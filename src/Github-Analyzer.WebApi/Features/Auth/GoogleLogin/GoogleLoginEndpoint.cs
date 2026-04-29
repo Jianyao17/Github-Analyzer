@@ -3,6 +3,7 @@ using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 
 namespace GithubAnalyzer.WebApi.Features.Auth.GoogleLogin;
@@ -11,9 +12,7 @@ public static class GoogleLoginEndpoint
 {
     public static IEndpointRouteBuilder MapGoogleLoginEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet(
-            "/api/auth/google/login",
-            (IConfiguration configuration) =>
+        app.MapGet("/api/auth/google/login", (IConfiguration configuration) =>
             {
                 var googleClientId = configuration["Authentication:Google:ClientId"];
                 var googleClientSecret = configuration["Authentication:Google:ClientSecret"];
@@ -35,11 +34,13 @@ public static class GoogleLoginEndpoint
                 return Results.Challenge(properties, [GoogleDefaults.AuthenticationScheme]);
             })
             .WithName("GoogleLogin")
-            .WithTags("Auth");
+            .WithTags("Auth")
+            .WithSummary("Start Google OAuth login")
+            .WithDescription("Redirects the user to Google OAuth. Requires Google client credentials in configuration.")
+            .Produces(StatusCodes.Status302Found)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
-        app.MapGet(
-            "/api/auth/google/callback",
-            async (
+        app.MapGet("/api/auth/google/callback", async (
                 HttpContext httpContext,
                 string? returnUrl,
                 UserManager<ApplicationUser> userManager,
@@ -87,7 +88,13 @@ public static class GoogleLoginEndpoint
                     $"{redirectTarget}{separator}token={Uri.EscapeDataString(response.AccessToken)}");
             })
             .WithName("GoogleCallback")
-            .WithTags("Auth");
+            .WithTags("Auth")
+            .WithSummary("Handle Google OAuth callback")
+            .WithDescription("Completes Google login and redirects to the frontend with the access token in the query string.")
+            .Produces(StatusCodes.Status302Found)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status400BadRequest)
+            .ProducesValidationProblem();
 
         return app;
     }

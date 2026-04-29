@@ -1,5 +1,6 @@
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Infrastructure.Authentication;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 
 namespace GithubAnalyzer.WebApi.Features.Auth.Register;
@@ -8,9 +9,7 @@ public static class RegisterEndpoint
 {
     public static IEndpointRouteBuilder MapRegisterEndpoint(this IEndpointRouteBuilder app)
     {
-        app.MapPost(
-            "/api/auth/register",
-            async (
+        app.MapPost("/api/auth/register", async (
                 RegisterRequest request,
                 UserManager<ApplicationUser> userManager,
                 IJwtTokenService jwtTokenService) =>
@@ -43,7 +42,13 @@ public static class RegisterEndpoint
                 return Results.Created("/api/auth/me", response);
             })
             .WithName("Register")
-            .WithTags("Auth");
+            .WithTags("Auth")
+            .WithSummary("Register a new account")
+            .WithDescription("Creates a user and returns a JWT access token plus profile. Use the token to call authenticated endpoints.")
+            .Accepts<RegisterRequest>("application/json")
+            .Produces<AuthResponse>(StatusCodes.Status201Created)
+            .Produces(StatusCodes.Status409Conflict)
+            .ProducesValidationProblem();
 
         return app;
     }

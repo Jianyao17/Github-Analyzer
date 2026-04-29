@@ -2,6 +2,7 @@ using System.Security.Claims;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 
 namespace GithubAnalyzer.WebApi.Features.Auth.GetCurrentUser;
@@ -10,9 +11,7 @@ public static class GetCurrentUserEndpoint
 {
     public static IEndpointRouteBuilder MapGetCurrentUserEndpoint(this IEndpointRouteBuilder app)
     {
-        app.MapGet(
-            "/api/auth/me",
-            [Authorize] async (
+        app.MapGet("/api/auth/me", [Authorize] async (
                 ClaimsPrincipal claimsPrincipal,
                 UserManager<ApplicationUser> userManager) =>
             {
@@ -36,7 +35,11 @@ public static class GetCurrentUserEndpoint
                     user.DisplayName));
             })
             .WithName("GetCurrentUser")
-            .WithTags("Auth");
+            .WithTags("Auth")
+            .WithSummary("Get current user profile")
+            .WithDescription("Requires an Authorization header using the Bearer token from /api/auth/login or /api/auth/register. Returns the authenticated user's profile.")
+            .Produces<UserProfileResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized);
 
         return app;
     }

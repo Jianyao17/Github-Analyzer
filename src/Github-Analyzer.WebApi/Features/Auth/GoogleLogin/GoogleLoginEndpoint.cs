@@ -15,6 +15,16 @@ public static class GoogleLoginEndpoint
             "/api/auth/google/login",
             (IConfiguration configuration) =>
             {
+                var googleClientId = configuration["Authentication:Google:ClientId"];
+                var googleClientSecret = configuration["Authentication:Google:ClientSecret"];
+                if (string.IsNullOrWhiteSpace(googleClientId) || string.IsNullOrWhiteSpace(googleClientSecret))
+                {
+                    return Results.Problem(
+                        title: "Google login is not configured.",
+                        detail: "Set Authentication:Google:ClientId and Authentication:Google:ClientSecret before using Google login.",
+                        statusCode: StatusCodes.Status503ServiceUnavailable);
+                }
+
                 var frontendBaseUrl = configuration["Frontend:BaseUrl"]?.TrimEnd('/')
                     ?? "http://localhost:5173";
 

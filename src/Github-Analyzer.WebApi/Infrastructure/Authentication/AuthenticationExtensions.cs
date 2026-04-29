@@ -15,17 +15,17 @@ public static class AuthenticationExtensions
         IConfiguration configuration)
     {
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.Configure<PasswordOptionsSettings>(configuration.GetSection(PasswordOptionsSettings.SectionName));
+
         var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
             ?? throw new InvalidOperationException("JWT settings are missing.");
+        var passwordOptions = configuration.GetSection(PasswordOptionsSettings.SectionName).Get<PasswordOptionsSettings>()
+            ?? new PasswordOptionsSettings();
 
         services
             .AddIdentityCore<ApplicationUser>(options =>
             {
-                options.Password.RequireDigit = true;
-                options.Password.RequireLowercase = true;
-                options.Password.RequireUppercase = false;
-                options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequiredLength = 8;
+                PasswordOptionsSettings.Apply(options, passwordOptions);
                 options.User.RequireUniqueEmail = true;
             })
             .AddRoles<IdentityRole<Guid>>()
@@ -35,7 +35,7 @@ public static class AuthenticationExtensions
 
         services.AddScoped<IJwtTokenService, JwtTokenService>();
 
-        services.AddAuthentication(options =>
+        var authenticationBuilder = services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -61,16 +61,23 @@ public static class AuthenticationExtensions
                 options.Cookie.SameSite = SameSiteMode.Lax;
                 options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
                 options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
-            })
-            .AddGoogle(
+            });
+
+        var googleClientId = configuration["Authentication:Google:ClientId"];
+        var googleClientSecret = configuration["Authentication:Google:ClientSecret"];
+
+        if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+        {
+            authenticationBuilder.AddGoogle(
                 GoogleDefaults.AuthenticationScheme,
                 options =>
                 {
                     options.SignInScheme = IdentityConstants.ExternalScheme;
-                    options.ClientId = configuration["Authentication:Google:ClientId"] ?? string.Empty;
-                    options.ClientSecret = configuration["Authentication:Google:ClientSecret"] ?? string.Empty;
+                    options.ClientId = googleClientId;
+                    options.ClientSecret = googleClientSecret;
                     options.CallbackPath = "/signin-google";
                 });
+        }
 
         services.AddAuthorization();
 

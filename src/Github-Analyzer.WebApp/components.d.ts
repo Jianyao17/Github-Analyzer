@@ -11,11 +11,28 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AnalysisConsole: typeof import('./src/components/analysis/AnalysisConsole.vue')['default']
+    AppShell: typeof import('./src/components/layout/AppShell.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    ToastHost: typeof import('./src/components/feedback/ToastHost.vue')['default']
+    UAlert: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Alert.vue')['default']
+    UApp: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/App.vue')['default']
+    UAvatar: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Avatar.vue')['default']
     UBadge: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Badge.vue')['default']
     UButton: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
     UCard: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Card.vue')['default']
+    UContainer: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Container.vue')['default']
+    UForm: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Form.vue')['default']
+    UFormField: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/FormField.vue')['default']
+    UIcon: typeof import('./node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']
     UInput: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Input.vue')['default']
+    UPopover: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Popover.vue')['default']
+    USeparator: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Separator.vue')['default']
+    USkeleton: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Skeleton.vue')['default']
+    UTabs: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Tabs.vue')['default']
+    UToaster: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Toaster.vue')['default']
+    UUser: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/User.vue')['default']
+    WorkspaceSidebar: typeof import('./src/components/layout/WorkspaceSidebar.vue')['default']
   }
 }

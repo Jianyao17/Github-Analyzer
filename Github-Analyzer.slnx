@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Github-Analyzer.Analysis/Github-Analyzer.Analysis.csproj" />
+    <Project Path="src/Github-Analyzer.AppHost/Github-Analyzer.AppHost.csproj" />
+    <Project Path="src/Github-Analyzer.ServiceDefaults/Github-Analyzer.ServiceDefaults.csproj" />
+    <Project Path="src/Github-Analyzer.WebApi/Github-Analyzer.WebApi.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Github-Analyzer.Analysis.Tests/Github-Analyzer.Analysis.Tests.csproj" />
+    <Project Path="test/Github-Analyzer.WebApi.Tests/Github-Analyzer.WebApi.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -27,12 +27,12 @@ onMounted(async () => {
 
 <template>
   <UApp>
-    <div class="flex min-h-screen items-center justify-center bg-(--ui-bg)">
-      <UCard class="w-full max-w-lg border-(--ui-border-muted)">
+    <div class="flex min-h-screen items-center justify-center bg-default">
+      <UCard class="w-full max-w-lg border-muted">
         <template #header>
           <div class="space-y-2">
             <UBadge color="secondary" variant="soft">Authentication</UBadge>
-            <h1 class="text-2xl font-semibold text-(--ui-text-highlighted)">
+            <h1 class="text-2xl font-semibold text-highlighted">
               Menyelesaikan login Google
             </h1>
           </div>

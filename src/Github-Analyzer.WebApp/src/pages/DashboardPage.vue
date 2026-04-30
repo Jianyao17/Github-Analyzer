@@ -1,55 +1,78 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import AnalysisConsole from '../components/analysis/AnalysisConsole.vue'
+import NewAnalysisPanel from '../components/analysis/NewAnalysisPanel.vue'
 import AppShell from '../components/layout/AppShell.vue'
 import WorkspaceSidebar from '../components/layout/WorkspaceSidebar.vue'
 import { apiRequest } from '../lib/api'
 import { useAuthStore } from '../stores/auth'
 
-interface AnalysisNode {
+interface Node {
   id: string
   label: string
-  kind: string
+  type: string
 }
 
-interface AnalysisEdge {
+interface Edge {
   source: string
   target: string
-  relationship: string
+  type: string
 }
 
-interface AnalysisSnapshot {
-  repository: string
-  fileCount: number
-  nodeCount: number
-  edgeCount: number
-  nodes: AnalysisNode[]
-  edges: AnalysisEdge[]
+interface CodeGraph {
+  nodes: Node[]
+  edges: Edge[]
+}
+
+interface HistoryItem {
+  jobId: string
+  repoUrl: string
+  status: string
+  progress: number
+  createdAt: string
+  completedAt?: string
 }
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const isLoading = ref(false)
 const errorMessage = ref('')
-const snapshot = ref<AnalysisSnapshot | null>(null)
+const currentGraph = ref<CodeGraph | null>(null)
 const selectedWorkspace = ref('new-analysis')
 const repositoryForm = reactive({
-  githubUrl: 'https://github.com/octocat/Hello-World',
+  githubUrl: '',
 })
 
-const workspaces = ref([
-  { id: 'new-analysis', label: 'New analysis', hint: 'Workspace baru' },
-  { id: 'octocat', label: 'octocat/Hello-World', hint: 'Sample AST graph' },
-  { id: 'aspire', label: 'dotnet/aspire', hint: 'Orchestration reference' },
-  { id: 'vue', label: 'vuejs/core', hint: 'Compiler and runtime' },
-])
+const history = ref<HistoryItem[]>([])
+const progressUpdate = ref<{ percentage: number, status: string } | null>(null)
+let activeEventSource: EventSource | null = null
+
+const isNewAnalysis = computed(() => selectedWorkspace.value === 'new-analysis')
+
+const workspaces = computed(() => {
+  const historical = history.value.map(item => ({
+    id: item.jobId,
+    label: item.repoUrl.replace('https://github.com/', ''),
+    hint: item.status
+  }))
+  const selectedMissing =
+    selectedWorkspace.value !== 'new-analysis'
+    && !history.value.some(item => item.jobId === selectedWorkspace.value)
+      ? [{ id: selectedWorkspace.value, label: 'Analysis Result', hint: 'Unknown' }]
+      : []
+  return [...selectedMissing, ...historical]
+})
 
 const repositoryName = computed(() => {
-  const rawUrl = repositoryForm.githubUrl.trim()
-  if (!rawUrl) {
-    return 'New repository'
+  if (selectedWorkspace.value !== 'new-analysis') {
+    const item = history.value.find(h => h.jobId === selectedWorkspace.value)
+    return item ? item.repoUrl.replace('https://github.com/', '') : 'Analysis Result'
   }
+
+  const rawUrl = repositoryForm.githubUrl.trim()
+  if (!rawUrl) return 'New repository'
 
   try {
     const parsed = new URL(rawUrl)
@@ -60,58 +83,190 @@ const repositoryName = computed(() => {
   }
 })
 
-const repositoryUrl = computed(() => repositoryForm.githubUrl.trim())
+const repositoryUrl = computed(() => {
+  if (selectedWorkspace.value !== 'new-analysis') {
+    const item = history.value.find(h => h.jobId === selectedWorkspace.value)
+    return item?.repoUrl ?? ''
+  }
+  return repositoryForm.githubUrl.trim()
+})
 
 const metrics = computed(() => {
-  if (!snapshot.value) {
-    return []
-  }
-
+  if (!currentGraph.value) return []
+  const nodesCount = currentGraph.value.nodes?.length ?? 0
+  const edgesCount = currentGraph.value.edges?.length ?? 0
   return [
-    { label: 'Files', value: snapshot.value.fileCount },
-    { label: 'Nodes', value: snapshot.value.nodeCount },
-    { label: 'Edges', value: snapshot.value.edgeCount },
+    { label: 'Nodes', value: nodesCount },
+    { label: 'Edges', value: edgesCount },
   ]
 })
 
 const visualizationModes = [
   { label: 'Graph View', value: 'graph' },
-  { label: 'Files', value: 'files' },
-  { label: 'Dependencies', value: 'deps' },
 ]
 const activeVisualizationMode = ref('graph')
 
 onMounted(async () => {
   await authStore.initialize()
-  await loadSnapshot()
+  await loadHistory()
+  const initialWorkspace = typeof route.params.jobId === 'string'
+    ? route.params.jobId
+    : 'new-analysis'
+  setWorkspace(initialWorkspace, { syncRoute: false })
 })
 
-async function loadSnapshot() {
+async function loadHistory() {
+  try {
+    history.value = await apiRequest<HistoryItem[]>('/api/analysis/history', {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    })
+  } catch (err) {
+    console.error('Failed to load history', err)
+  }
+}
+
+async function loadResult(jobId: string) {
   isLoading.value = true
   errorMessage.value = ''
-
   try {
-    snapshot.value = await apiRequest<AnalysisSnapshot>('/api/analysis/sample', {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`,
-      },
+    const result = await apiRequest<CodeGraph>(`/api/analysis/result/${jobId}`, {
+      headers: { Authorization: `Bearer ${authStore.token}` }
     })
-  } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Failed to load analysis data.'
+    currentGraph.value = {
+      nodes: Array.isArray(result.nodes) ? result.nodes : [],
+      edges: Array.isArray(result.edges) ? result.edges : [],
+    }
+  } catch (err) {
+    errorMessage.value = 'Failed to load analysis result.'
   } finally {
     isLoading.value = false
   }
 }
 
-async function analyzeRepository() {
-  selectedWorkspace.value = 'new-analysis'
-  await loadSnapshot()
+async function startAnalysis() {
+  if (!repositoryForm.githubUrl) return
+  
+  isLoading.value = true
+  errorMessage.value = ''
+  progressUpdate.value = { percentage: 0, status: 'Queuing...' }
+  currentGraph.value = null
+
+  try {
+    const response = await apiRequest<{ jobId: string }>('/api/repo/analyze', {
+      method: 'POST',
+      body: JSON.stringify({ repoUrl: repositoryForm.githubUrl }),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authStore.token}`
+      }
+    })
+
+    startProgressStream(response.jobId)
+
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : 'Failed to start analysis.'
+    isLoading.value = false
+  }
+}
+
+function onWorkspaceSelect(id: string) {
+  setWorkspace(id, { syncRoute: true })
+}
+
+function setWorkspace(id: string, options: { syncRoute: boolean }) {
+  selectedWorkspace.value = id
+  errorMessage.value = ''
+  if (id === 'new-analysis') {
+    stopProgressStream()
+    currentGraph.value = null
+    progressUpdate.value = null
+    isLoading.value = false
+    syncRoute(id, options)
+    return
+  } else {
+    currentGraph.value = null
+    const item = history.value.find(h => h.jobId === id)
+    if (item && item.status.toLowerCase() !== 'completed') {
+      progressUpdate.value = { percentage: item.progress, status: item.status }
+      if (item.status.toLowerCase() === 'failed') {
+        errorMessage.value = 'Analysis failed.'
+        stopProgressStream()
+        syncRoute(id, options)
+      } else {
+        startProgressStream(id)
+        syncRoute(id, options)
+      }
+      return
+    }
+
+    progressUpdate.value = null
+    stopProgressStream()
+    loadResult(id)
+    syncRoute(id, options)
+  }
+}
+
+function syncRoute(id: string, options: { syncRoute: boolean }) {
+  if (!options.syncRoute) return
+
+  if (id === 'new-analysis') {
+    if (route.name !== 'analysis-new') {
+      router.replace({ name: 'analysis-new' })
+    }
+    return
+  }
+
+  if (route.params.jobId === id && route.name === 'analysis-job') {
+    return
+  }
+
+  router.replace({ name: 'analysis-job', params: { jobId: id } })
+}
+
+function startProgressStream(jobId: string) {
+  stopProgressStream()
+
+  const eventSource = new EventSource(`${import.meta.env.VITE_API_BASE_URL}/api/repo/analyze/stream/${jobId}`)
+  activeEventSource = eventSource
+
+  const handleProgressEvent = (event: MessageEvent) => {
+    const data = JSON.parse(event.data)
+    progressUpdate.value = { percentage: data.progressPercentage, status: data.currentStatus }
+
+    if (data.currentStatus === 'Completed') {
+      stopProgressStream()
+      loadResult(jobId)
+      loadHistory()
+    } else if (data.currentStatus === 'Failed') {
+      stopProgressStream()
+      errorMessage.value = 'Analysis failed.'
+      isLoading.value = false
+    }
+  }
+
+  eventSource.addEventListener('progress', handleProgressEvent)
+  eventSource.onmessage = handleProgressEvent
+
+  eventSource.onerror = () => {
+    stopProgressStream()
+    errorMessage.value = 'Lost connection to progress stream.'
+    isLoading.value = false
+  }
+}
+
+function stopProgressStream() {
+  activeEventSource?.close()
+  activeEventSource = null
 }
 
 async function logout() {
   authStore.clear()
   await router.push('/login')
 }
+
+onUnmounted(() => {
+  stopProgressStream()
+})
 </script>
 
 <template>
@@ -120,27 +275,34 @@ async function logout() {
       <WorkspaceSidebar
         :workspaces="workspaces"
         :selectedId="selectedWorkspace"
-        :userName="authStore.user?.displayName ?? 'Authenticated user'"
-        :userEmail="authStore.user?.email ?? 'No email loaded'"
+        :userName="authStore.user?.displayName ?? 'User'"
+        :userEmail="authStore.user?.email ?? ''"
         :userInitials="authStore.initials"
-        @select="selectedWorkspace = $event"
-        @new="selectedWorkspace = 'new-analysis'"
+        @select="onWorkspaceSelect"
+        @new="onWorkspaceSelect('new-analysis')"
         @logout="logout"
       />
     </template>
 
     <AnalysisConsole
+      v-if="!isNewAnalysis"
       :repositoryName="repositoryName"
       :repositoryUrl="repositoryUrl"
       :isLoading="isLoading"
       :errorMessage="errorMessage"
-      :repositoryForm="repositoryForm"
       :metrics="metrics"
       :visualizationModes="visualizationModes"
       :activeMode="activeVisualizationMode"
-      @refresh="loadSnapshot"
-      @submit="analyzeRepository"
+      :graphData="currentGraph"
+      :progress="progressUpdate"
+      @refresh="loadHistory"
       @mode-change="activeVisualizationMode = $event"
+    />
+    <NewAnalysisPanel
+      v-if="isNewAnalysis"
+      :repositoryForm="repositoryForm"
+      :isLoading="isLoading"
+      @submit="startAnalysis"
     />
   </AppShell>
 </template>

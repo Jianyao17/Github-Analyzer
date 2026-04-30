@@ -21,7 +21,17 @@ declare module 'vue-router' {
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    name: 'dashboard',
+    redirect: '/analysis/new',
+  },
+  {
+    path: '/analysis/new',
+    name: 'analysis-new',
+    component: DashboardPage,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/analysis/:jobId',
+    name: 'analysis-job',
     component: DashboardPage,
     meta: { requiresAuth: true },
   },
@@ -67,7 +77,7 @@ export function createAppRouter(pinia: Pinia) {
     }
 
     if (guestOnly(to) && authStore.isAuthenticated) {
-      return { name: 'dashboard' }
+      return { name: 'analysis-new' }
     }
 
     return true

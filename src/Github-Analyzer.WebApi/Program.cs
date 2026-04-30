@@ -5,9 +5,15 @@ using GithubAnalyzer.WebApi.Features.Auth.GoogleLogin;
 using GithubAnalyzer.WebApi.Features.Auth.Login;
 using GithubAnalyzer.WebApi.Features.Auth.Register;
 using GithubAnalyzer.WebApi.Features.Health;
+using GithubAnalyzer.WebApi.Services;
 using GithubAnalyzer.WebApi.Infrastructure.Authentication;
 using GithubAnalyzer.WebApi.Infrastructure.Persistence;
+using GithubAnalyzer.Analysis.Parsers;
+using GithubAnalyzer.Analysis.Analyzer;
+using GithubAnalyzer.Analysis.Serialization;
+using GithubAnalyzer.Analysis.Application;
 using Scalar.AspNetCore;
+using System.Threading.Channels;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +39,21 @@ builder.Services.AddCors(options =>
 
 builder.AddApplicationPersistence();
 builder.Services.AddJwtAuthentication(builder.Configuration);
+
+// Code Analysis Services
+builder.Services.AddSingleton<ICodeParser, TreeSitterParser>();
+builder.Services.AddSingleton<ICodeAnalyzer, TreeSitterAnalyzer>();
+builder.Services.AddSingleton<JsonSerializerService>();
+builder.Services.AddSingleton<CodeAnalysisService>();
+
+builder.Services.AddSingleton(Channel.CreateUnbounded<GithubAnalyzer.WebApi.Models.AnalysisJob>());
+builder.Services.AddSingleton<ProgressTracker>();
+builder.Services.AddHttpClient<IRepositoryService, RepositoryService>(client =>
+{
+    client.DefaultRequestHeaders.Add("User-Agent", "Github-Analyzer");
+});
+builder.Services.AddSingleton<IAnalysisService, AnalysisService>();
+builder.Services.AddHostedService<AnalysisWorker>();
 
 var app = builder.Build();
 

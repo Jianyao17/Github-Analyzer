@@ -13,6 +13,8 @@ declare module 'vue' {
   export interface GlobalComponents {
     AnalysisConsole: typeof import('./src/components/analysis/AnalysisConsole.vue')['default']
     AppShell: typeof import('./src/components/layout/AppShell.vue')['default']
+    CodeGraphView: typeof import('./src/components/analysis/CodeGraphView.vue')['default']
+    NewAnalysisPanel: typeof import('./src/components/analysis/NewAnalysisPanel.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     ToastHost: typeof import('./src/components/feedback/ToastHost.vue')['default']
@@ -28,6 +30,7 @@ declare module 'vue' {
     UIcon: typeof import('./node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']
     UInput: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Input.vue')['default']
     UPopover: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Popover.vue')['default']
+    UProgress: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Progress.vue')['default']
     USeparator: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Separator.vue')['default']
     USkeleton: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Skeleton.vue')['default']
     UTabs: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Tabs.vue')['default']

@@ -7,4 +7,5 @@ namespace GithubAnalyzer.WebApi.Database;
 public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
     : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)
 {
+    public DbSet<AnalysisJobEntity> AnalysisJobs { get; set; } = null!;
 }

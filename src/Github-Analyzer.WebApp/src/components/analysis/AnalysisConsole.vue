@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import CodeGraphView from './CodeGraphView.vue'
+
 interface VisualizationMode {
   label: string
   value: string
@@ -10,27 +12,37 @@ interface MetricItem {
   value: number
 }
 
-defineProps<{
+interface Node {
+  id: string
+  label: string
+  type: string
+}
+
+interface Edge {
+  source: string
+  target: string
+  type: string
+}
+
+const props = defineProps<{
   repositoryName: string
   repositoryUrl: string
   isLoading: boolean
   errorMessage: string
-  repositoryForm: { githubUrl: string }
   visualizationModes: VisualizationMode[]
   activeMode: string
   metrics: MetricItem[]
+  graphData: { nodes: Node[], edges: Edge[] } | null
+  progress: { percentage: number, status: string } | null
 }>()
 
 const tabs = [
   { id: 'overview', label: 'Overview' },
   { id: 'graph', label: 'Graph' },
-  { id: 'files', label: 'Files' },
-  { id: 'deps', label: 'Dependencies' },
 ]
-const activeTab = ref('overview')
+const activeTab = ref('graph')
 
 const emit = defineEmits<{
-  (event: 'submit'): void
   (event: 'refresh'): void
   (event: 'mode-change', mode: string): void
 }>()
@@ -38,13 +50,13 @@ const emit = defineEmits<{
 
 <template>
   <div class="space-y-5">
-    <UCard class="border-(--ui-border-muted)">
+    <UCard class="border-muted">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div class="space-y-1">
-          <p class="text-xs font-medium uppercase tracking-[0.2em] text-(--ui-text-dimmed)">
+          <p class="text-xs font-medium uppercase tracking-[0.2em] text-dimmed">
             Repository
           </p>
-          <h1 class="text-2xl font-semibold text-(--ui-text-highlighted)">
+          <h1 class="text-2xl font-semibold text-highlighted">
             {{ repositoryName }}
           </h1>
           <a
@@ -52,24 +64,26 @@ const emit = defineEmits<{
             :href="repositoryUrl"
             target="_blank"
             rel="noreferrer"
-            class="text-sm text-(--ui-text-muted) underline"
+            class="text-sm text-muted underline"
           >
             {{ repositoryUrl }}
           </a>
-          <p v-else class="text-sm text-(--ui-text-muted)">
+          <p v-else class="text-sm text-muted">
             Paste a GitHub URL to start analysis.
           </p>
         </div>
 
-        <UButton
-          color="neutral"
-          variant="soft"
-          icon="i-lucide-refresh-cw"
-          :loading="isLoading"
-          @click="emit('refresh')"
-        >
-          Refresh analysis
-        </UButton>
+        <div class="flex gap-2">
+          <UButton
+            color="neutral"
+            variant="soft"
+            icon="i-lucide-refresh-cw"
+            :loading="isLoading"
+            @click="emit('refresh')"
+          >
+            Refresh
+          </UButton>
+        </div>
       </div>
     </UCard>
 
@@ -81,70 +95,74 @@ const emit = defineEmits<{
       :description="errorMessage"
     />
 
-    <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
-      <UCard class="border-(--ui-border-muted)">
-        <div class="flex min-h-[320px] flex-col gap-6">
-          <div class="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-            <UBadge color="secondary" variant="soft">New repo analysis</UBadge>
-            <p class="text-lg font-semibold text-(--ui-text-highlighted)">
-              Start a new analysis like a ChatGPT session
-            </p>
-            <p class="max-w-md text-sm text-(--ui-text-muted)">
-              Masukkan URL repository GitHub dan kirim untuk memulai proses analisis.
-            </p>
-          </div>
-
-          <UForm :state="repositoryForm" class="space-y-3" @submit.prevent="emit('submit')">
-            <div class="flex flex-col gap-3 sm:flex-row">
-              <UInput
-                v-model="repositoryForm.githubUrl"
-                icon="i-lucide-github"
-                size="xl"
-                class="w-full"
-                placeholder="https://github.com/owner/repository"
-              />
-              <UButton type="submit" size="xl" icon="i-lucide-send" :loading="isLoading">
-                Analyze
-              </UButton>
-            </div>
-            <UButton color="neutral" variant="soft" size="lg" icon="i-lucide-history">
-              Load previous result
-            </UButton>
-          </UForm>
+    <UCard v-if="progress && progress.percentage < 100" class="border-muted">
+      <div class="space-y-3">
+        <div class="flex justify-between text-sm">
+          <span class="font-medium">{{ progress.status }}</span>
+          <span class="text-muted">{{ progress.percentage }}%</span>
         </div>
-      </UCard>
+        <UProgress :value="progress.percentage" color="primary" />
+      </div>
+    </UCard>
 
+    <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
       <div class="space-y-4">
-        <UCard class="border-(--ui-border-muted)">
-          <div class="space-y-3">
-            <p class="text-xs font-medium uppercase tracking-[0.18em] text-(--ui-text-dimmed)">
-              View mode
-            </p>
-            <UButton
-              v-for="mode in visualizationModes"
-              :key="mode.value"
-              block
-              color="neutral"
-              :variant="activeMode === mode.value ? 'soft' : 'ghost'"
-              class="justify-start"
-              @click="emit('mode-change', mode.value)"
-            >
-              {{ mode.label }}
-            </UButton>
+        <div class="flex flex-wrap items-center gap-2 rounded-[--ui-radius] border border-muted bg-elevated p-2">
+          <UButton
+            v-for="tab in tabs"
+            :key="tab.id"
+            color="neutral"
+            size="sm"
+            :variant="activeTab === tab.id ? 'solid' : 'ghost'"
+            @click="activeTab = tab.id"
+          >
+            {{ tab.label }}
+          </UButton>
+        </div>
+
+        <UCard v-if="activeTab === 'overview'" class="border-muted">
+          <div class="space-y-4">
+            <div>
+              <p class="text-xs font-medium uppercase tracking-[0.18em] text-dimmed">
+                Summary
+              </p>
+              <p class="text-sm text-muted">
+                Ringkasan hasil analisis tersedia di tab Graph.
+              </p>
+            </div>
+            <div class="grid gap-3">
+              <div v-for="metric in metrics" :key="metric.label" class="space-y-1">
+                <p class="text-xs font-medium uppercase tracking-[0.18em] text-dimmed">
+                  {{ metric.label }}
+                </p>
+                <p class="text-2xl font-semibold text-highlighted">
+                  {{ metric.value }}
+                </p>
+              </div>
+            </div>
           </div>
         </UCard>
 
-        <UCard class="border-(--ui-border-muted)">
+        <UCard v-if="activeTab === 'graph'" class="relative h-125 border-muted p-0 overflow-hidden">
+          <CodeGraphView v-if="graphData" :nodes="graphData.nodes" :edges="graphData.edges" />
+          <div v-else class="flex h-full items-center justify-center text-muted">
+            No graph data available. Run analysis first.
+          </div>
+        </UCard>
+      </div>
+
+      <div class="space-y-4">
+        <UCard class="border-muted">
           <div class="space-y-3">
-            <p class="text-xs font-medium uppercase tracking-[0.18em] text-(--ui-text-dimmed)">
+            <p class="text-xs font-medium uppercase tracking-[0.18em] text-dimmed">
               Metrics
             </p>
             <div class="grid gap-3">
               <div v-for="metric in metrics" :key="metric.label" class="space-y-1">
-                <p class="text-xs font-medium uppercase tracking-[0.18em] text-(--ui-text-dimmed)">
+                <p class="text-xs font-medium uppercase tracking-[0.18em] text-dimmed">
                   {{ metric.label }}
                 </p>
-                <p class="text-2xl font-semibold text-(--ui-text-highlighted)">
+                <p class="text-2xl font-semibold text-highlighted">
                   {{ metric.value }}
                 </p>
               </div>
@@ -152,19 +170,6 @@ const emit = defineEmits<{
           </div>
         </UCard>
       </div>
-    </div>
-
-    <div class="flex flex-wrap items-center gap-2 rounded-[--ui-radius] border border-(--ui-border-muted) bg-(--ui-bg-elevated) p-2">
-      <UButton
-        v-for="tab in tabs"
-        :key="tab.id"
-        color="neutral"
-        size="sm"
-        :variant="activeTab === tab.id ? 'solid' : 'ghost'"
-        @click="activeTab = tab.id"
-      >
-        {{ tab.label }}
-      </UButton>
     </div>
   </div>
 </template>

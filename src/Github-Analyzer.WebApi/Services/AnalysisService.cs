@@ -1,6 +1,6 @@
 using GithubAnalyzer.WebApi.Models;
-using GithubAnalyzer.Analysis.Application;
-using GithubAnalyzer.Analysis.Domain;
+using GithubAnalyzer.Analysis.Service;
+using GithubAnalyzer.Analysis.Graph;
 using System.Text.Json;
 
 namespace GithubAnalyzer.WebApi.Services;

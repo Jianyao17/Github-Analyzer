@@ -1,0 +1,5 @@
+{
+  "appHost": {
+    "path": "src/Github-Analyzer.AppHost/Github-Analyzer.AppHost.csproj"
+  }
+}

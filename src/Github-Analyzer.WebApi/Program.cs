@@ -8,10 +8,8 @@ using GithubAnalyzer.WebApi.Features.Health;
 using GithubAnalyzer.WebApi.Services;
 using GithubAnalyzer.WebApi.Infrastructure.Authentication;
 using GithubAnalyzer.WebApi.Infrastructure.Persistence;
-using GithubAnalyzer.Analysis.Parsers;
-using GithubAnalyzer.Analysis.Analyzer;
-using GithubAnalyzer.Analysis.Serialization;
-using GithubAnalyzer.Analysis.Application;
+using GithubAnalyzer.Analysis.Interface;
+using GithubAnalyzer.Analysis.Service;
 using Scalar.AspNetCore;
 using System.Threading.Channels;
 

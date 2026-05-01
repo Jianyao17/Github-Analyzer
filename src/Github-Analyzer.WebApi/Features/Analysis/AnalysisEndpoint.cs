@@ -1,8 +1,8 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Channels;
-using GithubAnalyzer.Analysis.Application;
-using GithubAnalyzer.Analysis.Domain;
+using GithubAnalyzer.Analysis.Service;
+using GithubAnalyzer.Analysis.Graph;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Services;
 using GithubAnalyzer.WebApi.Models;

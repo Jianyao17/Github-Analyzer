@@ -1,50 +1,62 @@
-using GithubAnalyzer.WebApi.Models;
-using GithubAnalyzer.Analysis.Service;
-using GithubAnalyzer.Analysis.Graph;
-using System.Text.Json;
+using GithubAnalyzer.Analysis.Domain.Graph;
+using GithubAnalyzer.Analysis.Domain.Reader;
+using GithubAnalyzer.Analysis.Interface;
+using GithubAnalyzer.Analysis.TreeSitter;
+using System.Runtime.CompilerServices;
 
 namespace GithubAnalyzer.WebApi.Services;
 
 public sealed class AnalysisService(
-    CodeAnalysisService codeAnalysisService,
+    ICodebaseReader codebaseReader,
+    ICodeAnalysisPipeline analysisPipeline,
     ILogger<AnalysisService> logger) : IAnalysisService
 {
-    private readonly CodeAnalysisService _codeAnalysisService = codeAnalysisService;
-    private readonly ILogger<AnalysisService> _logger = logger;
-
-    public async Task<object> AnalyzeAsync(string repoPath, CancellationToken cancellationToken)
+    public async IAsyncEnumerable<TreeSitterProgress<CodeGraph>> AnalyzeAsync(
+        string repoPath, 
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Running static analysis for {RepoPath}", repoPath);
+        logger.LogInformation("Running static analysis for {RepoPath}", repoPath);
 
-        // Simple aggregation of all files in the repository
-        var files = Directory.GetFiles(repoPath, "*.cs", SearchOption.AllDirectories);
-        _logger.LogInformation("Found {Count} .cs files to analyze.", files.Length);
-        
-        var combinedGraph = new CodeGraph();
-
-        foreach (var file in files)
+        // 1. Read codebase
+        var options = new CodebaseReadOptions
         {
-            if (cancellationToken.IsCancellationRequested) break;
+            AllowedExtensions = new[] { ".cs", ".js", ".php", ".cpp", ".hpp", ".h", ".c" },
+            ExcludedFolders = new[] { "bin", "obj", "node_modules", ".git", "vendor" }
+        };
 
-            var code = await File.ReadAllTextAsync(file, cancellationToken);
-            var relativePath = Path.GetRelativePath(repoPath, file);
-            
-            _logger.LogDebug("Analyzing file: {FilePath} ({Size} bytes)", relativePath, code.Length);
-            
-            var json = _codeAnalysisService.Analyze(code, relativePath);
-            var fileGraph = JsonSerializer.Deserialize<CodeGraph>(json, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var snapshot = await codebaseReader.ReadAsync(repoPath, options, cancellationToken);
+        logger.LogInformation("Read {FileCount} files for analysis.", snapshot.Files.Count);
 
-            if (fileGraph != null)
-            {
-                _logger.LogDebug("File {FilePath} produced {NodeCount} nodes and {EdgeCount} edges.", 
-                    relativePath, fileGraph.Nodes.Count, fileGraph.Edges.Count);
-                combinedGraph.Nodes.AddRange(fileGraph.Nodes);
-                combinedGraph.Edges.AddRange(fileGraph.Edges);
-            }
+        if (snapshot.Files.Count == 0)
+        {
+            yield break;
         }
 
-        _logger.LogInformation("Analysis complete. Total nodes: {NodeCount}, Total edges: {EdgeCount}", 
-            combinedGraph.Nodes.Count, combinedGraph.Edges.Count);
-        return combinedGraph;
+        // 2. Determine primary language (simplified: based on most frequent extension)
+        var language = DetermineLanguage(snapshot);
+        logger.LogInformation("Determined primary language: {Language}", language);
+
+        // 3. Run analysis pipeline
+        foreach (var progress in analysisPipeline.AnalyzeAsync(snapshot, language))
+        {
+            if (cancellationToken.IsCancellationRequested) yield break;
+            yield return progress;
+        }
+    }
+
+    private SupportedLanguage DetermineLanguage(CodebaseSnapshot snapshot)
+    {
+        var extCount = snapshot.Files
+            .GroupBy(f => f.Extension.ToLowerInvariant())
+            .OrderByDescending(g => g.Count())
+            .FirstOrDefault()?.Key;
+
+        return extCount switch
+        {
+            ".js" => SupportedLanguage.JavaScript,
+            ".php" => SupportedLanguage.Php,
+            ".cpp" or ".hpp" or ".h" or ".c" => SupportedLanguage.Cpp,
+            _ => SupportedLanguage.CSharp
+        };
     }
 }

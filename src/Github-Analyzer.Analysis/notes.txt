@@ -1,0 +1,33 @@
+
+Tolong buatkan modul analisis konten kode sumber pada project src/Github-Analyzer.Analisis ini untuk beberapa bahasa pemrograman (parameter bahasa dari enum yang disediakan). Modul ini akan menerima input dari modul codebase reader berupa `CodebaseSnapshot` dan akan menghasilkan output berupa data `CodeGraph`.
+
+Detail struktur data `CodeGraph` dan `CodebaseSnapshot` sudah saya lampirkan, lengkap dengan contoh valuenya. Tolong pelajari terlebih dahulu.
+
+**Batasan Teknologi & Arsitektur:**
+1. Gunakan package `tree-sitter-dotnet-bindings` (https://github.com/mariusgreuel/tree-sitter-dotnet-bindings) untuk parser dan analisis statis, wajib untuk download, baca dan pahami dulu kodenya sebelum memulai. gunakan Query dan yang disediakan library untuk pencarian. ada juga tambahan QueryCursor boleh dipakai jika bermanfaat.
+2. Gunakan **Strategy Pattern** dan **Template Method** agar logika traversal inti hanya ditulis satu kali di kelas abstrak/base, sedangkan kelas turunan spesifik tiap bahasa (C#, PHP, JS, C++) hanya menyuplai abstraksi tipe node atau Tree-Sitter Queries.
+3. Buat algoritma yang sederhana dan mudah dimengerti tapi tetap bisa bekerja dengan optimal 
+4. Struktur folder:
+   - `/Interface`: Kontrak dan interface, masukan interface yang dibuat kesini.
+   - `/Domain`: Model data, tempatkan model data disini.
+   - `/TreeSitter`: Logika inti analisis (Base Analyzer, Parser initialization).
+   - `/TreeSitter/LangAnalyzer`: Implementasi spesifik tiap bahasa (C#, PHP, JS, C++).
+5. Hapus folder /service yang sudah tidak dipakai.
+6. Hapus interface `ICodeParser` jangan pakai interface lagi untuk parser
+7. Usahakan tidak ada terlalu banyak file di dir TreeSitter, masukan ke subfolder agar rapi.
+
+**Algoritma Analisis (Dua Fase / Two-Pass Analysis):**
+1. **Pass 1 - Declaration Mapping:** 
+   - Kumpulkan semua node deklarasi (FolderOrNamespace, File, Class, Function) beserta path asalnya.
+   - Untuk node Folder/Namespace, lakukan analisis *relative dir* dalam `FileContent` dan ekstrak definisi namespace dari kode. File node mengikuti tempat folder/namespace. Penentuan apakah node tipe "FolderOrNamespace" berupa folder path atau namespace harus adaptif sesuai jenis bahasa pemrogramannya
+   - Buat `pathId` dalam node sesuai format di contoh.
+   - Buat relasi `SourceRelEdges` dengan hierarki yang berurutan: RootFolder/RootNamespace -> Folder1/Namespace1 -> File1.cs -> Class1 -> Function1(). 
+2. **Pass 2 - Usage Scanning:**
+   - Scan seluruh konten kode untuk mencari node tipe pemanggilan (*usage*) terhadap class/function/file yang sudah dikumpulkan di Pass 1 menggunakan pustaka tree-sitter.
+   - Masukkan hubungan relasi ini ke `UseRelEdges`. 
+   - Anda **wajib** menangani resolusi scope (Name Collision) dengan resolusi konservatif antar file ketika membandingkan hasil query dan target pencarian. Contoh: Pemanggilan `FunctionA()` di `File1` harus memiliki kesaman sumber definisi dengan pathId terget `src/service/File1.js::FunctionA()` baru bisa disebut berelasi usage. Gunakan data pathId dari Pass 1 untuk mencocokkan scope `pathId` yang benar.
+
+**Requirement Tambahan:**
+Untuk memberikan user experience yang baik (progress percentage yang mulus), jalankan proses algoritma (Pass 1 & Pass 2) menggunakan `yield return`. Karena output akhir adalah objek `CodeGraph`, buatlah agar method analisis me-return `IAsyncEnumerable<TreeSitterProgress<CodeGraph>>` atau semacam event di mana setiap yield memancarkan status/persentase, dan yield terakhir memancarkan data graf finalnya.
+
+Jika ada bagian logika tree-sitter atau algoritma ini yang kurang jelas, tanyakan sebelum mulai menulis kodenya. fokus pada project class library ini dahulu baru integrasi dengan project webapi dan webapp setelah selesai.

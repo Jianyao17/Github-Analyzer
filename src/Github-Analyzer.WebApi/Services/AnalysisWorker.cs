@@ -1,5 +1,6 @@
 using System.Threading.Channels;
 using System.Text.Json;
+using GithubAnalyzer.Analysis.Domain.Graph;
 using GithubAnalyzer.WebApi.Models;
 using GithubAnalyzer.WebApi.Database;
 using Microsoft.EntityFrameworkCore;
@@ -59,27 +60,48 @@ public sealed class AnalysisWorker : BackgroundService
                 current.Result = null;
             });
 
-            var downloadTask = _repositoryService.DownloadAndExtractAsync(job.RepoUrl, cancellationToken);
-            await AdvanceProgressAsync(job.JobId, 0, 30, "Downloading & Extracting", downloadTask, cancellationToken);
-            tempDirectory = await downloadTask;
+            tempDirectory = await _repositoryService.DownloadAndExtractAsync(job.RepoUrl, cancellationToken);
 
-            await UpdateJobInDb(job.JobId, "Static Analysis", 31);
-            var analysisTask = _analysisService.AnalyzeAsync(tempDirectory, cancellationToken);
-            await AdvanceProgressAsync(job.JobId, 31, 90, "Static Analysis", analysisTask, cancellationToken);
-            var result = await analysisTask;
-
-            var resultJson = JsonSerializer.Serialize(result, new JsonSerializerOptions 
-            { 
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase 
-            });
-            await UpdateJobInDb(job.JobId, "Completed", 100, resultJson);
-
-            _tracker.TryUpdate(job.JobId, current =>
+            await UpdateJobInDb(job.JobId, "Static Analysis", 30);
+            
+            CodeGraph? finalResult = null;
+            await foreach (var progress in _analysisService.AnalyzeAsync(tempDirectory, cancellationToken))
             {
-                current.ProgressPercentage = 100;
-                current.CurrentStatus = "Completed";
-                current.Result = result;
-            });
+                // Map 0-100 from analyzer to 30-100 overall
+                var overallProgress = 30 + (int)(progress.Progress * 0.7);
+                await UpdateJobInDb(job.JobId, progress.Message, overallProgress);
+                
+                _tracker.TryUpdate(job.JobId, current =>
+                {
+                    current.ProgressPercentage = overallProgress;
+                    current.CurrentStatus = progress.Message;
+                });
+
+                if (progress.Result != null)
+                {
+                    finalResult = progress.Result;
+                }
+            }
+
+            if (finalResult != null)
+            {
+                var resultJson = JsonSerializer.Serialize(finalResult, new JsonSerializerOptions 
+                { 
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase 
+                });
+                await UpdateJobInDb(job.JobId, "Completed", 100, resultJson);
+
+                _tracker.TryUpdate(job.JobId, current =>
+                {
+                    current.ProgressPercentage = 100;
+                    current.CurrentStatus = "Completed";
+                    current.Result = finalResult;
+                });
+            }
+            else
+            {
+                throw new Exception("Analysis failed to produce a result.");
+            }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

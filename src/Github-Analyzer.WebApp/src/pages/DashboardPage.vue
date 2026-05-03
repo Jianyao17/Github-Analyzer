@@ -15,14 +15,15 @@ interface Node {
 }
 
 interface Edge {
-  source: string
-  target: string
-  type: string
+  from: string
+  to: string
+  type: number
 }
 
 interface CodeGraph {
   nodes: Node[]
-  edges: Edge[]
+  sourceRelEdges: Edge[]
+  useRelEdges: Edge[]
 }
 
 interface HistoryItem {
@@ -94,7 +95,7 @@ const repositoryUrl = computed(() => {
 const metrics = computed(() => {
   if (!currentGraph.value) return []
   const nodesCount = currentGraph.value.nodes?.length ?? 0
-  const edgesCount = currentGraph.value.edges?.length ?? 0
+  const edgesCount = (currentGraph.value.sourceRelEdges?.length ?? 0) + (currentGraph.value.useRelEdges?.length ?? 0)
   return [
     { label: 'Nodes', value: nodesCount },
     { label: 'Edges', value: edgesCount },
@@ -133,8 +134,9 @@ async function loadResult(jobId: string) {
       headers: { Authorization: `Bearer ${authStore.token}` }
     })
     currentGraph.value = {
-      nodes: Array.isArray(result.nodes) ? result.nodes : [],
-      edges: Array.isArray(result.edges) ? result.edges : [],
+      nodes: Array.isArray(result.nodes) ? result.nodes.map(n => ({ ...n, id: n.pathId })) : [],
+      sourceRelEdges: Array.isArray(result.sourceRelEdges) ? result.sourceRelEdges : [],
+      useRelEdges: Array.isArray(result.useRelEdges) ? result.useRelEdges : [],
     }
   } catch (err) {
     errorMessage.value = 'Failed to load analysis result.'

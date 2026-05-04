@@ -11,13 +11,20 @@ if (builder.Environment.IsDevelopment())
     postgres.WithPgWeb();
 }
 
+const int webappPort = 5017;
+
+var webapp = builder.AddNpmApp("webapp", "../Github-Analyzer.WebApp", "dev")
+    .WithHttpEndpoint(port: webappPort, env: "PORT");
+
 var api = builder.AddProject<Projects.Github_Analyzer_WebApi>("webapi")
+    .WithEnvironment("Frontend__BaseUrl", webapp.GetEndpoint("http"))
+    .WithEnvironment("Cors__AllowedOrigins__0", webapp.GetEndpoint("http"))
     .WithReference(postgresDb)
     .WaitFor(postgresDb);
 
-builder.AddNpmApp("webapp", "../Github-Analyzer.WebApp", "dev")
+webapp
+    .WithEnvironment("VITE_API_BASE_URL", api.GetEndpoint("http"))
     .WithReference(api)
-    .WaitFor(api)
-    .WithEnvironment("VITE_API_BASE_URL", api.GetEndpoint("http"));
+    .WaitFor(api);
 
 builder.Build().Run();

@@ -9,7 +9,6 @@ using GithubAnalyzer.WebApi.Services;
 using GithubAnalyzer.WebApi.Infrastructure.Authentication;
 using GithubAnalyzer.WebApi.Infrastructure.Persistence;
 using GithubAnalyzer.Analysis.Interface;
-using GithubAnalyzer.Analysis.Service;
 using Scalar.AspNetCore;
 using System.Threading.Channels;
 
@@ -38,11 +37,7 @@ builder.Services.AddCors(options =>
 builder.AddApplicationPersistence();
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
-// Code Analysis Services
-builder.Services.AddSingleton<ICodeParser, TreeSitterParser>();
-builder.Services.AddSingleton<ICodeAnalyzer, TreeSitterAnalyzer>();
-builder.Services.AddSingleton<JsonSerializerService>();
-builder.Services.AddSingleton<CodeAnalysisService>();
+// Code Analysis Services handled by factory
 
 builder.Services.AddSingleton(Channel.CreateUnbounded<GithubAnalyzer.WebApi.Models.AnalysisJob>());
 builder.Services.AddSingleton<ProgressTracker>();

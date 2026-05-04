@@ -64,9 +64,22 @@ public sealed class AnalysisWorker : BackgroundService
             tempDirectory = await downloadTask;
 
             await UpdateJobInDb(job.JobId, "Static Analysis", 31);
-            var analysisTask = _analysisService.AnalyzeAsync(tempDirectory, cancellationToken);
-            await AdvanceProgressAsync(job.JobId, 31, 90, "Static Analysis", analysisTask, cancellationToken);
-            var result = await analysisTask;
+            object? finalResult = null;
+            await foreach (var progress in _analysisService.AnalyzeAsync(tempDirectory, cancellationToken))
+            {
+                int scaledProgress = 31 + (int)(progress.Percentage * 0.59);
+                _tracker.TryUpdate(job.JobId, current =>
+                {
+                    current.ProgressPercentage = scaledProgress;
+                    current.CurrentStatus = progress.Message;
+                });
+
+                if (progress.Percentage == 100)
+                {
+                    finalResult = progress.Result;
+                }
+            }
+            var result = finalResult;
 
             var resultJson = JsonSerializer.Serialize(result, new JsonSerializerOptions 
             { 

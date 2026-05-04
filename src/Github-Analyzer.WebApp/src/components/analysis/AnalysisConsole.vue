@@ -12,16 +12,16 @@ interface MetricItem {
   value: number
 }
 
-interface Node {
-  id: string
+interface GraphNode {
+  pathId: string
   label: string
-  type: string
+  type: number | string
 }
 
-interface Edge {
-  source: string
-  target: string
-  type: string
+interface GraphEdge {
+  from: string
+  to: string
+  type: number | string
 }
 
 const props = defineProps<{
@@ -32,7 +32,7 @@ const props = defineProps<{
   visualizationModes: VisualizationMode[]
   activeMode: string
   metrics: MetricItem[]
-  graphData: { nodes: Node[], edges: Edge[] } | null
+  graphData: { nodes: GraphNode[], sourceRelEdges: GraphEdge[], useRelEdges: GraphEdge[] } | null
   progress: { percentage: number, status: string } | null
 }>()
 
@@ -144,7 +144,7 @@ const emit = defineEmits<{
         </UCard>
 
         <UCard v-if="activeTab === 'graph'" class="relative h-125 border-muted p-0 overflow-hidden">
-          <CodeGraphView v-if="graphData" :nodes="graphData.nodes" :edges="graphData.edges" />
+          <CodeGraphView v-if="graphData" :nodes="graphData.nodes" :sourceRelEdges="graphData.sourceRelEdges" :useRelEdges="graphData.useRelEdges" />
           <div v-else class="flex h-full items-center justify-center text-muted">
             No graph data available. Run analysis first.
           </div>

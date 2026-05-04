@@ -1,50 +1,100 @@
+using System.Runtime.CompilerServices;
 using GithubAnalyzer.WebApi.Models;
-using GithubAnalyzer.Analysis.Service;
-using GithubAnalyzer.Analysis.Graph;
+using GithubAnalyzer.Analysis.TreeSitter;
+using GithubAnalyzer.Analysis.Domain.Graph;
+using GithubAnalyzer.Analysis.Domain.Analyzer;
+using GithubAnalyzer.Analysis.Domain.Reader;
 using System.Text.Json;
 
 namespace GithubAnalyzer.WebApi.Services;
 
-public sealed class AnalysisService(
-    CodeAnalysisService codeAnalysisService,
-    ILogger<AnalysisService> logger) : IAnalysisService
+public sealed class AnalysisService(ILogger<AnalysisService> logger) : IAnalysisService
 {
-    private readonly CodeAnalysisService _codeAnalysisService = codeAnalysisService;
     private readonly ILogger<AnalysisService> _logger = logger;
 
-    public async Task<object> AnalyzeAsync(string repoPath, CancellationToken cancellationToken)
+    public async IAsyncEnumerable<TreeSitterProgress<CodeGraph>> AnalyzeAsync(string repoPath, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         _logger.LogInformation("Running static analysis for {RepoPath}", repoPath);
 
-        // Simple aggregation of all files in the repository
-        var files = Directory.GetFiles(repoPath, "*.cs", SearchOption.AllDirectories);
-        _logger.LogInformation("Found {Count} .cs files to analyze.", files.Length);
-        
-        var combinedGraph = new CodeGraph();
-
-        foreach (var file in files)
+        // Map extensions to ProgrammingLanguage
+        var languageExtensions = new Dictionary<string, ProgrammingLanguage>
         {
-            if (cancellationToken.IsCancellationRequested) break;
+            { ".cs", ProgrammingLanguage.CSharp },
+            { ".php", ProgrammingLanguage.Php },
+            { ".js", ProgrammingLanguage.JavaScript },
+            { ".cpp", ProgrammingLanguage.Cpp },
+            { ".h", ProgrammingLanguage.Cpp },
+            { ".hpp", ProgrammingLanguage.Cpp }
+        };
 
-            var code = await File.ReadAllTextAsync(file, cancellationToken);
-            var relativePath = Path.GetRelativePath(repoPath, file);
-            
-            _logger.LogDebug("Analyzing file: {FilePath} ({Size} bytes)", relativePath, code.Length);
-            
-            var json = _codeAnalysisService.Analyze(code, relativePath);
-            var fileGraph = JsonSerializer.Deserialize<CodeGraph>(json, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var allFiles = Directory.GetFiles(repoPath, "*.*", SearchOption.AllDirectories);
+        var filesByLanguage = new Dictionary<ProgrammingLanguage, List<CodebaseFileContent>>();
 
-            if (fileGraph != null)
+        foreach (var file in allFiles)
+        {
+            var ext = Path.GetExtension(file).ToLowerInvariant();
+            if (languageExtensions.TryGetValue(ext, out var lang))
             {
-                _logger.LogDebug("File {FilePath} produced {NodeCount} nodes and {EdgeCount} edges.", 
-                    relativePath, fileGraph.Nodes.Count, fileGraph.Edges.Count);
-                combinedGraph.Nodes.AddRange(fileGraph.Nodes);
-                combinedGraph.Edges.AddRange(fileGraph.Edges);
+                if (!filesByLanguage.ContainsKey(lang))
+                {
+                    filesByLanguage[lang] = new List<CodebaseFileContent>();
+                }
+                
+                var content = await File.ReadAllTextAsync(file, cancellationToken);
+                filesByLanguage[lang].Add(new CodebaseFileContent
+                {
+                    AbsolutePath = file,
+                    RelativePath = Path.GetRelativePath(repoPath, file).Replace('\\', '/'),
+                    Extension = ext,
+                    SizeBytes = new FileInfo(file).Length,
+                    Content = content
+                });
             }
         }
 
-        _logger.LogInformation("Analysis complete. Total nodes: {NodeCount}, Total edges: {EdgeCount}", 
-            combinedGraph.Nodes.Count, combinedGraph.Edges.Count);
-        return combinedGraph;
+        var combinedGraph = new CodeGraph();
+        int totalLangs = filesByLanguage.Count;
+        int currentLangIdx = 0;
+
+        if (totalLangs == 0)
+        {
+            yield return TreeSitterProgress<CodeGraph>.Completed(combinedGraph, "No supported files found.");
+            yield break;
+        }
+
+        foreach (var (lang, files) in filesByLanguage)
+        {
+            var analyzer = LanguageAnalyzerFactory.CreateAnalyzer(lang);
+            var snapshot = new CodebaseSnapshot
+            {
+                RootPath = repoPath,
+                Files = files
+            };
+
+            await foreach (var progress in analyzer.AnalyzeAsync(snapshot, cancellationToken))
+            {
+                // scale progress relative to multiple languages
+                double baseProgress = (double)currentLangIdx / totalLangs * 100;
+                double scaledProgress = baseProgress + (progress.Percentage / totalLangs);
+                
+                if (progress.Percentage == 100 && progress.Result != null)
+                {
+                    combinedGraph.Nodes.AddRange(progress.Result.Nodes);
+                    combinedGraph.SourceRelEdges.AddRange(progress.Result.SourceRelEdges);
+                    combinedGraph.UseRelEdges.AddRange(progress.Result.UseRelEdges);
+                }
+                else
+                {
+                    yield return TreeSitterProgress<CodeGraph>.InProgress(scaledProgress, $"[{lang}] {progress.Message}");
+                }
+            }
+            
+            currentLangIdx++;
+        }
+
+        _logger.LogInformation("Analysis complete. Total nodes: {NodeCount}, Source edges: {SourceEdgeCount}, Use edges: {UseEdgeCount}", 
+            combinedGraph.Nodes.Count, combinedGraph.SourceRelEdges.Count, combinedGraph.UseRelEdges.Count);
+            
+        yield return TreeSitterProgress<CodeGraph>.Completed(combinedGraph);
     }
 }

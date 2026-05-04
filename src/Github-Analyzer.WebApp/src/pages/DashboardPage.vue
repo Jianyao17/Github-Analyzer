@@ -8,21 +8,22 @@ import WorkspaceSidebar from '../components/layout/WorkspaceSidebar.vue'
 import { apiRequest } from '../lib/api'
 import { useAuthStore } from '../stores/auth'
 
-interface Node {
-  id: string
+interface GraphNode {
+  pathId: string
   label: string
-  type: string
+  type: number | string
 }
 
-interface Edge {
-  source: string
-  target: string
-  type: string
+interface GraphEdge {
+  from: string
+  to: string
+  type: number | string
 }
 
 interface CodeGraph {
-  nodes: Node[]
-  edges: Edge[]
+  nodes: GraphNode[]
+  sourceRelEdges: GraphEdge[]
+  useRelEdges: GraphEdge[]
 }
 
 interface HistoryItem {
@@ -94,7 +95,7 @@ const repositoryUrl = computed(() => {
 const metrics = computed(() => {
   if (!currentGraph.value) return []
   const nodesCount = currentGraph.value.nodes?.length ?? 0
-  const edgesCount = currentGraph.value.edges?.length ?? 0
+  const edgesCount = (currentGraph.value.sourceRelEdges?.length ?? 0) + (currentGraph.value.useRelEdges?.length ?? 0)
   return [
     { label: 'Nodes', value: nodesCount },
     { label: 'Edges', value: edgesCount },
@@ -134,7 +135,8 @@ async function loadResult(jobId: string) {
     })
     currentGraph.value = {
       nodes: Array.isArray(result.nodes) ? result.nodes : [],
-      edges: Array.isArray(result.edges) ? result.edges : [],
+      sourceRelEdges: Array.isArray(result.sourceRelEdges) ? result.sourceRelEdges : [],
+      useRelEdges: Array.isArray(result.useRelEdges) ? result.useRelEdges : [],
     }
   } catch (err) {
     errorMessage.value = 'Failed to load analysis result.'
@@ -162,6 +164,15 @@ async function startAnalysis() {
     })
 
     startProgressStream(response.jobId)
+    // Add it to history optimistically so the sidebar updates
+    history.value.unshift({
+      jobId: response.jobId,
+      repoUrl: repositoryForm.githubUrl,
+      status: 'Queuing...',
+      progress: 0,
+      createdAt: new Date().toISOString()
+    })
+    setWorkspace(response.jobId, { syncRoute: true })
 
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'Failed to start analysis.'

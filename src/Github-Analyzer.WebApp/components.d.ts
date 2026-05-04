@@ -33,9 +33,6 @@ declare module 'vue' {
     UProgress: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Progress.vue')['default']
     USeparator: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Separator.vue')['default']
     USkeleton: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Skeleton.vue')['default']
-    UTabs: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Tabs.vue')['default']
-    UToaster: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Toaster.vue')['default']
-    UUser: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/User.vue')['default']
     WorkspaceSidebar: typeof import('./src/components/layout/WorkspaceSidebar.vue')['default']
   }
 }

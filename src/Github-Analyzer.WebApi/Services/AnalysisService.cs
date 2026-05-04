@@ -1,6 +1,6 @@
 using GithubAnalyzer.WebApi.Models;
 using GithubAnalyzer.Analysis.Service;
-using GithubAnalyzer.Analysis.Graph;
+using GithubAnalyzer.Analysis.Domain.Graph;
 using System.Text.Json;
 
 namespace GithubAnalyzer.WebApi.Services;
@@ -37,14 +37,15 @@ public sealed class AnalysisService(
             if (fileGraph != null)
             {
                 _logger.LogDebug("File {FilePath} produced {NodeCount} nodes and {EdgeCount} edges.", 
-                    relativePath, fileGraph.Nodes.Count, fileGraph.Edges.Count);
+                    relativePath, fileGraph.Nodes.Count, fileGraph.SourceRelEdges.Count + fileGraph.UseRelEdges.Count);
                 combinedGraph.Nodes.AddRange(fileGraph.Nodes);
-                combinedGraph.Edges.AddRange(fileGraph.Edges);
+                combinedGraph.SourceRelEdges.AddRange(fileGraph.SourceRelEdges);
+                combinedGraph.UseRelEdges.AddRange(fileGraph.UseRelEdges);
             }
         }
 
         _logger.LogInformation("Analysis complete. Total nodes: {NodeCount}, Total edges: {EdgeCount}", 
-            combinedGraph.Nodes.Count, combinedGraph.Edges.Count);
+            combinedGraph.Nodes.Count, combinedGraph.SourceRelEdges.Count + combinedGraph.UseRelEdges.Count);
         return combinedGraph;
     }
 }

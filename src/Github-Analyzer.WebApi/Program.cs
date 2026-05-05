@@ -9,7 +9,8 @@ using GithubAnalyzer.WebApi.Services;
 using GithubAnalyzer.WebApi.Infrastructure.Authentication;
 using GithubAnalyzer.WebApi.Infrastructure.Persistence;
 using GithubAnalyzer.Analysis.Interface;
-using GithubAnalyzer.Analysis.Service;
+using GithubAnalyzer.Analysis.TreeSitter;
+using GithubAnalyzer.Analysis.Pipeline.Reader;
 using Scalar.AspNetCore;
 using System.Threading.Channels;
 
@@ -39,10 +40,8 @@ builder.AddApplicationPersistence();
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
 // Code Analysis Services
-builder.Services.AddSingleton<ICodeParser, TreeSitterParser>();
 builder.Services.AddSingleton<ICodeAnalyzer, TreeSitterAnalyzer>();
-builder.Services.AddSingleton<JsonSerializerService>();
-builder.Services.AddSingleton<CodeAnalysisService>();
+builder.Services.AddSingleton<ICodebaseReader, CodebaseReader>();
 
 builder.Services.AddSingleton(Channel.CreateUnbounded<GithubAnalyzer.WebApi.Models.AnalysisJob>());
 builder.Services.AddSingleton<ProgressTracker>();

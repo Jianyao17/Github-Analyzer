@@ -91,16 +91,6 @@ const repositoryUrl = computed(() => {
   return repositoryForm.githubUrl.trim()
 })
 
-const metrics = computed(() => {
-  if (!currentGraph.value) return []
-  const nodesCount = currentGraph.value.nodes?.length ?? 0
-  const edgesCount = currentGraph.value.edges?.length ?? 0
-  return [
-    { label: 'Nodes', value: nodesCount },
-    { label: 'Edges', value: edgesCount },
-  ]
-})
-
 const visualizationModes = [
   { label: 'Graph View', value: 'graph' },
 ]
@@ -290,7 +280,6 @@ onUnmounted(() => {
       :repositoryUrl="repositoryUrl"
       :isLoading="isLoading"
       :errorMessage="errorMessage"
-      :metrics="metrics"
       :visualizationModes="visualizationModes"
       :activeMode="activeVisualizationMode"
       :graphData="currentGraph"

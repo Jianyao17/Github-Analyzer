@@ -1,7 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Channels;
-using GithubAnalyzer.Analysis.Service;
 using GithubAnalyzer.Analysis.Domain.Graph;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Services;
@@ -17,16 +16,15 @@ public static class AnalysisEndpoint
 {
     public static IEndpointRouteBuilder MapAnalysisEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/analysis/sample", [Authorize] (CodeAnalysisService analysisService) =>
+        app.MapGet("/api/analysis/sample", [Authorize] () =>
             {
-                var jsonResult = analysisService.Analyze("public class Test { void ProcessData() {} }", "Test.cs");
-                return Results.Content(jsonResult, "application/json");
+                return Results.Ok(new { message = "Sample analysis endpoint is disabled in this build." });
             })
             .WithName("GetSampleAnalysis")
             .WithTags("Analysis")
             .WithSummary("Get sample analysis")
             .WithDescription("Returns a sample repository analysis snapshot. Requires Authorization: Bearer token.")
-            .Produces<CodeGraph>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized);
 
         app.MapGet("/api/analysis/history", [Authorize] async (ApplicationDbContext db) =>

@@ -11,8 +11,8 @@ interface Node {
 }
 
 interface Edge {
-  source: string | Node
-  target: string | Node
+  source: string
+  target: string
   type: string
 }
 
@@ -23,7 +23,7 @@ const props = defineProps<{
 
 const svgRef = ref<SVGSVGElement | null>(null)
 const containerRef = ref<HTMLDivElement | null>(null)
-let simulation: d3.Simulation<Node, Edge> | null = null
+let simulation: d3.Simulation<Node, d3.SimulationLinkDatum<Node>> | null = null
 
 async function initGraph() {
   if (!svgRef.value || !containerRef.value || !props.nodes.length) return
@@ -62,12 +62,15 @@ async function initGraph() {
     .force('charge', d3.forceManyBody().strength(-300))
     .force('center', d3.forceCenter(width / 2, height / 2))
 
+  // Prepare link data (d3 will resolve source/target to node objects)
+  const linksData = props.edges.map(e => ({ source: e.source, target: e.target, type: e.type }))
+
   // Link lines
   const link = svg.append('g')
     .attr('stroke', '#999')
     .attr('stroke-opacity', 0.6)
     .selectAll('line')
-    .data(props.edges)
+    .data(linksData as any)
     .join('line')
     .attr('stroke-width', 2)
 
@@ -107,10 +110,10 @@ async function initGraph() {
 
   simulation.on('tick', () => {
     link
-      .attr('x1', d => (d.source as Node).x!)
-      .attr('y1', d => (d.source as Node).y!)
-      .attr('x2', d => (d.target as Node).x!)
-      .attr('y2', d => (d.target as Node).y!)
+      .attr('x1', d => ((d as any).source as Node).x!)
+      .attr('y1', d => ((d as any).source as Node).y!)
+      .attr('x2', d => ((d as any).target as Node).x!)
+      .attr('y2', d => ((d as any).target as Node).y!)
 
     node.attr('transform', d => `translate(${d.x},${d.y})`)
   })
@@ -145,13 +148,6 @@ onUnmounted(() => {
 <template>
   <div ref="containerRef" class="absolute inset-0 overflow-hidden bg-elevated rounded-[--ui-radius]">
     <svg ref="svgRef" class="h-full w-full cursor-move"></svg>
-    <div class="absolute top-2 right-2 flex gap-2">
-      <div class="flex items-center gap-1 text-[10px]">
-        <div class="h-2 w-2 rounded-full bg-[#42b883]"></div> File
-      </div>
-      <div class="flex items-center gap-1 text-[10px]">
-        <div class="h-2 w-2 rounded-full bg-[#35495e]"></div> Method
-      </div>
-    </div>
+    
   </div>
 </template>

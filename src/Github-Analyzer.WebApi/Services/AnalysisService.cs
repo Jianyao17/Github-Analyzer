@@ -1,51 +1,87 @@
 using GithubAnalyzer.WebApi.Models;
-using GithubAnalyzer.Analysis.Service;
+using GithubAnalyzer.Analysis.Interface;
 using GithubAnalyzer.Analysis.Domain.Graph;
+using GithubAnalyzer.Analysis.Domain.Reader;
+using GithubAnalyzer.Analysis.Pipeline.Reader;
+using GithubAnalyzer.Analysis.Domain.TreeSitter;
 using System.Text.Json;
 
 namespace GithubAnalyzer.WebApi.Services;
 
 public sealed class AnalysisService(
-    CodeAnalysisService codeAnalysisService,
+    ICodeAnalyzer codeAnalyzer,
+    ICodebaseReader codebaseReader,
     ILogger<AnalysisService> logger) : IAnalysisService
 {
-    private readonly CodeAnalysisService _codeAnalysisService = codeAnalysisService;
+    private readonly ICodeAnalyzer _codeAnalyzer = codeAnalyzer;
+    private readonly ICodebaseReader _codebaseReader = codebaseReader;
     private readonly ILogger<AnalysisService> _logger = logger;
 
     public async Task<object> AnalyzeAsync(string repoPath, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Running static analysis for {RepoPath}", repoPath);
 
-        // Simple aggregation of all files in the repository
-        var files = Directory.GetFiles(repoPath, "*.cs", SearchOption.AllDirectories);
-        _logger.LogInformation("Found {Count} .cs files to analyze.", files.Length);
-        
-        var combinedGraph = new CodeGraph();
-
-        foreach (var file in files)
+        // Read codebase snapshot (allow common source extensions)
+        var options = new CodebaseReadOptions
         {
-            if (cancellationToken.IsCancellationRequested) break;
+            AllowedExtensions = new[] { ".cs", ".js", ".ts", ".php", ".cpp", ".c", ".h", ".hpp" },
+            ExcludedFolders = new[] { "node_modules", "vendor", ".git" }
+        };
 
-            var code = await File.ReadAllTextAsync(file, cancellationToken);
-            var relativePath = Path.GetRelativePath(repoPath, file);
-            
-            _logger.LogDebug("Analyzing file: {FilePath} ({Size} bytes)", relativePath, code.Length);
-            
-            var json = _codeAnalysisService.Analyze(code, relativePath);
-            var fileGraph = JsonSerializer.Deserialize<CodeGraph>(json, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var snapshot = await _codebaseReader.ReadAsync(repoPath, options, cancellationToken);
 
-            if (fileGraph != null)
+        // Heuristic: pick dominant language from files
+        var extCounts = snapshot.Files
+            .GroupBy(f => (f.Extension ?? string.Empty).ToLowerInvariant())
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        AnalysisLanguage language = AnalysisLanguage.CSharp;
+        extCounts.TryGetValue(".js", out var jsCount);
+        extCounts.TryGetValue(".ts", out var tsCount);
+        var totalJsTs = (jsCount + tsCount);
+        if (totalJsTs > extCounts.GetValueOrDefault(".cs", 0))
+        {
+            language = AnalysisLanguage.JavaScript;
+        }
+        else if (extCounts.TryGetValue(".php", out var php) && php > extCounts.GetValueOrDefault(".cs", 0))
+        {
+            language = AnalysisLanguage.Php;
+        }
+        else if (extCounts.Keys.Any(k => k == ".cpp" || k == ".c" || k == ".h" || k == ".hpp")
+                 && extCounts.GetValueOrDefault(".cs", 0) == 0)
+        {
+            language = AnalysisLanguage.Cpp;
+        }
+
+        // Run analyzer (streaming). Take final result when IsCompleted
+        CodeGraph finalGraph = new();
+        await foreach (var progress in _codeAnalyzer.AnalyzeAsync(snapshot, language, cancellationToken))
+        {
+            if (progress.IsCompleted && progress.Result is not null)
             {
-                _logger.LogDebug("File {FilePath} produced {NodeCount} nodes and {EdgeCount} edges.", 
-                    relativePath, fileGraph.Nodes.Count, fileGraph.SourceRelEdges.Count + fileGraph.UseRelEdges.Count);
-                combinedGraph.Nodes.AddRange(fileGraph.Nodes);
-                combinedGraph.SourceRelEdges.AddRange(fileGraph.SourceRelEdges);
-                combinedGraph.UseRelEdges.AddRange(fileGraph.UseRelEdges);
+                finalGraph = progress.Result;
             }
         }
 
-        _logger.LogInformation("Analysis complete. Total nodes: {NodeCount}, Total edges: {EdgeCount}", 
-            combinedGraph.Nodes.Count, combinedGraph.SourceRelEdges.Count + combinedGraph.UseRelEdges.Count);
-        return combinedGraph;
+        // Flatten nodes and edges into frontend-friendly shapes
+        var nodes = finalGraph.Nodes.Select(n => new
+        {
+            id = n.PathId,
+            label = n.Label,
+            type = n.Type.ToString()
+        }).ToList();
+
+        var edges = finalGraph.SourceRelEdges.Concat(finalGraph.UseRelEdges)
+            .Select(e => new
+            {
+                source = e.From,
+                target = e.To,
+                type = e.Type.ToString()
+            })
+            .ToList();
+
+        _logger.LogInformation("Analysis complete. Nodes: {NodeCount}, Edges: {EdgeCount}", nodes.Count, edges.Count);
+
+        return new { nodes, edges };
     }
 }

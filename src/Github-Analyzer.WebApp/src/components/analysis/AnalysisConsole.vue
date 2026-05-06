@@ -7,11 +7,6 @@ interface VisualizationMode {
   value: string
 }
 
-interface MetricItem {
-  label: string
-  value: number
-}
-
 interface Node {
   id: string
   label: string
@@ -31,7 +26,6 @@ const props = defineProps<{
   errorMessage: string
   visualizationModes: VisualizationMode[]
   activeMode: string
-  metrics: MetricItem[]
   graphData: { nodes: Node[], edges: Edge[] } | null
   progress: { percentage: number, status: string } | null
 }>()
@@ -105,7 +99,7 @@ const emit = defineEmits<{
       </div>
     </UCard>
 
-    <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
+    <div class="space-y-4">
       <div class="space-y-4">
         <div class="flex flex-wrap items-center gap-2 rounded-[--ui-radius] border border-muted bg-elevated p-2">
           <UButton
@@ -130,16 +124,6 @@ const emit = defineEmits<{
                 Ringkasan hasil analisis tersedia di tab Graph.
               </p>
             </div>
-            <div class="grid gap-3">
-              <div v-for="metric in metrics" :key="metric.label" class="space-y-1">
-                <p class="text-xs font-medium uppercase tracking-[0.18em] text-dimmed">
-                  {{ metric.label }}
-                </p>
-                <p class="text-2xl font-semibold text-highlighted">
-                  {{ metric.value }}
-                </p>
-              </div>
-            </div>
           </div>
         </UCard>
 
@@ -147,26 +131,6 @@ const emit = defineEmits<{
           <CodeGraphView v-if="graphData" :nodes="graphData.nodes" :edges="graphData.edges" />
           <div v-else class="flex h-full items-center justify-center text-muted">
             No graph data available. Run analysis first.
-          </div>
-        </UCard>
-      </div>
-
-      <div class="space-y-4">
-        <UCard class="border-muted">
-          <div class="space-y-3">
-            <p class="text-xs font-medium uppercase tracking-[0.18em] text-dimmed">
-              Metrics
-            </p>
-            <div class="grid gap-3">
-              <div v-for="metric in metrics" :key="metric.label" class="space-y-1">
-                <p class="text-xs font-medium uppercase tracking-[0.18em] text-dimmed">
-                  {{ metric.label }}
-                </p>
-                <p class="text-2xl font-semibold text-highlighted">
-                  {{ metric.value }}
-                </p>
-              </div>
-            </div>
           </div>
         </UCard>
       </div>

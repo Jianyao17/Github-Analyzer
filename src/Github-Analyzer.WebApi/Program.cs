@@ -1,3 +1,6 @@
+using GithubAnalyzer.Analysis.Interface;
+using GithubAnalyzer.Analysis.TreeSitter;
+using GithubAnalyzer.Analysis.Pipeline.Reader;
 using GithubAnalyzer.WebApi.Features.Analysis;
 using GithubAnalyzer.WebApi.Features.Auth.Configuration;
 using GithubAnalyzer.WebApi.Features.Auth.GetCurrentUser;
@@ -5,39 +8,22 @@ using GithubAnalyzer.WebApi.Features.Auth.GoogleLogin;
 using GithubAnalyzer.WebApi.Features.Auth.Login;
 using GithubAnalyzer.WebApi.Features.Auth.Register;
 using GithubAnalyzer.WebApi.Features.Health;
+using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Services;
-using GithubAnalyzer.WebApi.Infrastructure.Authentication;
-using GithubAnalyzer.WebApi.Infrastructure.Persistence;
-using GithubAnalyzer.Analysis.Interface;
-using GithubAnalyzer.Analysis.TreeSitter;
-using GithubAnalyzer.Analysis.Pipeline.Reader;
-using Scalar.AspNetCore;
+using GithubAnalyzer.WebApi.Config;
 using System.Threading.Channels;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy(
-        CorsPolicyNames.Frontend,
-        policy =>
-        {
-            var allowedOrigins = builder.Configuration
-                .GetSection("Cors:AllowedOrigins")
-                .Get<string[]>() ?? [];
-
-            policy.WithOrigins(allowedOrigins)
-                .AllowAnyHeader()
-                .AllowAnyMethod();
-        });
-});
+builder.Services.AddCorsPolicies(builder.Configuration);
 
 builder.AddApplicationPersistence();
-builder.Services.AddJwtAuthentication(builder.Configuration);
+builder.AddJwtAuthentication();
 
 // Code Analysis Services
 builder.Services.AddSingleton<ICodeAnalyzer, TreeSitterAnalyzer>();
@@ -55,20 +41,11 @@ builder.Services.AddHostedService<AnalysisWorker>();
 var app = builder.Build();
 
 app.UseExceptionHandler();
-app.UseCors(CorsPolicyNames.Frontend);
+app.UseCors(CorsPolicyConfig.Frontend);
 app.UseAuthentication();
 app.UseAuthorization();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.MapScalarApiReference(options =>
-    {
-        options.Title = "Github-Analyzer Web API";
-        options.Theme = ScalarTheme.Saturn;
-    });
-}
-
+// Map endpoints
 app.MapDefaultEndpoints();
 app.MapHealthEndpoints();
 app.MapRegisterEndpoint();
@@ -78,7 +55,19 @@ app.MapGetCurrentUserEndpoint();
 app.MapGoogleLoginEndpoints();
 app.MapAnalysisEndpoints();
 
-await app.ApplyDatabaseMigrationsAsync();
+// Development-only features
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options.Title = "Github-Analyzer Web API";
+        options.Theme = ScalarTheme.Saturn;
+    });
+
+    // Apply pending migrations on startup in development mode
+    await app.ApplyMigrationsAsync();
+}
 
 app.Run();
 

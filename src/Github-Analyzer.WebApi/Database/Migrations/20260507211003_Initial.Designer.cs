@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GithubAnalyzer.WebApi.Database.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260507163555_Initial")]
+    [Migration("20260507211003_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -190,11 +190,6 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
-
-                    b.Property<string>("DisplayName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)

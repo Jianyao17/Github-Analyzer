@@ -1,22 +1,24 @@
 using System.Security.Claims;
-using GithubAnalyzer.WebApi.Database;
-using GithubAnalyzer.WebApi.Infrastructure.Authentication;
+using GithubAnalyzer.WebApi.Config;
+using GithubAnalyzer.WebApi.Entities.Auth;
+using GithubAnalyzer.WebApi.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 
-namespace GithubAnalyzer.WebApi.Features.Auth.GoogleLogin;
+namespace GithubAnalyzer.WebApi.Endpoints.Auth;
 
 public static class GoogleLoginEndpoint
 {
-    public static IEndpointRouteBuilder MapGoogleLoginEndpoints(this IEndpointRouteBuilder app)
+    public static RouteHandlerBuilder MapGoogleLoginEndpoint(this RouteGroupBuilder group)
     {
-        app.MapGet("/api/auth/google/login", (IConfiguration configuration) =>
+        return group.MapGet("/google/login", (IConfiguration configuration) =>
             {
-                var googleClientId = configuration["Authentication:Google:ClientId"];
-                var googleClientSecret = configuration["Authentication:Google:ClientSecret"];
-                if (string.IsNullOrWhiteSpace(googleClientId) || string.IsNullOrWhiteSpace(googleClientSecret))
+                var googleConfig = configuration
+                    .GetSection("Authentication:Google")
+                    .Get<GoogleAuthConfig>() ?? new GoogleAuthConfig();
+
+                if (!googleConfig.IsEnabled)
                 {
                     return Results.Problem(
                         title: "Google login is not configured.",
@@ -32,19 +34,16 @@ public static class GoogleLoginEndpoint
                 var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
 
                 return Results.Challenge(properties, [GoogleDefaults.AuthenticationScheme]);
-            })
-            .WithName("GoogleLogin")
-            .WithTags("Auth")
-            .WithSummary("Start Google OAuth login")
-            .WithDescription("Redirects the user to Google OAuth. Requires Google client credentials in configuration.")
-            .Produces(StatusCodes.Status302Found)
-            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+            });
+    }
 
-        app.MapGet("/api/auth/google/callback", async (
+    public static RouteHandlerBuilder MapGoogleCallbackEndpoint(this RouteGroupBuilder group)
+    {
+        return group.MapGet("/google/callback", async (
                 HttpContext httpContext,
                 string? returnUrl,
                 UserManager<ApplicationUser> userManager,
-                IJwtTokenService jwtTokenService) =>
+                JwtIdentityService jwtIdentityService) =>
             {
                 var externalResult = await httpContext.AuthenticateAsync(IdentityConstants.ExternalScheme);
                 if (!externalResult.Succeeded)
@@ -61,18 +60,20 @@ public static class GoogleLoginEndpoint
                 var user = await userManager.FindByEmailAsync(email);
                 if (user is null)
                 {
+                    var preferredUsername = externalResult.Principal?.FindFirstValue(ClaimTypes.Name) ?? email;
+
                     user = new ApplicationUser
                     {
                         Id = Guid.NewGuid(),
-                        UserName = email,
-                        Email = email,
-                        DisplayName = externalResult.Principal?.FindFirstValue(ClaimTypes.Name) ?? email
+                        UserName = preferredUsername,
+                        Email = email
                     };
 
                     var createResult = await userManager.CreateAsync(user);
                     if (!createResult.Succeeded)
                     {
-                        return Results.ValidationProblem(createResult.Errors.ToDictionary(
+                        return Results.ValidationProblem(
+                          createResult.Errors.ToDictionary(
                             error => error.Code,
                             error => new[] { error.Description }));
                     }
@@ -80,22 +81,12 @@ public static class GoogleLoginEndpoint
 
                 await httpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
-                var response = jwtTokenService.CreateToken(user);
+                var accessToken = jwtIdentityService.CreateToken(user);
                 var redirectTarget = string.IsNullOrWhiteSpace(returnUrl) ? "/" : returnUrl;
                 var separator = redirectTarget.Contains('?') ? "&" : "?";
 
                 return Results.Redirect(
-                    $"{redirectTarget}{separator}token={Uri.EscapeDataString(response.AccessToken)}");
-            })
-            .WithName("GoogleCallback")
-            .WithTags("Auth")
-            .WithSummary("Handle Google OAuth callback")
-            .WithDescription("Completes Google login and redirects to the frontend with the access token in the query string.")
-            .Produces(StatusCodes.Status302Found)
-            .Produces(StatusCodes.Status401Unauthorized)
-            .Produces(StatusCodes.Status400BadRequest)
-            .ProducesValidationProblem();
-
-        return app;
+                    $"{redirectTarget}{separator}token={Uri.EscapeDataString(accessToken)}");
+            });
     }
 }

@@ -1,13 +1,8 @@
 using GithubAnalyzer.Analysis.Interface;
 using GithubAnalyzer.Analysis.TreeSitter;
 using GithubAnalyzer.Analysis.Pipeline.Reader;
-using GithubAnalyzer.WebApi.Features.Analysis;
-using GithubAnalyzer.WebApi.Features.Auth.Configuration;
-using GithubAnalyzer.WebApi.Features.Auth.GetCurrentUser;
-using GithubAnalyzer.WebApi.Features.Auth.GoogleLogin;
-using GithubAnalyzer.WebApi.Features.Auth.Login;
-using GithubAnalyzer.WebApi.Features.Auth.Register;
-using GithubAnalyzer.WebApi.Features.Health;
+using GithubAnalyzer.WebApi.Endpoints.Analysis;
+using GithubAnalyzer.WebApi.Endpoints.Auth;
 using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Services;
 using GithubAnalyzer.WebApi.Config;
@@ -47,12 +42,7 @@ app.UseAuthorization();
 
 // Map endpoints
 app.MapDefaultEndpoints();
-app.MapHealthEndpoints();
-app.MapRegisterEndpoint();
-app.MapLoginEndpoint();
-app.MapAuthConfigurationEndpoint();
-app.MapGetCurrentUserEndpoint();
-app.MapGoogleLoginEndpoints();
+app.MapAuthEndpoints();
 app.MapAnalysisEndpoints();
 
 // Development-only features

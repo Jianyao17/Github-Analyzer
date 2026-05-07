@@ -2,10 +2,12 @@ using Microsoft.Extensions.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
+const string postgresDbConnectionName = "postgresdb";
+
 var postgres = builder.AddPostgres("postgres")
     .WithDataVolume("github-analyzer-data");
 
-var postgresDb = postgres.AddDatabase("postgresdb", "github_analyzer");
+var postgresDb = postgres.AddDatabase(postgresDbConnectionName, "github_analyzer");
 if (builder.Environment.IsDevelopment())
 {
     postgres.WithPgWeb();

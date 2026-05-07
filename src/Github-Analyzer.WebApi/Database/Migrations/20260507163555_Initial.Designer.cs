@@ -3,6 +3,7 @@ using System;
 using GithubAnalyzer.WebApi.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GithubAnalyzer.WebApi.Database.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260507163555_Initial")]
+    partial class Initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -496,7 +499,7 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
             modelBuilder.Entity("GithubAnalyzer.WebApi.Entities.Analysis.StatisticAnalysis", b =>
                 {
                     b.HasOne("GithubAnalyzer.WebApi.Entities.Repo.Project", "Project")
-                        .WithMany("StatisticAnalyses")
+                        .WithMany("Statistics")
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -572,7 +575,7 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
 
                     b.Navigation("Queues");
 
-                    b.Navigation("StatisticAnalyses");
+                    b.Navigation("Statistics");
                 });
 #pragma warning restore 612, 618
         }

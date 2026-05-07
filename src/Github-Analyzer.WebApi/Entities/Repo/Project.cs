@@ -27,10 +27,8 @@ public class Project : BaseEntity
     public string?   LastCommitHash  { get; set; }
     public DateTime? LastCommitAtUtc { get; set; }
     
-    public ICollection<StatisticAnalysis> StatisticAnalyses { get; set; }
-        = new List<StatisticAnalysis>();
-    
     public ICollection<ProjectQueue> Queues { get; set; } = new List<ProjectQueue>();
-    public ICollection<CodeGraphAnalysis> CodeGraphs { get; set; } 
-        = new List<CodeGraphAnalysis>();
+    
+    public ICollection<StatisticAnalysis> Statistics { get; set; } = new List<StatisticAnalysis>();
+    public ICollection<CodeGraphAnalysis> CodeGraphs { get; set; } = new List<CodeGraphAnalysis>();
 }

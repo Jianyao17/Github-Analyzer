@@ -31,14 +31,14 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
                 .HasForeignKey(q => q.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            entity.HasMany(p => p.Statistics)
+                .WithOne(sa => sa.Project)
+                .HasForeignKey(sa => sa.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
             entity.HasMany(p => p.CodeGraphs)
                 .WithOne(cg => cg.Project)
                 .HasForeignKey(cg => cg.ProjectId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasMany(p => p.StatisticAnalyses)
-                .WithOne(sa => sa.Project)
-                .HasForeignKey(sa => sa.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

@@ -1,0 +1,103 @@
+using System.Security.Claims;
+using System.ComponentModel.DataAnnotations;
+using GithubAnalyzer.WebApi.Database;
+using GithubAnalyzer.WebApi.Entities.Repo;
+using GithubAnalyzer.WebApi.Interfaces;
+using GithubAnalyzer.WebApi.Models;
+
+namespace GithubAnalyzer.WebApi.Endpoints.Project;
+
+public sealed record CreateProjectRequest(
+    [Required, Url] string RepoUrl,
+    [Required, StringLength(100)] string Branch,
+    [StringLength(50)] string? CommitHash);
+
+public sealed record ProjectResponse(
+    Guid Id, string RepositoryName, string RepositoryUrl,
+    string? BranchName, string? LastCommitHash, DateTime CreatedAtUtc);
+
+public static class CreateProjectEndpoint
+{
+    public static RouteHandlerBuilder MapCreateProjectEndpoint(this RouteGroupBuilder group)
+    {
+        return group.MapPost("/new", async (
+            CreateProjectRequest request, ClaimsPrincipal claimsPrincipal,
+            AppDbContext dbContext, IRepositoryFetcher repositoryFetcher,
+            CancellationToken ct) =>
+        {
+            // Get User ID from claims
+            var userIdStr = claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? 
+                            claimsPrincipal.FindFirstValue("sub");
+            
+            // Try to parse user ID
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Results.Unauthorized();
+
+            // Fetch and Extract Code
+            RepositoryResult repoResult;
+            try
+            {
+                repoResult = await repositoryFetcher.DownloadAndExtractAsync(
+                    request.RepoUrl, request.Branch, request.CommitHash, ct);
+            }
+            catch (NotSupportedException ex)
+            {
+                return Results.BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(detail: ex.Message, 
+                    statusCode: StatusCodes.Status500InternalServerError);
+            }
+
+            // Create Project Entity
+            var project = new Entities.Repo.Project
+            {
+                UserId          = userId,
+                RepositoryUrl   = repoResult.RepositoryUrl,
+                RepositoryName  = repoResult.RepositoryName,
+                AuthorName      = repoResult.AuthorName,
+                LocalPath       = repoResult.ExtractPath,
+                BranchName      = repoResult.BranchName ?? request.Branch,
+                LastCommitHash  = repoResult.LastCommitHash,
+                LastCommitAtUtc = repoResult.LastCommitAtUtc,
+                Description     = repoResult.Description
+            };
+
+            // Add project to database
+            dbContext.Projects.Add(project);
+
+            // Queue jobs for analysis (Statistic & CodeGraph)
+            var statisticJob = new ProjectQueue
+            {
+                Project = project,
+                JobType = JobTypeEnum.Statistic.ToString(),
+                Status = Entities.QueueStatus.Pending,
+                Priority = 10
+            };
+            
+            var codeGraphJob = new ProjectQueue
+            {
+                Project = project,
+                JobType = JobTypeEnum.CodeGraph.ToString(),
+                Status = Entities.QueueStatus.Pending,
+                Priority = 10
+            };
+
+            // Save project and jobs to database
+            dbContext.ProjectQueues.AddRange(statisticJob, codeGraphJob);
+            await dbContext.SaveChangesAsync(ct);
+
+            // Return the created project
+            var response = new ProjectResponse(
+                project.Id,
+                project.RepositoryName,
+                project.RepositoryUrl,
+                project.BranchName,
+                project.LastCommitHash,
+                project.CreatedAtUtc);
+
+            return Results.Created($"/api/projects/{project.Id}", response);
+        });
+    }
+}

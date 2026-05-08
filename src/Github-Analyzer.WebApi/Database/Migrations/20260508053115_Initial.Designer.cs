@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GithubAnalyzer.WebApi.Database.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260507211003_Initial")]
+    [Migration("20260508053115_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -31,8 +31,9 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int>("BuildDurationMs")
-                        .HasColumnType("integer");
+                    b.Property<string>("Branch")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("CommitHash")
                         .HasMaxLength(50)
@@ -90,6 +91,10 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
 
                     b.Property<long?>("BlankLines")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("Branch")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<long?>("CodeLines")
                         .HasColumnType("bigint");
@@ -326,21 +331,17 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
 
                     b.Property<string>("JobType")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(25)
+                        .HasColumnType("character varying(25)");
 
                     b.Property<string>("LastError")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<int>("MaxAttempts")
                         .HasColumnType("integer");
 
-                    b.Property<string>("PayloadJson")
-                        .HasColumnType("text");
-
                     b.Property<int>("Priority")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Progress")
                         .HasColumnType("integer");
 
                     b.Property<Guid>("ProjectId")

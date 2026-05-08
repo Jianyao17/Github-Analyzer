@@ -1,7 +1,9 @@
+using GithubAnalyzer.Analysis.Interface;
+using GithubAnalyzer.Analysis.Pipeline.Reader;
+using GithubAnalyzer.Analysis.TreeSitter;
 using GithubAnalyzer.WebApi.Config;
-using GithubAnalyzer.WebApi.Endpoints.Analysis;
 using GithubAnalyzer.WebApi.Endpoints.Auth;
-using GithubAnalyzer.WebApi.Endpoints.Repo;
+using GithubAnalyzer.WebApi.Endpoints.Project;
 using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Services;
@@ -26,7 +28,7 @@ builder.Services.AddHttpClient<IRepositoryProvider, GithubRepositoryProvider>(
 
 // Services for analysis
 builder.Services.AddScoped<ICodebaseReader, CodebaseReader>();
-builder.Services.AddScoped<ICodeGraphAnalyzer, TreeSitterAnalyzer>();
+builder.Services.AddScoped<ICodeAnalyzer, TreeSitterAnalyzer>();
 
 // Queue progress notifier for real-time updates to clients
 builder.Services.AddSingleton<IQueueProgressNotifier, QueueProgressNotifier>();
@@ -46,8 +48,7 @@ app.UseAuthorization();
 // Map endpoints
 app.MapDefaultEndpoints();
 app.MapAuthEndpoints();
-app.MapAnalysisEndpoints();
-app.MapQueueEndpoints();
+app.MapProjectEndpoints();
 
 // Development-only features
 if (app.Environment.IsDevelopment())

@@ -12,12 +12,11 @@ public class ProjectQueue : BaseEntity
     [ForeignKey(nameof(ProjectId))]
     public Project Project { get; set; } = default!;
 
-    [Required]
+    [Required, MaxLength(25)]
     public string JobType { get; set; } = string.Empty;
 
     [Required]
     public QueueStatus Status { get; set; } = QueueStatus.Pending;
-    public int Progress { get; set; } = 0;
 
     [Required, Range(1, 100)]
     public int Priority { get; set; } = 10;
@@ -29,6 +28,6 @@ public class ProjectQueue : BaseEntity
     public int AttemptCount { get; set; }
     public int MaxAttempts { get; set; } = 3;
 
-    public string? PayloadJson { get; set; }
+    [MaxLength(500)]
     public string? LastError { get; set; }
 }

@@ -17,8 +17,9 @@ public class CodeGraphAnalysis : BaseEntity
     [ForeignKey(nameof(ProjectId))] 
     public Project Project { get; set; } = default!;
     
-    [MaxLength(50)]
-    public string? CommitHash { get; set; }
+    [MaxLength(50)] public string? Branch { get; set; }
+    [MaxLength(50)] public string? CommitHash { get; set; }
+    
     public DateTime? GeneratedAtUtc { get; set; }
 
     [Required]
@@ -26,6 +27,4 @@ public class CodeGraphAnalysis : BaseEntity
     
     public int NodeCount { get; set; }
     public int EdgeCount { get; set; }
-    
-    public int BuildDurationMs { get; set; }
 }

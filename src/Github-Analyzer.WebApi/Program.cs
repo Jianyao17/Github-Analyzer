@@ -1,12 +1,11 @@
-using GithubAnalyzer.Analysis.Interface;
-using GithubAnalyzer.Analysis.TreeSitter;
-using GithubAnalyzer.Analysis.Pipeline.Reader;
+using GithubAnalyzer.WebApi.Config;
 using GithubAnalyzer.WebApi.Endpoints.Analysis;
 using GithubAnalyzer.WebApi.Endpoints.Auth;
+using GithubAnalyzer.WebApi.Endpoints.Repo;
 using GithubAnalyzer.WebApi.Extensions;
+using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Services;
-using GithubAnalyzer.WebApi.Config;
-using System.Threading.Channels;
+using GithubAnalyzer.WebApi.Workers;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,19 +18,23 @@ builder.Services.AddCorsPolicies(builder.Configuration);
 
 builder.AddApplicationPersistence();
 builder.AddJwtAuthentication();
+builder.AddRepoConfig();
 
-// Code Analysis Services
-builder.Services.AddSingleton<ICodeAnalyzer, TreeSitterAnalyzer>();
-builder.Services.AddSingleton<ICodebaseReader, CodebaseReader>();
+builder.Services.AddSingleton<IRepositoryFetcher, RepositoryFetcher>();
+builder.Services.AddHttpClient<IRepositoryProvider, GithubRepositoryProvider>(
+    client => client.DefaultRequestHeaders.Add("User-Agent", "Github-Analyzer"));
 
-builder.Services.AddSingleton(Channel.CreateUnbounded<GithubAnalyzer.WebApi.Models.AnalysisJob>());
-builder.Services.AddSingleton<ProgressTracker>();
-builder.Services.AddHttpClient<IRepositoryService, RepositoryService>(client =>
-{
-    client.DefaultRequestHeaders.Add("User-Agent", "Github-Analyzer");
-});
-builder.Services.AddSingleton<IAnalysisService, AnalysisService>();
-builder.Services.AddHostedService<AnalysisWorker>();
+// Services for analysis
+builder.Services.AddScoped<ICodebaseReader, CodebaseReader>();
+builder.Services.AddScoped<ICodeGraphAnalyzer, TreeSitterAnalyzer>();
+
+// Queue progress notifier for real-time updates to clients
+builder.Services.AddSingleton<IQueueProgressNotifier, QueueProgressNotifier>();
+
+// Workers for background processing
+builder.Services.AddHostedService<CodeGraphAnalysisWorker>();
+builder.Services.AddHostedService<QueueCleanupWorker>();
+
 
 var app = builder.Build();
 
@@ -44,6 +47,7 @@ app.UseAuthorization();
 app.MapDefaultEndpoints();
 app.MapAuthEndpoints();
 app.MapAnalysisEndpoints();
+app.MapQueueEndpoints();
 
 // Development-only features
 if (app.Environment.IsDevelopment())

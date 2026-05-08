@@ -13,8 +13,9 @@ public class StatisticAnalysis : BaseEntity
     [ForeignKey(nameof(ProjectId))]
     public Project Project { get; set; } = default!;
 
-    [MaxLength(50)]
-    public string? CommitHash { get; set; }
+    [MaxLength(50)] public string? Branch { get; set; }
+    [MaxLength(50)] public string? CommitHash { get; set; }
+    
     public DateTime? GeneratedAtUtc { get; set; }
 
     // Structural Statistics

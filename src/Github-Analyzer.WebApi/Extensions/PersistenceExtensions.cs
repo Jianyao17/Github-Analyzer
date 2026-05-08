@@ -19,9 +19,7 @@ public static class PersistenceExtensions
     public static async Task ApplyMigrationsAsync(this WebApplication app)
     {
         if (!app.Environment.IsDevelopment())
-        {
             return;
-        }
 
         await using var scope = app.Services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();

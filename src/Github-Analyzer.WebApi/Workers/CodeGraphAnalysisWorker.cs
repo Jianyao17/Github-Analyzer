@@ -95,6 +95,7 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
             UserId = job.Project.UserId,
             ProjectId = job.ProjectId,
 
+            Branch = job.Project.BranchName,
             CommitHash = job.Project.LastCommitHash,
             GeneratedAtUtc = DateTime.UtcNow,
 

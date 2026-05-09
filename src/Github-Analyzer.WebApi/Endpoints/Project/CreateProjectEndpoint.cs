@@ -54,8 +54,10 @@ public static class CreateProjectEndpoint
             var project = new Entities.Repo.Project
             {
                 UserId          = userId,
-                RepositoryUrl   = repoResult.RepositoryUrl,
+                Title           = repoResult.RepositoryName,
                 RepositoryName  = repoResult.RepositoryName,
+                RepositoryUrl   = repoResult.RepositoryUrl,
+                
                 AuthorName      = repoResult.AuthorName,
                 LocalPath       = repoResult.ExtractPath,
                 BranchName      = repoResult.BranchName ?? request.Branch,

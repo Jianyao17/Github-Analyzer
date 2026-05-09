@@ -1,9 +1,9 @@
-using GithubAnalyzer.WebApi.Entities.Analysis;
-using GithubAnalyzer.WebApi.Entities.Auth;
-using GithubAnalyzer.WebApi.Entities.Repo;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using GithubAnalyzer.WebApi.Entities.Analysis;
+using GithubAnalyzer.WebApi.Entities.Auth;
+using GithubAnalyzer.WebApi.Entities.Repo;
 
 namespace GithubAnalyzer.WebApi.Database;
 
@@ -23,6 +23,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
         modelBuilder.Entity<ApplicationRole>().ToTable("Roles", "Auth");
         modelBuilder.Entity<IdentityUserRole<Guid>>().ToTable("UserRoles", "Auth");
         modelBuilder.Entity<IdentityUserClaim<Guid>>().ToTable("UserClaims", "Auth");
+        modelBuilder.Entity<IdentityUserLogin<Guid>>().ToTable("UserLogins", "Auth");
+        modelBuilder.Entity<IdentityRoleClaim<Guid>>().ToTable("RoleClaims", "Auth");
+        modelBuilder.Entity<IdentityUserToken<Guid>>().ToTable("UserTokens", "Auth");
 
         modelBuilder.Entity<Project>(entity =>
         {

@@ -22,7 +22,7 @@ builder.AddApplicationPersistence();
 builder.AddJwtAuthentication();
 builder.AddRepoConfig();
 
-builder.Services.AddSingleton<IRepositoryFetcher, RepositoryFetcher>();
+builder.Services.AddTransient<IRepositoryFetcher, RepositoryFetcher>();
 builder.Services.AddHttpClient<IRepositoryProvider, GithubRepositoryProvider>(
     client => client.DefaultRequestHeaders.Add("User-Agent", "Github-Analyzer"));
 
@@ -53,6 +53,8 @@ app.MapProjectEndpoints();
 // Development-only features
 if (app.Environment.IsDevelopment())
 {
+    // Enable OpenAPI documentation and 
+    // Scalar API reference in development mode
     app.MapOpenApi();
     app.MapScalarApiReference(options =>
     {

@@ -256,8 +256,8 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("BranchName")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -293,6 +293,11 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -388,7 +393,7 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetRoleClaims", (string)null);
+                    b.ToTable("RoleClaims", "Auth");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
@@ -433,7 +438,7 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserLogins", (string)null);
+                    b.ToTable("UserLogins", "Auth");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
@@ -467,7 +472,7 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("AspNetUserTokens", (string)null);
+                    b.ToTable("UserTokens", "Auth");
                 });
 
             modelBuilder.Entity("GithubAnalyzer.WebApi.Entities.Analysis.CodeGraphAnalysis", b =>

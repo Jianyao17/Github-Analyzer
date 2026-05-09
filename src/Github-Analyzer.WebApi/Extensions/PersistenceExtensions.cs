@@ -24,6 +24,11 @@ public static class PersistenceExtensions
         await using var scope = app.Services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        await dbContext.Database.MigrateAsync();
+        var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
+        if (pendingMigrations.Any())
+        {
+            // Apply pending migrations in development mode
+            await dbContext.Database.MigrateAsync();
+        }
     }
 }

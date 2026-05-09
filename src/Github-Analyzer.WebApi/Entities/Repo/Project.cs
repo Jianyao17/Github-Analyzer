@@ -9,6 +9,9 @@ public class Project : BaseEntity
 {
     [Required]
     public Guid UserId { get; set; }
+
+    [Required, MaxLength(50)]
+    public string Title { get; set; } = default!;
     
     [Required, MaxLength(200)]
     public string RepositoryUrl { get; set; } = default!;
@@ -21,7 +24,7 @@ public class Project : BaseEntity
 
     [MaxLength(200)] public string? Description { get; set; }
     [MaxLength(50)]  public string? AuthorName  { get; set; }
-    [MaxLength(20)]  public string? BranchName  { get; set; }
+    [MaxLength(50)]  public string? BranchName  { get; set; }
     
     [MaxLength(50)] 
     public string?   LastCommitHash  { get; set; }

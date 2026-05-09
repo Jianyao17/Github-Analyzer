@@ -18,7 +18,9 @@ public static class PersistenceExtensions
 
     public static async Task ApplyMigrationsAsync(this WebApplication app)
     {
-        if (!app.Environment.IsDevelopment())
+        // Only apply migrations in development or staging environments
+        if (!(app.Environment.IsDevelopment() || 
+              app.Environment.IsStaging()))
             return;
 
         await using var scope = app.Services.CreateAsyncScope();

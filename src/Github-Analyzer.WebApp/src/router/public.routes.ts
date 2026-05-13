@@ -7,7 +7,7 @@ export const publicRoutes: RouteRecordRaw =
     {
       path: "",
       name: "public.home",
-      redirect: { name: 'app.dashboard' }
+      redirect: { name: 'public.login' }
     },
     {
       path: "login",

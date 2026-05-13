@@ -1,27 +1,39 @@
 <script setup lang="ts">
 import { useSidebar } from '../../composables/useSidebar';
 import { useAuthStore } from '../../stores/auth.store';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useThemeStore } from '../../stores/theme.store';
+import { onMounted, ref, watch } from 'vue';
+import { useProjectApi } from '../../composables/useProjectApi';
+import type { ProjectResponse } from '../../composables/useProjectApi';
 
 const { isCollapsed, isOpen, isMobile, close, toggleCollapse } = useSidebar();
 const auth = useAuthStore();
 const theme = useThemeStore();
+const route = useRoute();
 const router = useRouter();
-
-import { onMounted, ref } from 'vue';
-import { useProjectApi } from '../../composables/useProjectApi';
-import type { ProjectResponse } from '../../composables/useProjectApi';
 
 const { fetchProjects } = useProjectApi();
 
 const projects = ref<ProjectResponse[]>([]);
 
-onMounted(async () => {
+async function loadProjects() {
   try {
     projects.value = await fetchProjects();
   } catch (e) {
     console.error('Failed to fetch projects for sidebar', e);
+  }
+}
+
+onMounted(() => {
+  loadProjects();
+});
+
+// Refresh list tiap kali masuk ke route project detail baru (dari halaman "New Analysis")
+watch(() => route.params.id, (newId) => {
+  if (newId) {
+    // Refresh untuk memastikan project baru juga ditarik ke dalam daftar sidebar
+    loadProjects();
   }
 });
 
@@ -66,7 +78,7 @@ function handleLogout() {
               <UIcon name="i-lucide-github" class="w-5 h-5 text-white" />
             </div>
             <span class="font-bold text-lg tracking-tight text-gray-900 dark:text-white truncate">
-              GitAnalyzer
+              GitHub Analyzer
             </span>
           </div>
           <UButton
@@ -110,16 +122,16 @@ function handleLogout() {
           v-for="project in projects"
           :key="project.id"
           :to="{ name: 'app.project-detail', params: { id: project.id } }"
-          color="gray"
-          variant="ghost"
-          class="w-full justify-start py-2"
-          active-class="bg-primary-50 dark:bg-primary-950 text-primary-600 dark:text-primary-400"
+          :color="route.params.id === project.id ? 'primary' : 'gray'"
+          :variant="route.params.id === project.id ? 'soft' : 'ghost'"
+          class="w-full justify-start py-2 transition-colors"
+          :class="route.params.id === project.id ? 'bg-primary-50 dark:bg-primary-950 text-primary-600 dark:text-primary-400 font-bold' : ''"
         >
           <div class="flex items-center gap-2 w-full overflow-hidden">
             <UIcon name="i-lucide-github" class="w-5 h-5 shrink-0" />
             <div v-if="!isCollapsed || isMobile" class="flex flex-col items-start min-w-0 text-left">
-              <span class="truncate w-full font-medium">{{ project.repositoryName }}</span>
-              <span class="text-[10px] text-gray-400 dark:text-gray-500 font-normal mt-0.5">{{ new Date(project.createdAtUtc).toLocaleDateString() }}</span>
+              <span class="truncate w-full" :class="route.params.id === project.id ? 'font-bold' : 'font-medium'">{{ project.repositoryName }}</span>
+              <span class="text-[10px] truncate max-w-full font-normal mt-0.5" :class="route.params.id === project.id ? 'text-primary-500/80 dark:text-primary-400/80' : 'text-gray-400 dark:text-gray-500'">{{ new Date(project.createdAtUtc).toLocaleDateString() }}</span>
             </div>
           </div>
         </UButton>

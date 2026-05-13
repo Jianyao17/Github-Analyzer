@@ -72,18 +72,34 @@ function subscribeToProgress()
 {
   if (!project.value) return
 
-
-  unsubCodeGraph = streamQueueProgress(project.value.id, 'CodeGraph', (event) => {
-    codeGraphProgress.value = event
-    if (event.status === 'Completed') {
-      checkExistingGraph()
+  try {
+    const unsub = streamQueueProgress(
+      project.value.id, 
+      'CodeGraph', 
+      (event) => {
+        if (event) {
+          codeGraphProgress.value = event
+          if (event.status === 'Completed') {
+             checkExistingGraph()
+          }
+        }
+      }, 
+      () => {
+        // Fallback jika SSE stream terputus, error, atau tertutup sebelum selesai
+        if (!codeGraphProgress.value || codeGraphProgress.value.status !== 'Completed') {
+          fetchAnalysisFallback()
+        }
+      }
+    )
+    
+    // Pastikan mengembalikan valid function
+    if (typeof unsub === 'function') {
+      unsubCodeGraph = unsub
     }
-  }, () => {
-    // Fallback if SSE stream closes or error before completion
-    if (!codeGraphProgress.value || codeGraphProgress.value.status !== 'Completed') {
-      fetchAnalysisFallback()
-    }
-  })
+  } catch (error) {
+    console.warn('Stream subscription failed or not supported, using fallback directly:', error)
+    fetchAnalysisFallback()
+  }
 }
 
 onMounted(() => 
@@ -131,13 +147,38 @@ onUnmounted(() =>
       <UCard class="relative w-full flex-1 border-2 border-dashed border-gray-200 dark:border-gray-800 overflow-hidden" :ui="{ base: 'flex-1 flex flex-col', body: 'p-0 h-full w-full flex-1' }">
         <div class="w-full h-full relative" style="background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px;">
           <!-- Wait state -->
-          <div v-if="!graphData" class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm z-10 gap-4">
-            <UIcon name="i-lucide-loader-2" class="w-10 h-10 animate-spin text-gray-400" />
-            <div class="text-center">
-               <p class="font-bold text-gray-700 dark:text-gray-300">Menyiapkan Graph Node Codebase...</p>
-               <p class="text-sm text-gray-500 dark:text-gray-400 max-w-md mt-1">{{ codeGraphProgress?.message || 'Menunggu proses analisa selesai.' }}</p>
+          <div v-if="!graphData" class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm z-10 gap-6">
+            <!-- Circular Progress -->
+            <div class="relative flex items-center justify-center w-28 h-28">
+              <!-- Background Ring -->
+              <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="8" fill="transparent" class="text-gray-200 dark:text-gray-700" />
+              </svg>
+              <!-- Spinning Progress Ring -->
+              <svg class="absolute inset-0 w-full h-full animate-spin" viewBox="0 0 100 100">
+                <circle 
+                  cx="50" 
+                  cy="50" 
+                  r="42" 
+                  stroke="currentColor" 
+                  stroke-width="8" 
+                  stroke-linecap="round" 
+                  fill="transparent" 
+                  stroke-dasharray="264" 
+                  stroke-dashoffset="160" 
+                  class="text-green-500" 
+                />
+              </svg>
+              <!-- Center Text -->
+              <span class="text-2xl font-bold text-gray-800 dark:text-white">
+                {{ Math.round(codeGraphProgress?.progress || 0) }}<span class="text-sm text-gray-500">%</span>
+              </span>
             </div>
-            <UProgress v-if="codeGraphProgress" :value="codeGraphProgress.progress" color="primary" class="max-w-md w-full mt-2" />
+
+            <div class="text-center">
+               <p class="font-bold text-lg text-gray-700 dark:text-gray-300">Menyiapkan Graph Node Codebase...</p>
+               <p class="text-sm text-gray-500 dark:text-gray-400 max-w-md mt-1 animate-pulse">{{ codeGraphProgress?.message || 'Menunggu proses analisa selesai.' }}</p>
+            </div>
           </div>
 
           <!-- Graph Container -->

@@ -3,6 +3,7 @@ import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import AuthLayout from '../../components/_Layouts/AuthLayout.vue'
 import { useAuthStore } from '../../stores/auth.store'
+import { baseURL } from '../../api/axios'
 
 const router = useRouter()
 const route = useRoute()
@@ -39,8 +40,7 @@ async function onSubmit()
 
 function loginWithGoogle() 
 {
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
-  window.location.href = `${apiBaseUrl}/api/auth/google/login`
+  window.location.href = `${baseURL}/api/auth/google/login`
 }
 </script>
 

@@ -1,6 +1,6 @@
-import apiClient from '../api/axios';
-import { useAuthStore } from '../stores/auth.store';
 import type { CodeGraph, CodeGraphAnalysis } from '../types/code-graph';
+import apiClient, { baseURL } from '../api/axios';
+import { useAuthStore } from '../stores/auth.store';
 
 export interface CreateProjectRequest {
   repoUrl: string;
@@ -109,14 +109,33 @@ export const useProjectApi = () => {
     const token = authStore.token;
     
     // Construct the URL using the api base URL. Since apiClient handles prefixes, we will manually do it here.
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5242';
-    const url = `${apiBaseUrl}/api/projects/${projectId}/queue/event?job_type=${jobType}&token=${token}`;
+    const url = `${baseURL}/api/projects/${projectId}/queue/event?job_type=${jobType}&token=${token}`;
     
     const eventSource = new EventSource(url);
     
     eventSource.onmessage = (e) => {
       try {
-        const data = JSON.parse(e.data) as ProgressEvent;
+        const raw = JSON.parse(e.data);
+        
+        // Memetakan tipe data C# (PascalCase, Status Enum int) ke Typescript interface (camelCase)
+        let statusStr = raw.Status ?? raw.status;
+        if (typeof raw.Status === 'number') {
+          // Asumsi pemetaan Status Enum .NET:
+          if (raw.Status === 3) statusStr = 'Completed';
+          else if (raw.Status === 4) statusStr = 'Failed';
+          else if (raw.Progress >= 100) statusStr = 'Completed';
+          else statusStr = 'Processing';
+        } else if (raw.Progress >= 100) {
+          statusStr = 'Completed';
+        }
+
+        const data: ProgressEvent = {
+          jobType: raw.JobType ?? raw.jobType,
+          status: statusStr,
+          progress: raw.Progress ?? raw.progress ?? 0,
+          message: raw.Message ?? raw.message ?? ''
+        };
+
         onUpdate(data);
         if (data.status === 'Completed' || data.status === 'Failed') {
           eventSource.close();

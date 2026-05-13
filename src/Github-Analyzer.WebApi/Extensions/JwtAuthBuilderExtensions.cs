@@ -55,6 +55,23 @@ public static class JwtAuthBuilderExtensions
                     RequireExpirationTime = true,
                     ClockSkew = TimeSpan.FromSeconds(30)
                 };
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["token"];
+                        var path = context.HttpContext.Request.Path;
+
+                        // This allows us to get the token from the query string for the SSE connection
+                        if (!string.IsNullOrEmpty(accessToken) && 
+                            path.StartsWithSegments("/api/projects") && 
+                            path.Value!.EndsWith("/queue/event"))
+                        {
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
             })
             .AddCookie(IdentityConstants.ExternalScheme, options =>
             {

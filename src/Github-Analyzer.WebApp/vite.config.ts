@@ -1,10 +1,11 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import tailwind from '@tailwindcss/vite'
 import ui from '@nuxt/ui/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue(), ui()],
+  plugins: [vue(), tailwind(), ui()],
   server: {
     port: Number(process.env.PORT ?? 5173),
     strictPort: true,

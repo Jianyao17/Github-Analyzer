@@ -11,9 +11,12 @@
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.104",
+    "@iconify/vue": "^5.0.1",
     "@nuxt/ui": "^4.7.1",
     "@tailwindcss/vite": "^4.2.4",
     "@types/d3": "^7.4.3",
+    "@vueuse/core": "^14.3.0",
+    "axios": "^1.16.0",
     "d3": "^7.9.0",
     "pinia": "^3.0.4",
     "tailwindcss": "^4.2.4",

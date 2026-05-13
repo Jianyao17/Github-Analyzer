@@ -1,7 +1,6 @@
 using GithubAnalyzer.Analysis.Interface;
 using GithubAnalyzer.Analysis.Pipeline.Reader;
 using GithubAnalyzer.Analysis.TreeSitter;
-using GithubAnalyzer.WebApi.Config;
 using GithubAnalyzer.WebApi.Endpoints.Auth;
 using GithubAnalyzer.WebApi.Endpoints.Project;
 using GithubAnalyzer.WebApi.Endpoints.Testing;
@@ -9,6 +8,7 @@ using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Services;
 using GithubAnalyzer.WebApi.Workers;
+using GithubAnalyzer.WebApi.Config;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -67,7 +67,7 @@ if (app.Environment.IsDevelopment() ||
     // Apply pending migrations on startup in development mode
     await app.ApplyMigrationsAsync();
     
-    // Map testing endpoints for benchmarking and development purposes
+    // Map testing endpoints only for benchmarking and development purposes
     app.MapTestingEndpoints();
 }
 

@@ -24,7 +24,7 @@ async function onSubmit()
   try 
   {
     await auth.register(state)
-    router.push('/app/dashboard')
+    router.push('/analysis/new')
   } 
   catch (err: any) 
   {

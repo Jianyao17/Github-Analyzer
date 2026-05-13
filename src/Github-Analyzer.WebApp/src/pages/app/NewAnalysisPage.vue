@@ -8,7 +8,7 @@ const router = useRouter()
 const { createProject } = useProjectApi()
 const {
   branches, commits,
-  isFetchingBranches, isFetchingCommits,
+  isFetchingBranches,
   fetchError, hasBranches, hasCommits,
   fetchBranches, fetchCommits,
   reset: resetRepoInfo,
@@ -125,7 +125,7 @@ async function onSubmit() {
         </div>
         
         <!-- Contextual Help / Status -->
-        <div class="mt-2.5 min-h-[1.25rem] px-1">
+        <div class="mt-2.5 min-h-5 px-1">
           <transition name="fade" mode="out-in">
             <span v-if="fetchError" class="text-red-500 flex items-center gap-1.5 text-xs sm:text-sm">
               <UIcon name="i-lucide-alert-circle" class="w-4 h-4" /> {{ fetchError }}

@@ -3,7 +3,7 @@ import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import AuthLayout from '../../components/_Layouts/AuthLayout.vue'
 import { useAuthStore } from '../../stores/auth.store'
-import { baseURL } from '../../api/axios'
+// import { baseURL } from '../../api/axios'
 
 const router = useRouter()
 const route = useRoute()
@@ -38,10 +38,12 @@ async function onSubmit()
   }
 }
 
+/*
 function loginWithGoogle() 
 {
   window.location.href = `${baseURL}/api/auth/google/login`
 }
+*/
 </script>
 
 <template>
@@ -91,16 +93,16 @@ function loginWithGoogle()
       </UButton>
     </UForm>
 
-    <div class="relative my-8">
+    <!-- <div class="relative my-8">
       <div class="absolute inset-0 flex items-center">
         <span class="w-full border-t border-gray-200 dark:border-gray-800" />
       </div>
       <div class="relative flex justify-center text-xs uppercase tracking-widest font-bold text-gray-400">
         <span class="bg-white dark:bg-gray-900 px-4">Or continue with</span>
       </div>
-    </div>
+    </div> -->
 
-    <UButton
+    <!-- <UButton
       color="gray"
       variant="outline"
       block
@@ -109,7 +111,7 @@ function loginWithGoogle()
       @click="loginWithGoogle"
     >
       Sign in with Google
-    </UButton>
+    </UButton> -->
 
     <p class="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
       Don’t have an account?

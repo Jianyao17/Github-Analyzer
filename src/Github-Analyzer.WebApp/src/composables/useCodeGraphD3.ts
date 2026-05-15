@@ -6,12 +6,15 @@ import type { CodeGraph, GraphNode, GraphEdge } from '../types/code-graph';
 export const useCodeGraphD3 = (
   containerRef: Ref<HTMLElement | null>,
   graphDataRef: Ref<CodeGraph | null>
-) => {
+) => 
+{
   let simulation: d3.Simulation<d3.SimulationNodeDatum, undefined> | null = null;
   let svg: d3.Selection<SVGSVGElement, unknown, null, undefined> | null = null;
 
-  const nodeColor = (type: number) => {
-    switch (type) {
+  const nodeColor = (type: number) => 
+  {
+    switch (type) 
+    {
       case 0: return '#FBBF24'; // Directory - Yellow
       case 1: return '#A78BFA'; // Namespace - Purple
       case 2: return '#60A5FA'; // File - Blue
@@ -21,8 +24,10 @@ export const useCodeGraphD3 = (
     }
   };
 
-  const nodeRadius = (type: number) => {
-    switch (type) {
+  const nodeRadius = (type: number) => 
+  {
+    switch (type) 
+    {
       case 0: return 12; // Directory
       case 1: return 10; // Namespace
       case 2: return 8;  // File
@@ -32,8 +37,10 @@ export const useCodeGraphD3 = (
     }
   };
 
-  const edgeColor = (type: number) => {
-    switch (type) {
+  const edgeColor = (type: number) => 
+  {
+    switch (type) 
+    {
       case 0: return '#9CA3AF'; // BelongsTo - Gray
       case 1: return '#6B7280'; // Define - Dark Gray
       case 2: return '#F87171'; // Call - Red
@@ -42,7 +49,8 @@ export const useCodeGraphD3 = (
     }
   };
 
-  const renderGraph = () => {
+  const renderGraph = () => 
+  {
     if (!containerRef.value || !graphDataRef.value) return;
     
     const container = containerRef.value;
@@ -64,7 +72,8 @@ export const useCodeGraphD3 = (
     const g = svg.append('g');
     svg.call(d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 4])
-      .on('zoom', (event) => {
+      .on('zoom', (event) => 
+      {
         g.attr('transform', event.transform);
       }));
 
@@ -132,7 +141,8 @@ export const useCodeGraphD3 = (
     nodeGroup.append('title')
       .text(d => `${d.label} (${d.pathId})`);
 
-    simulation.on('tick', () => {
+    simulation.on('tick', () => 
+    {
       link
         .attr('x1', (d: any) => d.source.x)
         .attr('y1', (d: any) => d.source.y)
@@ -142,18 +152,21 @@ export const useCodeGraphD3 = (
       nodeGroup.attr('transform', (d: any) => `translate(${d.x},${d.y})`);
     });
 
-    function dragstarted(event: any, d: any) {
+    function dragstarted(event: any, d: any) 
+    {
       if (!event.active) simulation?.alphaTarget(0.3).restart();
       d.fx = d.x;
       d.fy = d.y;
     }
 
-    function dragged(event: any, d: any) {
+    function dragged(event: any, d: any) 
+    {
       d.fx = event.x;
       d.fy = event.y;
     }
 
-    function dragended(event: any, d: any) {
+    function dragended(event: any, d: any) 
+    {
       if (!event.active) simulation?.alphaTarget(0);
       d.fx = null;
       d.fy = null;
@@ -162,8 +175,10 @@ export const useCodeGraphD3 = (
 
   watch([containerRef, graphDataRef], renderGraph, { deep: true, flush: 'post' });
 
-  onUnmounted(() => {
-    if (simulation) {
+  onUnmounted(() => 
+  {
+    if (simulation) 
+    {
       simulation.stop();
     }
   });

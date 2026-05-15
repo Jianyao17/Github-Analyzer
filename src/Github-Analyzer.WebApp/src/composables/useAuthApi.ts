@@ -16,23 +16,28 @@ export interface GoogleLoginPayload {
   idToken: string;
 }
 
-export const useAuthApi = () => {
-  const login = async (payload: LoginPayload) => {
+export const useAuthApi = () => 
+{
+  const login = async (payload: LoginPayload) => 
+  {
     const response = await apiClient.post<string>('/auth/login', payload);
     return response.data;
   };
 
-  const register = async (payload: RegisterPayload) => {
+  const register = async (payload: RegisterPayload) => 
+  {
     const response = await apiClient.post<string>('/auth/register', payload);
     return response.data;
   };
 
-  const googleLogin = async (payload: GoogleLoginPayload) => {
+  const googleLogin = async (payload: GoogleLoginPayload) => 
+  {
     const response = await apiClient.post<string>('/auth/google', payload);
     return response.data;
   };
 
-  const getCurrentUser = async () => {
+  const getCurrentUser = async () => 
+  {
     const response = await apiClient.get<UserProfile>('/auth/me');
     return response.data;
   };

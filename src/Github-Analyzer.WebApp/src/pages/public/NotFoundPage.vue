@@ -3,7 +3,9 @@
     <h1>404</h1>
     <h2>Page Not Found</h2>
     <p>The page you are looking for doesn't exist or has been moved.</p>
-    <RouterLink to="/" class="back-home">Back to Home</RouterLink>
+    <RouterLink to="/"
+      class="back-home"
+    >Back to Home</RouterLink>
   </div>
 </template>
 

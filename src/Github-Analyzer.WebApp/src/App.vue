@@ -1,29 +1,32 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
-import toastManager from './lib/toast'
+import { onMounted, onUnmounted } from 'vue';
+import toastManager from './lib/toast';
 
-const toast = useToast()
+const toast = useToast();
 
-let unsubscribe: (() => void) | null = null
+let unsubscribe: (() => void) | null = null;
 
-onMounted(() => {
-  unsubscribe = toastManager.subscribe((message, type) => {
+onMounted(() => 
+{
+  unsubscribe = toastManager.subscribe((message, type) => 
+  {
     toast.add({
-      title: type === 'error' ? 'Error' : 'Success',
       description: message,
-      color: type === 'error' ? 'red' : 'green',
+      title: type === 'error' ? 'Error' : 'Success',
+      color: type === 'error' ? 'error' : 'success',
       icon: type === 'error' ? 'i-lucide-alert-circle' : 'i-lucide-check-circle',
-    })
-  })
-})
+    });
+  });
+});
 
-onUnmounted(() => {
-  if (unsubscribe) unsubscribe()
-})
+onUnmounted(() => 
+{
+  if (unsubscribe) unsubscribe();
+});
 </script>
 
 <template>
-  <UApp>
+  <NApp>
     <RouterView />
-  </UApp>
+  </NApp>
 </template>

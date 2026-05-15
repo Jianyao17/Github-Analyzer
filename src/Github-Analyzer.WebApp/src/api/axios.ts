@@ -20,12 +20,14 @@ export interface CustomAxiosRequestConfig extends AxiosRequestConfig {
 /**
  * API client class to handle requests with or without Bearer token
  */
-class ApiClient {
+class ApiClient 
+{
   private instance: AxiosInstance;
   private token: string | null = null;
   private defaultPrefix = '/api';
 
-  constructor(config?: AxiosRequestConfig) {
+  constructor(config?: AxiosRequestConfig) 
+  {
     this.instance = axios.create({
       baseURL,
       headers: {
@@ -39,15 +41,18 @@ class ApiClient {
 
     // Attach interceptor to include Authorization header when token is set
     this.instance.interceptors.request.use(
-      (reqConfig) => {
-        if (this.token) {
+      (reqConfig) => 
+      {
+        if (this.token) 
+        {
           reqConfig.headers = reqConfig.headers || {};
           reqConfig.headers['Authorization'] = `Bearer ${this.token}`;
         }
 
         return reqConfig;
       },
-      (error) => {
+      (error) => 
+      {
         console.error('Request Error:', error);
 
         return Promise.reject(error);
@@ -56,14 +61,15 @@ class ApiClient {
 
     // Add response interceptor for better error handling
     this.instance.interceptors.response.use(
-      (response) => {
-        return response;
-      },
-      (error) => {
+      (response) => 
+        response,
+      (error) => 
+      {
         // Handle different error types
         let errorMessage: string;
 
-        if (error.response) {
+        if (error.response) 
+        {
           // Server responded with error status
           errorMessage =
             error.response.data?.error ||
@@ -74,15 +80,20 @@ class ApiClient {
             `HTTP ${error.response.status} Error`;
             
           // Handle 401 specifically
-          if (error.response.status === 401) {
-             errorMessage = 'Session expired. Please log in again.';
-             this.clearToken();
-             // Optionally dispatch event to clear pinia store
+          if (error.response.status === 401) 
+          {
+            errorMessage = 'Session expired. Please log in again.';
+            this.clearToken();
+            // Optionally dispatch event to clear pinia store
           }
-        } else if (error.request) {
+        }
+        else if (error.request) 
+        {
           // Request was made but no response received
           errorMessage = 'Network Error - No response from server';
-        } else {
+        }
+        else 
+        {
           // Something else happened
           errorMessage = error.message || 'Unknown Error';
         }
@@ -99,14 +110,16 @@ class ApiClient {
    * Set Bearer token for future requests
    * @param token - JWT or access token string
    */
-  setToken(token: string) {
+  setToken(token: string) 
+  {
     this.token = token;
   }
 
   /**
    * Clear the stored token (unauthenticated mode)
    */
-  clearToken() {
+  clearToken() 
+  {
     this.token = null;
   }
 
@@ -114,15 +127,18 @@ class ApiClient {
    * Set default prefix (default is '/api')
    * @param prefix - Prefix to prepend to all URLs (e.g., '/api', '/v1', '')
    */
-  setDefaultPrefix(prefix: string) {
+  setDefaultPrefix(prefix: string) 
+  {
     this.defaultPrefix = prefix;
   }
 
   /**
    * Get the prefix for a request (use provided prefix or default)
    */
-  private getPrefix(config?: CustomAxiosRequestConfig): string {
-    if (config && 'prefix' in config) {
+  private getPrefix(config?: CustomAxiosRequestConfig): string 
+  {
+    if (config && 'prefix' in config) 
+    {
       return config.prefix ?? '';
     }
 
@@ -132,8 +148,10 @@ class ApiClient {
   /**
    * Prepend prefix to URL if it doesn't already start with it
    */
-  private prependPrefix(url: string, prefix: string): string {
-    if (!prefix || url.startsWith(prefix)) {
+  private prependPrefix(url: string, prefix: string): string 
+  {
+    if (!prefix || url.startsWith(prefix)) 
+    {
       return url;
     }
 

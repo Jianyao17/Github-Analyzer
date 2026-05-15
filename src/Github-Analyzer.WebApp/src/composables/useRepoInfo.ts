@@ -6,7 +6,8 @@ import apiClient from '../api/axios';
  * Composable untuk fetch info branch dan commit dari GitHub repository.
  * Menggunakan endpoint GET /api/projects/github/info
  */
-export const useRepoInfo = () => {
+export const useRepoInfo = () => 
+{
   const branches = ref<RepoBranch[]>([]);
   const commits = ref<RepoCommit[]>([]);
 
@@ -23,7 +24,8 @@ export const useRepoInfo = () => {
    * Fetch branches dari repository.
    * Juga mereset commits ke array kosong.
    */
-  const fetchBranches = async (repoUrl: string): Promise<void> => {
+  const fetchBranches = async (repoUrl: string): Promise<void> => 
+  {
     if (!repoUrl.trim()) return;
 
     isFetchingBranches.value = true;
@@ -31,14 +33,19 @@ export const useRepoInfo = () => {
     branches.value = [];
     commits.value = [];
 
-    try {
+    try 
+    {
       const response = await apiClient.get<FetchRepoInfoResponse>(
         `/projects/github/info?repoUrl=${encodeURIComponent(repoUrl)}`
       );
       branches.value = response.data.branches ?? [];
-    } catch (err: any) {
+    }
+    catch (err: any) 
+    {
       fetchError.value = err?.message ?? 'Gagal mengambil daftar branch.';
-    } finally {
+    }
+    finally 
+    {
       isFetchingBranches.value = false;
     }
   };
@@ -47,27 +54,34 @@ export const useRepoInfo = () => {
    * Fetch commits dari branch yang dipilih.
    * Requires repoUrl dan branchName yang valid.
    */
-  const fetchCommits = async (repoUrl: string, branchName: string): Promise<void> => {
+  const fetchCommits = async (repoUrl: string, branchName: string): Promise<void> => 
+  {
     if (!repoUrl.trim() || !branchName.trim()) return;
 
     isFetchingCommits.value = true;
     fetchError.value = null;
     commits.value = [];
 
-    try {
+    try 
+    {
       const response = await apiClient.get<FetchRepoInfoResponse>(
         `/projects/github/info?repoUrl=${encodeURIComponent(repoUrl)}&branch=${encodeURIComponent(branchName)}`
       );
       commits.value = response.data.commits ?? [];
-    } catch (err: any) {
+    }
+    catch (err: any) 
+    {
       fetchError.value = err?.message ?? 'Gagal mengambil daftar commit.';
-    } finally {
+    }
+    finally 
+    {
       isFetchingCommits.value = false;
     }
   };
 
   /** Reset semua state ke kondisi awal */
-  const reset = () => {
+  const reset = () => 
+  {
     branches.value = [];
     commits.value = [];
     fetchError.value = null;

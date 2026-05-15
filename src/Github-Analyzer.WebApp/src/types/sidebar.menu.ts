@@ -13,4 +13,4 @@ export const sidebarMenu: SidebarMenuItem[] =
     icon: 'lucide:layout-dashboard',
     to: '/app/dashboard',
   },
-]
+];

@@ -488,3 +488,6 @@ $RECYCLE.BIN/
 src/Github-Analyzer.WebApi/appsettings.json
 src/Github-Analyzer.WebApi/appsettings.Development.json
 
+# .NET / VS Code Artifacts
+*.lscache
+.userprefs

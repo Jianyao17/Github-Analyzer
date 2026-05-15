@@ -1,24 +1,27 @@
 <script setup lang="ts">
-  import { onMounted } from 'vue'
-  import { useRoute, useRouter } from 'vue-router'
-  import { useAuthStore } from '../../stores/auth.store'
+import { onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useAuthStore } from '../../stores/auth.store';
 
-  const route = useRoute()
-  const router = useRouter()
-  const auth = useAuthStore()
+const route = useRoute();
+const router = useRouter();
+const auth = useAuthStore();
 
-  onMounted(async () => {
-    const token = route.query.token as string
+onMounted(async () => 
+{
+  const token = route.query.token as string;
 
-    if (token) {
-      auth.setAuth(token)
-      await auth.loadCurrentUser()
-      router.push({ name: 'app.analysis.new' })
-    }
-    else {
-      router.push({ name: 'public.login' })
-    }
-  })
+  if (token) 
+  {
+    auth.setAuth(token);
+    await auth.loadCurrentUser();
+    router.push({ name: 'app.analysis.new' });
+  }
+  else 
+  {
+    router.push({ name: 'public.login' });
+  }
+});
 </script>
 
 <template>

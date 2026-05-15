@@ -16,7 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 builder.Services.AddOpenApi();
-builder.Services.AddProblemDetails();
+builder.Services.AddApiProblemDetails(builder.Environment);
 builder.Services.AddCorsPolicies(builder.Configuration);
 
 builder.AddApplicationPersistence();

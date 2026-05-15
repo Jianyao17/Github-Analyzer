@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import { useAuthStore } from '../stores/auth.store';
 import { publicRoutes } from './public.routes';
 import { mainRoutes } from './main.routes';
-import { useAuthStore } from '../stores/auth.store';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -32,7 +32,7 @@ router.beforeEach(async (to) =>
 
   if (guestOnly && auth.isAuthenticated) 
   {
-    return { name: 'app.dashboard' };
+    return { name: 'app.analysis.new', query: { redirect: to.fullPath } };
   }
 
   return true;

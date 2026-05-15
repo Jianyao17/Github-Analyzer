@@ -1,5 +1,5 @@
-import { ref, computed, watch } from 'vue'
 import { useBreakpoints, breakpointsTailwind, useStorage } from '@vueuse/core'
+import { ref, computed, watch } from 'vue'
 
 export function useSidebar() 
 {
@@ -18,8 +18,7 @@ export function useSidebar()
     {
       isCollapsed.value = true
     }
-    else 
-    {
+    else {
       isCollapsed.value = persistedCollapsed.value
     }
   }, { immediate: true })
@@ -31,8 +30,7 @@ export function useSidebar()
       isOpen.value = false
       isCollapsed.value = false
     } 
-    else 
-    {
+    else {
       isCollapsed.value = persistedCollapsed.value
     }
   }, { immediate: true })
@@ -53,9 +51,9 @@ export function useSidebar()
   })
 
   return {
+    isOpen,
     isMobile,
     isCollapsed,
-    isOpen,
     sidebarWidth,
     toggleCollapse: () => setCollapsed(!isCollapsed.value),
     open: () => (isOpen.value = true),

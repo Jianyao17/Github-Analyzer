@@ -1,211 +1,214 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useProjectApi } from '../../composables/useProjectApi'
 import type { ProjectResponse, ProgressEvent } from '../../composables/useProjectApi'
+import type { StatisticAnalysis } from '../../types/statistic-analysis'
 import type { CodeGraph } from '../../types/code-graph'
-import { useCodeGraphD3 } from '../../composables/useCodeGraphD3'
+import StatisticTab from '../../components/StatisticTab.vue'
+import CodeGraphTab from '../../components/CodeGraphTab.vue'
 
 const route = useRoute()
-const { fetchProject: getProject, streamQueueProgress, getCodeGraphAnalysis } = useProjectApi()
+const {
+  fetchProject: getProject,
+  streamQueueProgress,
+  getCodeGraphAnalysis,
+  getStatisticAnalysis
+} = useProjectApi()
 
-const project = ref<ProjectResponse | null>(null)
+// ─── Page state ───────────────────────────────────────────────────────────────
+const project   = ref<ProjectResponse | null>(null)
+const loading   = ref(true)
+const activeTab = ref<'statistic' | 'codegraph'>('statistic')
+
+// ─── Code Graph state ─────────────────────────────────────────────────────────
 const codeGraphProgress = ref<ProgressEvent | null>(null)
-const loading = ref(true)
+const graphData         = ref<CodeGraph | null>(null)
 
-const graphData = ref<CodeGraph | null>(null)
-const graphContainer = ref<HTMLElement | null>(null)
+// ─── Statistic state ──────────────────────────────────────────────────────────
+const statisticProgress = ref<ProgressEvent | null>(null)
+const statisticData     = ref<StatisticAnalysis | null>(null)
 
-// Initialize D3 graph
-useCodeGraphD3(graphContainer, graphData)
-
+// ─── Unsubscribe handles ──────────────────────────────────────────────────────
 let unsubCodeGraph: (() => void) | null = null
+let unsubStatistic: (() => void) | null = null
 
-async function fetchProject() 
-{
+// ─── Fetch ────────────────────────────────────────────────────────────────────
+async function fetchProject() {
   loading.value = true
-  try 
-  {
+  try {
     project.value = await getProject(route.params.id as string)
-    subscribeToProgress()
-    checkExistingGraph()
-  } 
-  catch (error) 
-  {
+    subscribeToCodeGraph()
+    subscribeToStatistic()
+    checkExistingCodeGraph()
+    checkExistingStatistic()
+  } catch (error) {
     console.error('Failed to fetch project', error)
-  } 
-  finally 
-  {
+  } finally {
     loading.value = false
   }
 }
 
-async function checkExistingGraph() {
+// ─── Code Graph ───────────────────────────────────────────────────────────────
+async function checkExistingCodeGraph() {
   try {
     const analysis = await getCodeGraphAnalysis(route.params.id as string)
     if (analysis && (analysis as any).graphData) {
       graphData.value = (analysis as any).graphData
     }
-  } catch(e) {
-    // It's normal if not completed yet
-  }
+  } catch { /* not completed yet */ }
 }
 
-async function fetchAnalysisFallback() {
-  try {
-    const analysis = await getCodeGraphAnalysis(route.params.id as string)
-    if (analysis && (analysis as any).graphData) {
-      graphData.value = (analysis as any).graphData
-      codeGraphProgress.value = {
-        jobType: 'CodeGraph',
-        status: 'Completed',
-        progress: 100,
-        message: 'Loaded from previous analysis.'
-      }
-    }
-  } catch(e) {
-    console.error('Fallback GET analysis failed', e)
-  }
-}
-
-function subscribeToProgress() 
-{
+function subscribeToCodeGraph() {
   if (!project.value) return
-
   try {
     const unsub = streamQueueProgress(
-      project.value.id, 
-      'CodeGraph', 
-      (event) => {
-        if (event) {
-          codeGraphProgress.value = event
-          if (event.status === 'Completed') {
-             checkExistingGraph()
-          }
+      project.value.id, 'CodeGraph',
+      async (event) => {
+        codeGraphProgress.value = event
+        if (event.status === 'Completed') {
+          // Small delay to let the backend flush the DB write before we fetch
+          await new Promise(r => setTimeout(r, 500))
+          await checkExistingCodeGraph()
         }
-      }, 
+      },
       () => {
-        // Fallback jika SSE stream terputus, error, atau tertutup sebelum selesai
-        if (!codeGraphProgress.value || codeGraphProgress.value.status !== 'Completed') {
-          fetchAnalysisFallback()
-        }
+        if (!codeGraphProgress.value || codeGraphProgress.value.status !== 'Completed')
+          checkExistingCodeGraph()
       }
     )
-    
-    // Pastikan mengembalikan valid function
-    if (typeof unsub === 'function') {
-      unsubCodeGraph = unsub
-    }
-  } catch (error) {
-    console.warn('Stream subscription failed or not supported, using fallback directly:', error)
-    fetchAnalysisFallback()
+    if (typeof unsub === 'function') unsubCodeGraph = unsub
+  } catch {
+    checkExistingCodeGraph()
   }
 }
 
-onMounted(() => 
-{
-  fetchProject()
-})
+// ─── Statistic ────────────────────────────────────────────────────────────────
+async function checkExistingStatistic() {
+  try {
+    const data = await getStatisticAnalysis(route.params.id as string)
+    if (data) statisticData.value = data
+  } catch { /* not completed yet */ }
+}
 
-onUnmounted(() => 
-{
+function subscribeToStatistic() {
+  if (!project.value) return
+  try {
+    const unsub = streamQueueProgress(
+      project.value.id, 'Statistic',
+      async (event) => {
+        statisticProgress.value = event
+        if (event.status === 'Completed') {
+          await new Promise(r => setTimeout(r, 500))
+          await checkExistingStatistic()
+        }
+      },
+      () => {
+        if (!statisticProgress.value || statisticProgress.value.status !== 'Completed')
+          checkExistingStatistic()
+      }
+    )
+    if (typeof unsub === 'function') unsubStatistic = unsub
+  } catch {
+    checkExistingStatistic()
+  }
+}
+
+// ─── Lifecycle ────────────────────────────────────────────────────────────────
+onMounted(() => fetchProject())
+onUnmounted(() => {
   if (unsubCodeGraph) unsubCodeGraph()
+  if (unsubStatistic) unsubStatistic()
 })
 </script>
 
 <template>
-  <div class="w-full h-full min-h-[calc(100vh-2rem)] flex flex-col space-y-4">
-    <div v-if="loading" class="flex flex-col items-center py-20 gap-4 flex-1">
+  <!--
+    `min-h-0` is critical: it prevents the flex child from overflowing its parent
+    by allowing it to shrink below its intrinsic min-content height.
+  -->
+  <div class="w-full flex flex-col h-full min-h-0">
+
+    <!-- Loading -->
+    <div v-if="loading" class="flex flex-col items-center py-20 gap-4">
       <UIcon name="i-lucide-loader-2" class="w-8 h-8 animate-spin text-gray-400" />
       <p class="text-gray-500">Loading analysis details...</p>
     </div>
 
-    <div v-else-if="project" class="flex flex-col flex-1 space-y-4">
+    <div v-else-if="project" class="flex flex-col flex-1 min-h-0 gap-4">
 
-      <!-- Repo Info Card -->
-      <UCard class="shadow-sm border-0 ring-1 ring-gray-200 dark:ring-gray-800 bg-white dark:bg-gray-900" :ui="{ body: 'p-6' }">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <!-- ── Repo Info Card ───────────────────────────────────────────────── -->
+      <UCard class="shrink-0 shadow-sm border-0 ring-1 ring-gray-200 dark:ring-gray-800 bg-white dark:bg-gray-900"
+        :ui="{ body: 'p-5' }">
+        <div class="flex items-start gap-3">
+          <div class="mt-1 p-2 rounded-lg bg-gray-100 dark:bg-gray-800">
+            <UIcon name="i-lucide-github" class="w-5 h-5 text-gray-700 dark:text-gray-300" />
+          </div>
           <div>
-            <h1 class="text-xl font-bold font-mono text-gray-900 dark:text-white flex items-center gap-2">
+            <h1 class="text-base font-bold font-mono text-gray-900 dark:text-white">
               {{ project.repositoryUrl }}
             </h1>
-            <p class="text-gray-500 dark:text-gray-400 mt-1">
-              Repositori ini digunakan untuk menganalisis struktur kode backend menggunakan sistem node graph.
-            </p>
-          </div>
-        </div>
-      </UCard>
-
-      <!-- Analysis Tabs Header -->
-      <div class="flex items-center gap-4 border-b border-gray-200 dark:border-gray-800 mt-2 shrink-0">
-        <div class="px-4 py-2 border-b-2 border-gray-800 dark:border-white font-bold text-gray-900 dark:text-white">
-          Tab Analisa
-        </div>
-      </div>
-
-      <!-- Graph Visualization Area -->
-      <UCard class="relative w-full flex-1 border-2 border-dashed border-gray-200 dark:border-gray-800 overflow-hidden" :ui="{ base: 'flex-1 flex flex-col', body: 'p-0 h-full w-full flex-1' }">
-        <div class="w-full h-full relative" style="background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px;">
-          <!-- Wait state -->
-          <div v-if="!graphData" class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm z-10 gap-6">
-            <!-- Circular Progress -->
-            <div class="relative flex items-center justify-center w-28 h-28">
-              <!-- Background Ring -->
-              <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="8" fill="transparent" class="text-gray-200 dark:text-gray-700" />
-              </svg>
-              <!-- Spinning Progress Ring -->
-              <svg class="absolute inset-0 w-full h-full animate-spin" viewBox="0 0 100 100">
-                <circle 
-                  cx="50" 
-                  cy="50" 
-                  r="42" 
-                  stroke="currentColor" 
-                  stroke-width="8" 
-                  stroke-linecap="round" 
-                  fill="transparent" 
-                  stroke-dasharray="264" 
-                  stroke-dashoffset="160" 
-                  class="text-green-500" 
-                />
-              </svg>
-              <!-- Center Text -->
-              <span class="text-2xl font-bold text-gray-800 dark:text-white">
-                {{ Math.round(codeGraphProgress?.progress || 0) }}<span class="text-sm text-gray-500">%</span>
+            <div class="flex items-center gap-2 mt-1 flex-wrap">
+              <span v-if="project.branchName"
+                class="inline-flex items-center gap-1 text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full px-2 py-0.5 ring-1 ring-blue-200 dark:ring-blue-800">
+                <UIcon name="i-lucide-git-branch" class="w-3 h-3" />
+                {{ project.branchName }}
+              </span>
+              <span v-if="project.lastCommitHash"
+                class="inline-flex items-center gap-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full px-2 py-0.5 font-mono">
+                <UIcon name="i-lucide-git-commit-horizontal" class="w-3 h-3" />
+                {{ project.lastCommitHash.slice(0, 7) }}
               </span>
             </div>
-
-            <div class="text-center">
-               <p class="font-bold text-lg text-gray-700 dark:text-gray-300">Menyiapkan Graph Node Codebase...</p>
-               <p class="text-sm text-gray-500 dark:text-gray-400 max-w-md mt-1 animate-pulse">{{ codeGraphProgress?.message || 'Menunggu proses analisa selesai.' }}</p>
-            </div>
-          </div>
-
-          <!-- Graph Container -->
-          <div v-if="graphData" ref="graphContainer" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
-          
-          <div v-if="graphData && graphData.nodes?.length === 0" class="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div class="text-center text-gray-400 italic">
-              [ Tampilan Graph Node Codebase ]<br/>
-              Gunakan library seperti D3.js atau Cytoscape untuk merender graph di sini.
-            </div>
-          </div>
-
-          <!-- Legend -->
-          <div v-if="graphData" class="absolute bottom-6 right-6 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md p-4 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 text-sm flex flex-col gap-3 pointer-events-none">
-            <div class="font-bold border-b border-gray-200 dark:border-gray-700 pb-2 mb-1 flex items-center justify-between gap-4">
-              <span>Nodes Legend</span>
-              <span class="text-xs font-normal text-gray-500">{{ graphData.nodes?.length || 0 }} Nodes</span>
-            </div>
-            <div class="flex items-center gap-3"><div class="w-4 h-4 rounded-full bg-[#FBBF24]"></div> Directory</div>
-            <div class="flex items-center gap-3"><div class="w-4 h-4 rounded-full bg-[#A78BFA]"></div> Namespace</div>
-            <div class="flex items-center gap-3"><div class="w-4 h-4 rounded-full bg-[#60A5FA]"></div> File</div>
-            <div class="flex items-center gap-3"><div class="w-4 h-4 rounded-full bg-[#34D399]"></div> Class</div>
-            <div class="flex items-center gap-3"><div class="w-4 h-4 rounded-full bg-[#F87171]"></div> Function</div>
           </div>
         </div>
       </UCard>
 
+      <!-- ── Tab Navigation ───────────────────────────────────────────────── -->
+      <div class="shrink-0 flex items-center gap-1 border-b border-gray-200 dark:border-gray-800">
+        <button id="tab-statistic" @click="activeTab = 'statistic'"
+          class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors duration-150 border-b-2"
+          :class="activeTab === 'statistic'
+            ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'">
+          <UIcon name="i-lucide-bar-chart-2" class="w-4 h-4" />
+          Statistik
+        </button>
+        <button id="tab-codegraph" @click="activeTab = 'codegraph'"
+          class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors duration-150 border-b-2"
+          :class="activeTab === 'codegraph'
+            ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'">
+          <UIcon name="i-lucide-network" class="w-4 h-4" />
+          Code Graph
+        </button>
+      </div>
+
+      <!-- ── Tab Content (fills remaining height, no scroll on page level) ── -->
+      <div class="flex-1 min-h-0 flex flex-col">
+
+        <!-- STATISTIC tab — scrolls internally, page does not scroll -->
+        <StatisticTab
+          v-if="activeTab === 'statistic'"
+          :data="statisticData"
+          :progress="statisticProgress"
+          class="flex-1 min-h-0 overflow-y-auto"
+        />
+
+        <!-- CODE GRAPH tab — fills remaining height, D3 renders inside absolute container -->
+        <div
+          v-if="activeTab === 'codegraph'"
+          class="flex-1 min-h-0 relative rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-800 overflow-hidden"
+          style="min-height: 400px"
+        >
+          <CodeGraphTab
+            :data="graphData"
+            :progress="codeGraphProgress"
+            class="absolute inset-0"
+          />
+        </div>
+
+      </div>
     </div>
   </div>
 </template>

@@ -1,13 +1,15 @@
 <script setup lang="ts">
+import type { ProjectResponse } from '../../composables/useProjectApi';
+import { useProjectApi } from '../../composables/useProjectApi';
 import { useSidebar } from '../../composables/useSidebar';
+import { useThemeStore } from '../../stores/theme.store';
 import { useAuthStore } from '../../stores/auth.store';
 import { useRoute, useRouter } from 'vue-router';
-import { useThemeStore } from '../../stores/theme.store';
 import { onMounted, ref, watch } from 'vue';
-import { useProjectApi } from '../../composables/useProjectApi';
-import type { ProjectResponse } from '../../composables/useProjectApi';
 
-const { isCollapsed, isOpen, isMobile, close, toggleCollapse } = useSidebar();
+const { isCollapsed, isOpen, isMobile, 
+        close, toggleCollapse } = useSidebar();
+
 const auth = useAuthStore();
 const theme = useThemeStore();
 const route = useRoute();
@@ -190,9 +192,9 @@ function handleLogout() {
       />
 
       <!-- Page Content -->
-      <div class="flex-1 h-screen overflow-y-auto">
-        <div class="w-full h-full p-4 lg:p-6">
-          <RouterView :key="$route.fullPath" />
+      <div class="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
+        <div class="w-full h-full p-4 lg:p-6 flex flex-col">
+          <RouterView :key="$route.fullPath" class="flex-1 min-h-0" />
         </div>
       </div>
     </main>

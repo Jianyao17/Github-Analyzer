@@ -1,6 +1,7 @@
 import type { CodeGraph, CodeGraphAnalysis } from '../types/code-graph';
-import apiClient, { baseURL } from '../api/axios';
+import type { StatisticAnalysis } from '../types/statistic-analysis';
 import { useAuthStore } from '../stores/auth.store';
+import apiClient, { baseURL } from '../api/axios';
 
 export interface CreateProjectRequest {
   repoUrl: string;
@@ -93,9 +94,13 @@ export const useProjectApi = () => {
     return response.data;
   };
 
-  const getStatisticAnalysis = async (id: string) => {
-    const response = await apiClient.get<any>(`/projects/${id}/analysis/statistic`);
-    return response.data;
+  const getStatisticAnalysis = async (id: string): Promise<StatisticAnalysis | null> => {
+    try {
+      const response = await apiClient.get<StatisticAnalysis>(`/projects/${id}/analysis/statistic`);
+      return response.data;
+    } catch {
+      return null;
+    }
   };
 
   const streamQueueProgress = (

@@ -28,7 +28,7 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
                     Title = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     RepositoryUrl = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     RepositoryName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    LocalPath = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    LocalPath = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
                     Description = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     AuthorName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     BranchName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),

@@ -19,8 +19,9 @@ public class Project : BaseEntity
     [Required, MaxLength(50)]
     public string RepositoryName { get; set; } = default!;
     
-    [Required, MaxLength(100)]
+    [Required, MaxLength(150)]
     public string LocalPath { get; set; } = default!;
+
 
     [MaxLength(200)] public string? Description { get; set; }
     [MaxLength(50)]  public string? AuthorName  { get; set; }

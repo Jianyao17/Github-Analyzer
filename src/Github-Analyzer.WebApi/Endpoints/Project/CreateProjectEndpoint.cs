@@ -67,7 +67,10 @@ public static class CreateProjectEndpoint
             };
 
             // Add project to database
+            // and save to prevent race conditions with 
+            // queued jobs that reference the project
             dbContext.Projects.Add(project);
+            await dbContext.SaveChangesAsync(ct);
 
             // Queue jobs for analysis (Statistic & CodeGraph)
             var statisticJob = new ProjectQueue

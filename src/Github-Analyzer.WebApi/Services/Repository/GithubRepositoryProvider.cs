@@ -2,6 +2,8 @@ using GithubAnalyzer.WebApi.Config;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Models;
 using System.IO.Compression;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 
 namespace GithubAnalyzer.WebApi.Services;
@@ -29,9 +31,9 @@ public sealed class GithubRepositoryProvider : IRepositoryProvider
         HttpClient httpClient, RepoConfig repoConfig,
         ILogger<GithubRepositoryProvider> logger)
     {
-        _httpClient = httpClient;
-        _repoConfig = repoConfig;
-        _logger     = logger;
+        _httpClient  = httpClient;
+        _repoConfig   = repoConfig;
+        _logger      = logger;
     }
 
     // -------------------------------------------------------------------------
@@ -55,45 +57,62 @@ public sealed class GithubRepositoryProvider : IRepositoryProvider
         // Prefer commit hash over branch name when both are provided
         var reference = !string.IsNullOrWhiteSpace(commitHash) ? commitHash : branch;
 
-        var repoId        = Guid.NewGuid().ToString("N");
-        var tempDirectory = Path.Combine(_repoConfig.GetBaseTempPath(), repoId);
-        Directory.CreateDirectory(tempDirectory);
+        var randomSuffix  = Convert.ToHexString(RandomNumberGenerator.GetBytes(4)).ToLowerInvariant();
+        var repositoryId  = GetDeterministicRepoId(repoUrl, reference, randomSuffix);
+        var tempDirectory = Path.Combine(_repoConfig.GetBaseTempPath(), repositoryId);
+        var extractPath   = Path.Combine(tempDirectory, "extracted");
 
-        try
+        if (!Directory.Exists(extractPath))
         {
+            Directory.CreateDirectory(tempDirectory);
+
             // Step 1: Download and extract the repository zip (must complete first)
-            var extractPath = await DownloadAndExtractZipAsync(owner, repo, reference, tempDirectory, ct);
-
-            // Step 2: Fetch repo description and commit metadata in parallel
-            // (both are independent GitHub API calls, so no need to wait for one before the other)
-            var descriptionTask      = FetchRepoDescriptionAsync(owner, repo, ct);
-            var commitMetadataTask   = FetchCommitMetadataAsync(owner, repo, reference, ct);
-            await Task.WhenAll(descriptionTask, commitMetadataTask);
-
-            var description                               = await descriptionTask;
-            var (authorName, lastCommitHash, lastCommitAtUtc) = await commitMetadataTask;
-
-            // BranchName is null when a specific commit hash was requested
-            var branchName = string.IsNullOrWhiteSpace(commitHash) ? branch : null;
-
-            return new RepositoryResult(
-                ExtractPath:      extractPath,
-                RepositoryUrl:    repoUrl,
-                RepositoryName:   repo,
-                Description:      description,
-                AuthorName:       authorName,
-                BranchName:       branchName,
-                LastCommitHash:   lastCommitHash,
-                LastCommitAtUtc:  lastCommitAtUtc
-            );
+            await DownloadAndExtractZipAsync(owner, repo, reference, tempDirectory, ct);
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogError(ex,
-                "Failed to download or extract repository {RepoUrl} at reference {Reference}",
-                repoUrl, reference);
-            throw;
+            _logger.LogInformation("Repository {RepoUrl} at reference {Reference} already exists at {ExtractPath}",
+                repoUrl, reference, extractPath);
         }
+
+        // Step 2: Fetch repo description and commit metadata in parallel
+        // (both are independent GitHub API calls, so no need to wait for one before the other)
+        var descriptionTask    = FetchRepoDescriptionAsync(owner, repo, ct);
+        var commitMetadataTask = FetchCommitMetadataAsync(owner, repo, reference, ct);
+        await Task.WhenAll(descriptionTask, commitMetadataTask);
+
+        var description                                   = await descriptionTask;
+        var (authorName, lastCommitHash, lastCommitAtUtc) = await commitMetadataTask;
+
+        // BranchName is null when a specific commit hash was requested
+        var branchName = string.IsNullOrWhiteSpace(commitHash) ? branch : null;
+
+        return new RepositoryResult(
+            ExtractPath:     extractPath,
+            RepositoryUrl:   repoUrl,
+            RepositoryName:  repo,
+            Description:     description,
+            AuthorName:      authorName,
+            BranchName:      branchName,
+            LastCommitHash:  lastCommitHash,
+            LastCommitAtUtc: lastCommitAtUtc
+        );
+    }
+
+    private static string GetDeterministicRepoId(
+        string repoUrl, string reference, string randomSuffix)
+    {
+        // Create a unique ID per request to allow multiple analyses of the same repo.
+        var input = $"{repoUrl.ToLowerInvariant()}|{reference.ToLowerInvariant()}|{randomSuffix}";
+
+        // Hash the input to ensure a fixed length 
+        // and avoid filesystem issues with long URLs 
+        var bytes = Encoding.UTF8.GetBytes(input);
+        var hash  = SHA1.HashData(bytes);
+
+        // Use the first 12 characters of the hex string as the ID 
+        // (enough for uniqueness while keeping it short)
+        return Convert.ToHexString(hash).ToLowerInvariant().Substring(0, 12); 
     }
 
     public async Task<IReadOnlyList<RepoBranch>> GetBranchesAsync(
@@ -221,7 +240,8 @@ public sealed class GithubRepositoryProvider : IRepositoryProvider
         }
 
         var extractPath = Path.Combine(tempDirectory, "extracted");
-        ZipFile.ExtractToDirectory(zipFilePath, extractPath);
+        ZipFile.ExtractToDirectory(zipFilePath, extractPath, overwriteFiles: true);
+
         File.Delete(zipFilePath);
 
         return extractPath;

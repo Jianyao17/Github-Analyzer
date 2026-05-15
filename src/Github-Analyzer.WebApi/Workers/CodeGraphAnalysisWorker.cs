@@ -10,6 +10,7 @@ using GithubAnalyzer.WebApi.Entities.Analysis;
 using GithubAnalyzer.WebApi.Entities.Repo;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Models;
+using GithubAnalyzer.WebApi.Services;
 
 namespace GithubAnalyzer.WebApi.Workers;
 
@@ -27,11 +28,13 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
 
     protected override async Task ProcessJobAsync(ProjectQueue job, CancellationToken cancellationToken)
     {
-        using var scope = _scopeFactory.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var analyzer = scope.ServiceProvider.GetRequiredService<ICodeAnalyzer>();
-        var reader = scope.ServiceProvider.GetRequiredService<ICodebaseReader>();
-        var repoConfig = scope.ServiceProvider.GetRequiredService<RepoConfig>();
+        using var scope  = _scopeFactory.CreateScope();
+        var dbContext    = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var analyzer     = scope.ServiceProvider.GetRequiredService<ICodeAnalyzer>();
+        var reader       = scope.ServiceProvider.GetRequiredService<ICodebaseReader>();
+        var repoFetcher  = scope.ServiceProvider.GetRequiredService<IRepositoryFetcher>();
+        var downloadGate = scope.ServiceProvider.GetRequiredService<RepoDownloadGate>();
+        var repoConfig   = scope.ServiceProvider.GetRequiredService<RepoConfig>();
 
         if (job.Project == null) 
         {
@@ -42,8 +45,21 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
         var localPath = job.Project.LocalPath;
         if (!Directory.Exists(localPath)) 
         {
-            // Check if local path exists
-            throw new DirectoryNotFoundException($"Repository path not found: {localPath}");
+            // Re-download repository if local file is missing
+            // EnsureRepoAsync will coordinate concurrent download attempts for the same project
+            localPath = await downloadGate.EnsureRepoAsync(
+                job.ProjectId,
+                async token =>
+                {
+                    var repoResult = await repoFetcher.DownloadAndExtractAsync(
+                        job.Project.RepositoryUrl, job.Project.BranchName ?? "main",
+                        job.Project.LastCommitHash, token);
+                    return repoResult.ExtractPath;
+                },
+                cancellationToken);
+
+            if (!Directory.Exists(localPath))
+                throw new DirectoryNotFoundException($"Repository path not found after re-download: {localPath}");
         }
 
         // 1. Tentukan bahasa secara otomatis

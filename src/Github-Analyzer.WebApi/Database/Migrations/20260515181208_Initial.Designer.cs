@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GithubAnalyzer.WebApi.Database.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260509045917_Initial")]
+    [Migration("20260515181208_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -284,8 +284,8 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
 
                     b.Property<string>("LocalPath")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
 
                     b.Property<string>("RepositoryName")
                         .IsRequired()

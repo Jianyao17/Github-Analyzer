@@ -281,8 +281,8 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
 
                     b.Property<string>("LocalPath")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
 
                     b.Property<string>("RepositoryName")
                         .IsRequired()

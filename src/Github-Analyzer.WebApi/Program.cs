@@ -23,6 +23,7 @@ builder.AddApplicationPersistence();
 builder.AddJwtAuthentication();
 builder.AddRepoConfig();
 
+builder.Services.AddSingleton<RepositoryDownloadCoordinator>();
 builder.Services.AddTransient<IRepositoryFetcher, RepositoryFetcher>();
 builder.Services.AddHttpClient<IRepositoryProvider, GithubRepositoryProvider>(
     client => client.DefaultRequestHeaders.Add("User-Agent", "Github-Analyzer"));

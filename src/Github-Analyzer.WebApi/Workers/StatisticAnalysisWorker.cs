@@ -38,7 +38,7 @@ public sealed class StatisticAnalysisWorker : BaseQueueWorker
         using var scope = _scopeFactory.CreateScope();
         var dbContext    = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var fileSvc      = scope.ServiceProvider.GetRequiredService<IFileStatisticsService>();
-        var repoProvider = scope.ServiceProvider.GetRequiredService<IRepositoryProvider>();
+        var repoProvider = scope.ServiceProvider.GetRequiredService<IRepositoryFetcher>();
         var repoConfig   = scope.ServiceProvider.GetRequiredService<RepoConfig>();
 
         if (job.Project is null)
@@ -46,7 +46,20 @@ public sealed class StatisticAnalysisWorker : BaseQueueWorker
 
         var localPath = job.Project.LocalPath;
         if (!Directory.Exists(localPath))
-            throw new DirectoryNotFoundException($"Repository path not found: {localPath}");
+        {
+            // Re-download repository if local path is missing
+            var repoResult = await repoProvider.DownloadAndExtractAsync(
+                job.Project.RepositoryUrl, job.Project.BranchName ?? "main",
+                job.Project.LastCommitHash, cancellationToken);
+
+            // Update local path in database after extraction
+            job.Project.LocalPath = repoResult.ExtractPath;
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            localPath = job.Project.LocalPath;
+            if (!Directory.Exists(localPath))
+                throw new DirectoryNotFoundException($"Repository path not found after re-download: {localPath}");
+        }
 
         var repoUrl = job.Project.RepositoryUrl;
         var branch  = job.Project.BranchName;

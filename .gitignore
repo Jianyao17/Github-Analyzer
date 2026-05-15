@@ -483,3 +483,8 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# appsettings files
+src/Github-Analyzer.WebApi/appsettings.json
+src/Github-Analyzer.WebApi/appsettings.Development.json
+

@@ -16,4 +16,14 @@ public interface IRepositoryFetcher
     Task<IReadOnlyList<RepoCommit>> GetCommitsAsync(
         string repoUrl, string? branch = null, 
         CancellationToken ct = default);
+
+    /// <inheritdoc cref="IRepositoryProvider.GetTotalBranchCountAsync"/>
+    Task<int?> GetTotalBranchCountAsync(string repoUrl, CancellationToken ct = default);
+
+    /// <inheritdoc cref="IRepositoryProvider.GetTotalCommitCountAsync"/>
+    Task<int?> GetTotalCommitCountAsync(
+        string repoUrl, string? branch = null, CancellationToken ct = default);
+
+    /// <inheritdoc cref="IRepositoryProvider.GetTotalContributorCountAsync"/>
+    Task<int?> GetTotalContributorCountAsync(string repoUrl, CancellationToken ct = default);
 }

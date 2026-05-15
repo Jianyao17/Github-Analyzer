@@ -30,12 +30,14 @@ builder.Services.AddHttpClient<IRepositoryProvider, GithubRepositoryProvider>(
 // Services for analysis
 builder.Services.AddScoped<ICodebaseReader, CodebaseReader>();
 builder.Services.AddScoped<ICodeAnalyzer, TreeSitterAnalyzer>();
+builder.Services.AddScoped<IFileStatisticsService, FileStatisticsService>();
 
 // Queue progress notifier for real-time updates to clients
 builder.Services.AddSingleton<IQueueProgressNotifier, QueueProgressNotifier>();
 
 // Workers for background processing
 builder.Services.AddHostedService<CodeGraphAnalysisWorker>();
+builder.Services.AddHostedService<StatisticAnalysisWorker>();
 builder.Services.AddHostedService<QueueCleanupWorker>();
 
 

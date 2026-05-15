@@ -3,18 +3,12 @@ using GithubAnalyzer.WebApi.Models;
 
 namespace GithubAnalyzer.WebApi.Services;
 
-public sealed class RepositoryFetcher : IRepositoryFetcher
+public sealed class RepositoryFetcher(IEnumerable<IRepositoryProvider> providers) 
+    : IRepositoryFetcher
 {
-    private readonly IEnumerable<IRepositoryProvider> _providers;
-
-    public RepositoryFetcher(IEnumerable<IRepositoryProvider> providers)
-    {
-        _providers = providers;
-    }
-
     private IRepositoryProvider GetProvider(string repoUrl)
     {
-        var provider = _providers.FirstOrDefault(p => p.CanHandle(repoUrl));
+        var provider = providers.FirstOrDefault(p => p.CanHandle(repoUrl));
         if (provider == null)
         {
             throw new NotSupportedException($"No repository provider found that can handle the URL: {repoUrl}");
@@ -40,5 +34,24 @@ public sealed class RepositoryFetcher : IRepositoryFetcher
     {
         var provider = GetProvider(repoUrl);
         return provider.GetCommitsAsync(repoUrl, branch, ct);
+    }
+
+    public Task<int?> GetTotalBranchCountAsync(string repoUrl, CancellationToken ct = default)
+    {
+        var provider = GetProvider(repoUrl);
+        return provider.GetTotalBranchCountAsync(repoUrl, ct);
+    }
+
+    public Task<int?> GetTotalCommitCountAsync(
+        string repoUrl, string? branch = null, CancellationToken ct = default)
+    {
+        var provider = GetProvider(repoUrl);
+        return provider.GetTotalCommitCountAsync(repoUrl, branch, ct);
+    }
+
+    public Task<int?> GetTotalContributorCountAsync(string repoUrl, CancellationToken ct = default)
+    {
+        var provider = GetProvider(repoUrl);
+        return provider.GetTotalContributorCountAsync(repoUrl, ct);
     }
 }

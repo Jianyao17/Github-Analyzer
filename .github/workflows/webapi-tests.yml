@@ -1,6 +1,7 @@
-name: Tests
+name: Web API Tests
 
 on:
+  workflow_dispatch:
   push:
     branches: [main, master, develop, "feature/**"]
     paths:

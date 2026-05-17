@@ -1,0 +1,65 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, master, develop, "feature/**"]
+    paths:
+      - "src/Github-Analyzer.WebApi/**"
+      - "src/Github-Analyzer.Analysis/**"
+      - "test/Github-Analyzer.WebApi.Tests/**"
+      - "global.json"
+      - "*.slnx"
+      - "*.sln"
+  pull_request:
+    branches: [main, master, develop, "feature/**"]
+    paths:
+      - "src/Github-Analyzer.WebApi/**"
+      - "src/Github-Analyzer.Analysis/**"
+      - "test/Github-Analyzer.WebApi.Tests/**"
+      - "global.json"
+      - "*.slnx"
+      - "*.sln"
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ hashFiles('**/*.csproj', 'global.json') }}
+          restore-keys: nuget-
+
+      - name: Restore
+        run: dotnet restore test/Github-Analyzer.WebApi.Tests/Github-Analyzer.WebApi.Tests.csproj
+
+      - name: Build
+        run: dotnet build test/Github-Analyzer.WebApi.Tests/Github-Analyzer.WebApi.Tests.csproj --no-restore --configuration Release
+
+      - name: Test
+        run: >
+          dotnet test test/Github-Analyzer.WebApi.Tests/Github-Analyzer.WebApi.Tests.csproj
+          --no-build
+          --configuration Release
+          --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/test-results.trx"
+          retention-days: 7

@@ -1,0 +1,62 @@
+name: Analysis Tests
+
+on:
+  push:
+    branches: [main, master, develop, 'feature/**']
+    paths:
+      - 'src/Github-Analyzer.Analysis/**'
+      - 'test/Github-Analyzer.Analysis.Tests/**'
+      - 'global.json'
+  pull_request:
+    branches: [main, master, develop, 'feature/**']
+    paths:
+      - 'src/Github-Analyzer.Analysis/**'
+      - 'test/Github-Analyzer.Analysis.Tests/**'
+      - 'global.json'
+
+jobs:
+  test:
+    name: Run Analysis Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-analysis-${{ hashFiles('test/Github-Analyzer.Analysis.Tests/*.csproj', 'src/Github-Analyzer.Analysis/*.csproj', 'global.json') }}
+          restore-keys: nuget-analysis-
+
+      - name: Restore
+        run: dotnet restore test/Github-Analyzer.Analysis.Tests/Github-Analyzer.Analysis.Tests.csproj
+
+      - name: Build
+        run: >
+          dotnet build test/Github-Analyzer.Analysis.Tests/Github-Analyzer.Analysis.Tests.csproj
+          --no-restore
+          --configuration Release
+
+      - name: Test
+        run: >
+          dotnet test test/Github-Analyzer.Analysis.Tests/Github-Analyzer.Analysis.Tests.csproj
+          --no-build
+          --configuration Release
+          --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=analysis-test-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: analysis-test-results
+          path: '**/analysis-test-results.trx'
+          retention-days: 7

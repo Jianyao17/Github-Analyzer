@@ -12,11 +12,13 @@ export const useThemeStore = defineStore('theme', () =>
   {
     const storedTheme = localStorage.getItem('theme') as Theme | null;
     if (storedTheme)
-    { 
+    {
+      // Use the stored theme if it exists 
       currentTheme.value = storedTheme; 
     }
     else 
     {
+      // Otherwise, use the system preference
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       currentTheme.value = prefersDark ? 'dark' : 'light';
     }

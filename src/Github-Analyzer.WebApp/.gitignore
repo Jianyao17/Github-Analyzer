@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .env
+
+# Bundle analysis report
+bundle-analysis.html

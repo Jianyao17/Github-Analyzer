@@ -23,7 +23,7 @@ on:
 
 jobs:
   test:
-    name: Run Tests
+    name: Run Web API Tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
 

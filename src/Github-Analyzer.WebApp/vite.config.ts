@@ -25,6 +25,7 @@ export default defineConfig({
       filename: 'bundle-analysis.html',
       template: 'treemap',
       gzipSize: true,
+      brotliSize: true,
       open: true,
     })
   ],

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useProjectApi } from '../../composables/useProjectApi';
 import { useRepoInfo } from '../../composables/useRepoInfo';
@@ -7,55 +7,85 @@ import { useRepoInfo } from '../../composables/useRepoInfo';
 const router = useRouter();
 const { createProject } = useProjectApi();
 const {
-  branches, commits,
+  branches,
+  commits,
   isFetchingBranches,
-  fetchError, hasBranches, hasCommits,
-  fetchBranches, fetchCommits,
+  fetchError,
+  hasBranches,
+  hasCommits,
+  fetchBranches,
+  fetchCommits,
   reset: resetRepoInfo,
 } = useRepoInfo();
 
 // ─── State ────────────────────────────────────────────────────────────────
-const state = reactive({
-  repoUrl: '',
-  branch: '' as string,
-  commitHash: '' as string,
-});
+const repoUrl = ref('');
+const branch = ref('');
+const commitHash = ref('');
 const creating = ref(false);
 const submitError = ref<string | null>(null);
 
-// ─── Options ──────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────
+function formatCommitLabel(hash: string, message: string): string
+{
+  const shortHash = hash.slice(0, 7);
+  const shortMessage = message.length > 55
+    ? `${message.slice(0, 55)}...`
+    : message;
+
+  return `${shortHash}  ${shortMessage}`;
+}
+
+function resetSelections(): void
+{
+  branch.value = '';
+  commitHash.value = '';
+  resetRepoInfo();
+}
+
+function applyDefaultBranch(): void
+{
+  const firstBranch = branches.value[0]?.name;
+  if (firstBranch) branch.value = firstBranch;
+}
+
+// ─── Derived Options ──────────────────────────────────────────────────────
 const branchOptions = computed(() =>
   branches.value.map(b => ({ label: b.name, value: b.name }))
 );
 const commitOptions = computed(() =>
   commits.value.map(c => ({
-    label: `${c.hash.slice(0, 7)}  ${c.message.slice(0, 55)}${c.message.length > 55 ? '…' : ''}`,
+    label: formatCommitLabel(c.hash, c.message),
     value: c.hash,
   }))
 );
 
 // ─── Watchers ─────────────────────────────────────────────────────────────
-let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-watch(() => state.repoUrl, (url) => 
+watch(repoUrl, (url, _prev, onCleanup) => 
 {
-  if (debounceTimer) clearTimeout(debounceTimer);
   submitError.value = null;
-  state.branch = '';
-  state.commitHash = '';
-  resetRepoInfo();
-  if (!url.trim()) return;
-  debounceTimer = setTimeout(async () => 
+  resetSelections();
+
+  const trimmedUrl = url.trim();
+  if (!trimmedUrl) return;
+
+  const timer = setTimeout(async () => 
   {
-    await fetchBranches(url);
-    if (branches.value.length > 0) state.branch = branches.value[0].name;
+    await fetchBranches(trimmedUrl);
+    applyDefaultBranch();
   }, 700);
+
+  onCleanup(() => clearTimeout(timer));
 });
 
-watch(() => state.branch, (branch) => 
+watch(branch, (selectedBranch) => 
 {
-  state.commitHash = '';
-  if (branch && state.repoUrl) fetchCommits(state.repoUrl, branch);
+  commitHash.value = '';
+
+  if (selectedBranch && repoUrl.value)
+  {
+    fetchCommits(repoUrl.value, selectedBranch);
+  }
 });
 
 // ─── Submit ───────────────────────────────────────────────────────────────
@@ -63,13 +93,15 @@ async function onSubmit()
 {
   creating.value = true;
   submitError.value = null;
+
   try 
   {
     const project = await createProject({
-      repoUrl: state.repoUrl,
-      branch: state.branch || 'main',
-      commitHash: state.commitHash || undefined,
+      repoUrl: repoUrl.value,
+      branch: branch.value || 'main',
+      commitHash: commitHash.value || undefined,
     });
+
     router.push({ name: 'app.project-detail', params: { id: project.id } });
   }
   catch (err: any) 
@@ -89,7 +121,6 @@ async function onSubmit()
     px-4 py-12
   "
   >
-
     <!-- ── Header ─────────────────────────────────────────────────────── -->
     <div class="mb-8 text-center">
       <div class="
@@ -121,19 +152,18 @@ async function onSubmit()
     <!-- ── Custom Form Card ───────────────────────────────────────────── -->
     <form @submit.prevent="onSubmit"
       class="
-        flex w-full max-w-3xl flex-col gap-3 rounded-2xl border border-gray-200
-        bg-white p-6 shadow-sm
+        mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-2xl border border-gray-200
+        bg-white p-6
         sm:p-7
         dark:border-gray-800 dark:bg-gray-900
       "
     >
-      
-      <!-- URL + Embedded Submit Button -->
+      <!-- URL Input -->
       <div class="w-full">
         <label class="sr-only">URL Repositori</label>
         <div class="
           relative flex w-full items-stretch overflow-hidden rounded-xl border
-          border-gray-200 bg-gray-50 transition-all
+          border-gray-200 bg-gray-50 transition-colors
           focus-within:border-transparent focus-within:bg-white
           focus-within:ring-2 focus-within:ring-green-500
           dark:border-gray-700 dark:bg-gray-800
@@ -146,65 +176,54 @@ async function onSubmit()
             />
           </div>
           <input
-            v-model="state.repoUrl"
+            v-model="repoUrl"
             type="text"
             required
             placeholder="https://github.com/username/repo"
             :disabled="creating"
             class="
-              w-full min-w-0 flex-1 bg-transparent py-3.5 pr-2 pl-3 text-sm
+              w-full min-w-0 flex-1 bg-transparent py-2.5 pr-2 pl-3 text-xs
               text-gray-900 placeholder-gray-400
               focus:outline-none
               disabled:opacity-50
-              sm:text-base
+              sm:py-3 sm:text-sm
               dark:text-white
             "
           />
           <button
             type="submit"
-            :disabled="creating || !state.repoUrl"
+            :disabled="creating || !repoUrl"
+            aria-label="Mulai analisa"
             class="
-              relative flex items-center justify-center gap-2 bg-green-500 px-5
-              text-sm font-semibold text-white transition-colors
+              relative hidden items-center justify-center gap-2 bg-green-500 px-2
+              text-xs font-semibold text-white transition-colors
               hover:bg-green-600
               focus:bg-green-600 focus:outline-none
               disabled:cursor-not-allowed disabled:bg-gray-300
               disabled:text-gray-500
-              sm:px-8 sm:text-base
+              sm:flex sm:px-6 sm:text-base
               dark:disabled:bg-gray-700
             "
           >
-            <span class="
-              hidden
-              sm:inline
-            "
-              :class="{ 'opacity-0': creating }"
-            >Mulai Analisa</span>
-            <span class="sm:hidden"
-              :class="{ 'opacity-0': creating }"
-            >Mulai</span>
+            <span :class="{ 'opacity-0': creating }">Mulai Analisa</span>
             <NIcon name="i-lucide-play"
-              class="
-                h-4 w-4
-                sm:h-5 sm:w-5
-              "
+              class="h-4 w-4 sm:h-5 sm:w-5"
               :class="{ 'opacity-0': creating }"
             />
-            
-            <!-- Loading Spinner (diletakkan terpusat absolut saat sedang proses) -->
-            <NIcon 
-              v-if="creating" 
-              name="i-lucide-loader-2" 
+
+            <NIcon
+              v-if="creating"
+              name="i-lucide-loader-2"
               class="
                 absolute inset-0 m-auto h-5 w-5 animate-spin
                 sm:h-6 sm:w-6
-              " 
+              "
             />
           </button>
         </div>
-        
+
         <!-- Contextual Help / Status -->
-        <div class="mt-2.5 min-h-5 px-1">
+        <div class="mt-1.5 min-h-5 px-1">
           <transition name="fade"
             mode="out-in"
           >
@@ -253,14 +272,13 @@ async function onSubmit()
 
       <!-- Branch & Commit Selectors -->
       <div class="
-        flex w-full flex-col gap-5
-        sm:flex-row
+        flex w-full flex-col gap-3
+        sm:flex-row sm:gap-5
       "
       >
-        <!-- Branch: 60% -->
         <div class="
           relative w-full
-          sm:w-[60%]
+          sm:w-1/2
         "
         >
           <div class="
@@ -273,14 +291,15 @@ async function onSubmit()
             />
           </div>
           <select
-            v-model="state.branch"
+            v-model="branch"
             :disabled="creating || !hasBranches"
             class="
               w-full cursor-pointer appearance-none rounded-xl border
-              border-gray-200 bg-gray-50 py-2.5 pr-8 pl-10 text-sm text-gray-900
-              transition-all
+              border-gray-200 bg-gray-50 py-2.5 pr-8 pl-10 text-xs text-gray-900
+              transition-colors
               focus:ring-2 focus:ring-green-500 focus:outline-none
               disabled:cursor-not-allowed disabled:opacity-50
+              sm:text-sm
               dark:border-gray-700 dark:bg-gray-800 dark:text-white
             "
           >
@@ -304,10 +323,9 @@ async function onSubmit()
           </div>
         </div>
 
-        <!-- Commit: 40% -->
         <div class="
           relative w-full
-          sm:w-[40%]
+          sm:w-1/2
         "
         >
           <div class="
@@ -320,14 +338,15 @@ async function onSubmit()
             />
           </div>
           <select
-            v-model="state.commitHash"
+            v-model="commitHash"
             :disabled="creating || !hasCommits"
             class="
               w-full cursor-pointer appearance-none rounded-xl border
-              border-gray-200 bg-gray-50 py-2.5 pr-8 pl-10 text-sm text-gray-900
-              transition-all
+              border-gray-200 bg-gray-50 py-2.5 pr-8 pl-10 text-xs text-gray-900
+              transition-colors
               focus:ring-2 focus:ring-green-500 focus:outline-none
               disabled:cursor-not-allowed disabled:opacity-50
+              sm:text-sm
               dark:border-gray-700 dark:bg-gray-800 dark:text-white
             "
           >
@@ -348,6 +367,39 @@ async function onSubmit()
           </div>
         </div>
       </div>
+
+      <!-- Submit Button (Mobile Only) -->
+      <button
+        type="submit"
+        :disabled="creating || !repoUrl"
+        aria-label="Mulai analisa"
+        class="
+          relative flex w-full items-center justify-center gap-2 rounded-xl
+          bg-green-500 px-4 py-3 text-sm font-semibold text-white
+          transition-colors
+          hover:bg-green-600
+          focus:bg-green-600 focus:outline-none
+          disabled:cursor-not-allowed disabled:bg-gray-300
+          disabled:text-gray-500
+          sm:hidden
+          dark:disabled:bg-gray-700
+        "
+      >
+        <span :class="{ 'opacity-0': creating }">Mulai Analisa</span>
+        <NIcon name="i-lucide-play"
+          class="h-4 w-4 sm:h-5 sm:w-5"
+          :class="{ 'opacity-0': creating }"
+        />
+
+        <NIcon
+          v-if="creating"
+          name="i-lucide-loader-2"
+          class="
+            absolute inset-0 m-auto h-5 w-5 animate-spin
+            sm:h-6 sm:w-6
+          "
+        />
+      </button>
 
       <!-- Error Alert -->
       <div v-if="submitError"
@@ -378,6 +430,5 @@ async function onSubmit()
     <p class="mt-6 text-center text-xs text-gray-400">
       Analyzer dapat membuat kesalahan. Periksa informasi penting sebelum digunakan.
     </p>
-
   </div>
 </template>

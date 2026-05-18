@@ -16,6 +16,11 @@ export default [
   {
     name: 'custom-style',
     files: ['**/*.{js,ts,mts,tsx,vue}'],
+    settings: {
+      'better-tailwindcss': {
+        entryPoint: './src/styles/main.css',
+      },
+    },
     plugins: {
       'better-tailwindcss': betterTailwindcss,
     },
@@ -57,7 +62,7 @@ export default [
         'warn',
         {
           printWidth: 80,
-          lineBreakStyle: 'windows',
+          lineBreakStyle: 'auto',
         },
       ],
 

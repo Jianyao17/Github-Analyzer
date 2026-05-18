@@ -11,9 +11,9 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    AuthLayout: typeof import('./src/components/_Layouts/AuthLayout.vue')['default']
+    AuthLayout: typeof import('./src/components/_layouts/AuthLayout.vue')['default']
     CodeGraphTab: typeof import('./src/components/CodeGraphTab.vue')['default']
-    Dashboard: typeof import('./src/components/_Layouts/Dashboard.vue')['default']
+    Dashboard: typeof import('./src/components/_layouts/Dashboard.vue')['default']
     GoogleAuthButton: typeof import('./src/components/GoogleAuthButton.vue')['default']
     MainSidebar: typeof import('./src/components/MainSidebar.vue')['default']
     NAlert: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Alert.vue')['default']
@@ -26,6 +26,8 @@ declare module 'vue' {
     NFormField: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/FormField.vue')['default']
     NIcon: typeof import('./node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']
     NInput: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Input.vue')['default']
+    NSelect: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Select.vue')['default']
+    NSelectMenu: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/SelectMenu.vue')['default']
     ProjectItemButton: typeof import('./src/components/ProjectItemButton.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

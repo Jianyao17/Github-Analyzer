@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import toastManager from '../lib/toast';
+import { showError } from '../lib/toast';
 
 /**
  * Base URL configuration depending on environment
@@ -99,7 +99,7 @@ class ApiClient
         }
 
         // Show toast notification for error
-        toastManager.showError(errorMessage);
+        showError({ message: errorMessage });
 
         return Promise.reject(new Error(errorMessage));
       },

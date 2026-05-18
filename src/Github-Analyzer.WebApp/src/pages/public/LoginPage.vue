@@ -2,7 +2,7 @@
 import { ref, reactive } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth.store';
-import AuthLayout from '../../components/_Layouts/AuthLayout.vue';
+import AuthLayout from '../../components/_layouts/AuthLayout.vue';
 import GoogleAuthButton from '../../components/GoogleAuthButton.vue';
 
 const isGoogleAuthEnabled = ref(false);
@@ -29,6 +29,8 @@ async function onSubmit()
   {
     await auth.login(state);
     const redirect = route.query.redirect as string || '/app/analysis/new';
+
+    
     router.push({ path: redirect });
   }
   catch (err: any) 

@@ -26,8 +26,6 @@ declare module 'vue' {
     NFormField: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/FormField.vue')['default']
     NIcon: typeof import('./node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']
     NInput: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Input.vue')['default']
-    NSelect: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Select.vue')['default']
-    NSelectMenu: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/SelectMenu.vue')['default']
     ProjectItemButton: typeof import('./src/components/ProjectItemButton.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

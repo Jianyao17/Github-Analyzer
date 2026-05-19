@@ -1,4 +1,5 @@
 using GithubAnalyzer.WebApi.Entities.Analysis;
+using GithubAnalyzer.WebApi.Models;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Project;
 
@@ -14,48 +15,50 @@ public static class Endpoints
         group.MapCreateProjectEndpoint()
             .WithName("CreateProject")
             .Accepts<CreateProjectRequest>("application/json")
-            .Produces<ProjectResponse>(StatusCodes.Status201Created)
-            .Produces(StatusCodes.Status400BadRequest)
-            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ApiResponse<ProjectResponse>>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status500InternalServerError)
             .ProducesValidationProblem();
 
         group.MapListProjectsEndpoint()
             .WithName("ListProjects")
-            .Produces<List<ProjectResponse>>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status401Unauthorized);
+            .Produces<ApiResponse<List<ProjectResponse>>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         group.MapGetProjectEndpoint()
             .WithName("GetProject")
-            .Produces<ProjectResponse>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status404NotFound)
-            .Produces(StatusCodes.Status401Unauthorized);
+            .Produces<ApiResponse<ProjectResponse>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         // Queues and Status
         group.MapStreamQueueProgressEndpoint()
             .WithName("StreamQueueProgress")
             .Produces(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status404NotFound)
-            .Produces(StatusCodes.Status401Unauthorized);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         // Analysis Results
         group.MapGetStatisticAnalysisEndpoint()
             .WithName("GetStatisticAnalysis")
-            .Produces<StatisticAnalysis>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status404NotFound)
-            .Produces(StatusCodes.Status401Unauthorized);
+            .Produces<ApiResponse<StatisticAnalysis>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         group.MapGetCodeGraphAnalysisEndpoint()
             .WithName("GetCodeGraphAnalysis")
-            .Produces<CodeGraphAnalysis>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status404NotFound)
-            .Produces(StatusCodes.Status401Unauthorized);
+            .Produces<ApiResponse<CodeGraphAnalysis>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         // External Repositories (Github)
         group.MapFetchRepoInfoEndpoint()
             .WithName("FetchRepoInfo")
-            .Produces<FetchRepoInfoResponse>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status400BadRequest)
-            .Produces(StatusCodes.Status401Unauthorized);
+            .Produces<ApiResponse<FetchRepoInfoResponse>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         return app;
     }

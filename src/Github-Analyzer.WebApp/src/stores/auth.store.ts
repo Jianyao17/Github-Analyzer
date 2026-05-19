@@ -79,18 +79,26 @@ export const useAuthStore = defineStore('auth', () =>
 
   async function login(payload: LoginPayload) 
   {
-    const accessToken = await authApi.login(payload);
-    setAuth(accessToken);
+    const response = await authApi.login(payload);
+    if (!response?.accessToken)
+    {
+      throw new Error('Missing access token from login response.');
+    }
+    setAuth(response.accessToken);
     await loadCurrentUser();
-    return accessToken;
+    return response.accessToken;
   }
 
   async function register(payload: RegisterPayload) 
   {
-    const accessToken = await authApi.register(payload);
-    setAuth(accessToken);
+    const response = await authApi.register(payload);
+    if (!response?.accessToken)
+    {
+      throw new Error('Missing access token from register response.');
+    }
+    setAuth(response.accessToken);
     await loadCurrentUser();
-    return accessToken;
+    return response.accessToken;
   }
 
   function logout() 

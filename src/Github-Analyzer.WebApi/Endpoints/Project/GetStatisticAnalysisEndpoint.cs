@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Entities.Analysis;
+using GithubAnalyzer.WebApi.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Project;
@@ -19,14 +20,14 @@ public static class GetStatisticAnalysisEndpoint
             
             // Try to parse user ID
             if (!Guid.TryParse(userIdStr, out var userId))
-                return Results.Unauthorized();
+                return ApiResults.Unauthorized("Invalid user identifier.");
 
             // Verify project belongs to user
             var projectExists = await dbContext.Projects
                 .AnyAsync(p => p.Id == projectGuid && p.UserId == userId, ct);
 
             if (!projectExists)
-                return Results.NotFound(new { message = "Project not found or access denied." });
+                return ApiResults.NotFound("Project not found or access denied.");
 
             // Get the latest statistic analysis for the project
             var statistic = await dbContext.StatisticAnalyses
@@ -36,9 +37,9 @@ public static class GetStatisticAnalysisEndpoint
 
             // Return the statistic analysis if found
             if (statistic == null)
-                return Results.NotFound(new { message = "Statistic analysis not found or not yet completed." });
+                return ApiResults.NotFound("Statistic analysis not found or not yet completed.");
 
-            return Results.Ok(statistic);
+            return ApiResults.Ok(statistic);
         });
     }
 }

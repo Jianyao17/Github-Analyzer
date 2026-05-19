@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { showError } from '../lib/toast';
+import { showError, showSuccess } from '../lib/toast';
 
 /**
  * Base URL configuration depending on environment
@@ -62,7 +62,19 @@ class ApiClient
     // Add response interceptor for better error handling
     this.instance.interceptors.response.use(
       (response) => 
-        response,
+      {
+        const method = response.config?.method?.toLowerCase();
+        const isMutation = method === 'post' || method === 'put' || method === 'patch' || method === 'delete';
+        const message = response.data?.message;
+        const isSuccessEnvelope = response.data?.success === true;
+
+        if (isMutation && isSuccessEnvelope && typeof message === 'string' && message.trim().length > 0)
+        {
+          showSuccess({ message });
+        }
+
+        return response;
+      },
       (error) => 
       {
         // Handle different error types

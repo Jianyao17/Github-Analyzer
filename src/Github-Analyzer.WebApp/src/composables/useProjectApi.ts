@@ -1,5 +1,6 @@
 import type { CodeGraph, CodeGraphAnalysis } from '../types/code-graph';
 import type { StatisticAnalysis } from '../types/statistic-analysis';
+import type { ApiResponse } from '../types/api-response';
 import { useAuthStore } from '../stores/auth.store';
 import apiClient, { baseURL } from '../api/axios';
 
@@ -36,37 +37,42 @@ export const useProjectApi = () =>
 {
   const createProject = async (payload: CreateProjectRequest) => 
   {
-    const response = await apiClient.post<ProjectResponse>('/projects/new', payload);
-    return response.data;
+    const response = await apiClient.post<ApiResponse<ProjectResponse>>('/projects/new', payload);
+    return response.data.data;
   };
 
   const fetchProjects = async () => 
   {
-    const response = await apiClient.get<ProjectResponse[]>('/projects');
-    return response.data;
+    const response = await apiClient.get<ApiResponse<ProjectResponse[]>>('/projects');
+    return response.data.data;
   };
 
   const fetchProject = async (id: string) => 
   {
-    const response = await apiClient.get<ProjectResponse>(`/projects/${id}`);
-    return response.data;
+    const response = await apiClient.get<ApiResponse<ProjectResponse>>(`/projects/${id}`);
+    return response.data.data;
   };
 
   const fetchRepoInfo = async (githubUrl: string) => 
   {
-    const response = await apiClient.get<RepoInfoResponse>(`/projects/github/info?url=${encodeURIComponent(githubUrl)}`);
-    return response.data;
+    const response = await apiClient.get<ApiResponse<RepoInfoResponse>>(
+      `/projects/github/info?url=${encodeURIComponent(githubUrl)}`
+    );
+    return response.data.data;
   };
 
   const getCodeGraphAnalysis = async (id: string) => 
   {
-    const response = await apiClient.get<CodeGraphAnalysis>(`/projects/${id}/analysis/code-graph`);
+    const response = await apiClient.get<ApiResponse<CodeGraphAnalysis>>(
+      `/projects/${id}/analysis/code-graph`
+    );
+    const payload = response.data.data;
     // Parse the graphJson automatically for convenience
-    if (response.data && response.data.graphJson) 
+    if (payload && payload.graphJson) 
     {
       try 
       {
-        let parsed: any = response.data.graphJson;
+        let parsed: any = payload.graphJson;
         if (typeof parsed === 'string') 
         {
           parsed = JSON.parse(parsed);
@@ -80,7 +86,7 @@ export const useProjectApi = () =>
         const rawSourceEdges = parsed.sourceRelEdges || parsed.SourceRelEdges || [];
         const rawUseEdges = parsed.useRelEdges || parsed.UseRelEdges || [];
 
-        (response.data as any).graphData = {
+        (payload as any).graphData = {
           nodes: rawNodes.map((n: any) => ({
             pathId: n.pathId || n.PathId,
             label: n.label || n.Label,
@@ -103,15 +109,17 @@ export const useProjectApi = () =>
         console.error('Failed to parse graphJson', e);
       }
     }
-    return response.data;
+    return payload;
   };
 
   const getStatisticAnalysis = async (id: string): Promise<StatisticAnalysis | null> => 
   {
     try 
     {
-      const response = await apiClient.get<StatisticAnalysis>(`/projects/${id}/analysis/statistic`);
-      return response.data;
+      const response = await apiClient.get<ApiResponse<StatisticAnalysis>>(
+        `/projects/${id}/analysis/statistic`
+      );
+      return response.data.data;
     }
     catch 
     {

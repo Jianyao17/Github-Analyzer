@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using GithubAnalyzer.WebApi.Database;
+using GithubAnalyzer.WebApi.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Project;
@@ -20,7 +21,7 @@ public static class FetchProjectsEndpoint
             
             // Try to parse user ID
             if (!Guid.TryParse(userIdStr, out var userId))
-                return Results.Unauthorized();
+                return ApiResults.Unauthorized("Invalid user identifier.");
 
             // Get projects for the user
             var projects = await dbContext.Projects
@@ -35,7 +36,7 @@ public static class FetchProjectsEndpoint
                     p.CreatedAtUtc))
                 .ToListAsync(ct);
 
-            return Results.Ok(projects);
+            return ApiResults.Ok(projects);
         });
     }
 
@@ -52,7 +53,7 @@ public static class FetchProjectsEndpoint
             
             // Try to parse user ID
             if (!Guid.TryParse(userIdStr, out var userId))
-                return Results.Unauthorized();
+                return ApiResults.Unauthorized("Invalid user identifier.");
 
             // Get project for the user
             var project = await dbContext.Projects
@@ -67,9 +68,9 @@ public static class FetchProjectsEndpoint
                 .FirstOrDefaultAsync(ct);
 
             if (project == null)
-                return Results.NotFound();
+                return ApiResults.NotFound("Project not found.");
 
-            return Results.Ok(project);
+            return ApiResults.Ok(project);
         });
     }
 }

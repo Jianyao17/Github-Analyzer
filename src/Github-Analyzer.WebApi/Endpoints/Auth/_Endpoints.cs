@@ -1,3 +1,5 @@
+using GithubAnalyzer.WebApi.Models;
+
 namespace GithubAnalyzer.WebApi.Endpoints.Auth;
 
 public static class Endpoints
@@ -10,20 +12,20 @@ public static class Endpoints
         group.MapRegisterEndpoint()
             .WithName("Register")
             .Accepts<RegisterRequest>("application/json")
-            .Produces<string>(StatusCodes.Status201Created)
-            .Produces(StatusCodes.Status409Conflict)
+            .Produces<ApiResponse<string>>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesValidationProblem();
 
         group.MapLoginEndpoint()
             .WithName("Login")
             .Accepts<LoginRequest>("application/json")
-            .Produces<string>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status401Unauthorized);
+            .Produces<ApiResponse<string>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         group.MapGetCurrentUserEndpoint()
             .WithName("GetCurrentUser")
-            .Produces<UserProfileResponse>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status401Unauthorized);
+            .Produces<ApiResponse<UserProfileResponse>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         group.MapGoogleLoginEndpoint()
             .WithName("GoogleLogin")
@@ -33,8 +35,8 @@ public static class Endpoints
         group.MapGoogleCallbackEndpoint()
             .WithName("GoogleCallback")
             .Produces(StatusCodes.Status302Found)
-            .Produces(StatusCodes.Status401Unauthorized)
-            .Produces(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesValidationProblem();
 
         return app;

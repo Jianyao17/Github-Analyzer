@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Entities.Analysis;
+using GithubAnalyzer.WebApi.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Project;
@@ -19,14 +20,14 @@ public static class GetCodeGraphAnalysisEndpoint
             
             // Try to parse user ID
             if (!Guid.TryParse(userIdStr, out var userId))
-                return Results.Unauthorized();
+                return ApiResults.Unauthorized("Invalid user identifier.");
 
             // Verify project belongs to user
             var projectExists = await dbContext.Projects
                 .AnyAsync(p => p.Id == projectGuid && p.UserId == userId, ct);
 
             if (!projectExists)
-                return Results.NotFound(new { message = "Project not found or access denied." });
+                return ApiResults.NotFound("Project not found or access denied.");
 
             // Get code graph analysis for the project
             var codeGraph = await dbContext.CodeGraphAnalyses
@@ -36,9 +37,9 @@ public static class GetCodeGraphAnalysisEndpoint
 
             // Return the code graph analysis
             if (codeGraph == null)
-                return Results.NotFound(new { message = "Code graph analysis not found or not yet completed." });
+                return ApiResults.NotFound("Code graph analysis not found or not yet completed.");
 
-            return Results.Ok(codeGraph);
+            return ApiResults.Ok(codeGraph);
         });
     }
 }

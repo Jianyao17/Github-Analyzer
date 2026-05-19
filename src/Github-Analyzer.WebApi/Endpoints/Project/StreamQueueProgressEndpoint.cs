@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text.Json;
 using GithubAnalyzer.WebApi.Database;
+using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,13 +22,13 @@ public static class StreamQueueProgressEndpoint
             
             // Try to parse user ID
             if (!Guid.TryParse(userIdStr, out var userId))
-                return Results.Unauthorized();
+                return ApiResults.Unauthorized("Invalid user identifier.");
 
             var projectExists = await dbContext.Projects
                 .AnyAsync(p => p.Id == projectGuid && p.UserId == userId, ct);
 
             if (!projectExists)
-                return Results.NotFound(new { message = "Project not found or access denied." });
+                return ApiResults.NotFound("Project not found or access denied.");
 
             // Set headers for Server-Sent Events (SSE)
             context.Response.Headers.Append("Content-Type", "text/event-stream");

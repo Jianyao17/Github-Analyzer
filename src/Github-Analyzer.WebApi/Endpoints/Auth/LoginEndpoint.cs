@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using GithubAnalyzer.WebApi.Entities.Auth;
+using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Services;
 using Microsoft.AspNetCore.Identity;
 
@@ -8,6 +9,8 @@ namespace GithubAnalyzer.WebApi.Endpoints.Auth;
 public sealed record LoginRequest(
     [Required, EmailAddress] string Email,
     [Required, MinLength(8)] string Password);
+
+public sealed record LoginResponse(string AccessToken);
 
 public static class LoginEndpoint
 {
@@ -20,13 +23,16 @@ public static class LoginEndpoint
             {
                 var user = await userManager.FindByEmailAsync(request.Email.Trim().ToLowerInvariant());
                 if (user is null)
-                    return Results.Unauthorized();
+                    return ApiResults.Unauthorized("Invalid credentials.");
 
                 var validPassword = await userManager.CheckPasswordAsync(user, request.Password);
                 if (!validPassword)
-                    return Results.Unauthorized();
+                    return ApiResults.Unauthorized("Invalid credentials.");
 
-                return Results.Ok(jwtIdentityService.CreateToken(user));
+                var accessToken = jwtIdentityService.CreateToken(user);
+                var message = "Login successful.";
+
+                return ApiResults.Ok(new LoginResponse(accessToken), message);
             });
     }
 }

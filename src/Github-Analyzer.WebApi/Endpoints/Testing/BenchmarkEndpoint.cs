@@ -5,6 +5,7 @@ using GithubAnalyzer.Analysis.Domain.TreeSitter;
 using GithubAnalyzer.Analysis.Interface;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Config;
+using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Models;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Testing;
@@ -75,12 +76,11 @@ public static class BenchmarkEndpoint
             }
             catch (NotSupportedException ex)
             {
-                return Results.BadRequest(new { message = ex.Message });
+                return ApiResults.BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                return Results.Problem(detail: ex.Message,
-                    statusCode: StatusCodes.Status500InternalServerError);
+                return ApiResults.InternalServerError(ex.Message);
             }
 
             var extractPath = repoResult.ExtractPath;
@@ -104,9 +104,8 @@ public static class BenchmarkEndpoint
 
                 if (snapshot.Files.Count == 0)
                 {
-                    return Results.Problem(
-                        detail: "No source files found for the selected language.",
-                        statusCode: StatusCodes.Status500InternalServerError);
+                    return ApiResults.InternalServerError(
+                        "No source files found for the selected language.");
                 }
 
                 CodeGraph? finalGraph = null;
@@ -154,9 +153,8 @@ public static class BenchmarkEndpoint
 
                 if (finalGraph == null)
                 {
-                    return Results.Problem(
-                        detail: "Analysis completed without a CodeGraph result.",
-                        statusCode: StatusCodes.Status500InternalServerError);
+                    return ApiResults.InternalServerError(
+                        "Analysis completed without a CodeGraph result.");
                 }
 
                 var response = new BenchmarkResponse(
@@ -177,12 +175,11 @@ public static class BenchmarkEndpoint
                         EdgeCount: (finalGraph.SourceRelEdges?.Count ?? 0) + (finalGraph.UseRelEdges?.Count ?? 0)),
                     Stages: stages);
 
-                return Results.Ok(response);
+                return ApiResults.Ok(response);
             }
             catch (Exception ex)
             {
-                return Results.Problem(detail: ex.Message,
-                    statusCode: StatusCodes.Status500InternalServerError);
+                return ApiResults.InternalServerError(ex.Message);
             }
             finally
             {

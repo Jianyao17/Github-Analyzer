@@ -1,4 +1,5 @@
 using GithubAnalyzer.WebApi.Interfaces;
+using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Models;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Project;
@@ -17,7 +18,7 @@ public static class FetchRepoInfoEndpoint
             CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(repoUrl))
-                return Results.BadRequest(new { message = "repoUrl is required" });
+                return ApiResults.BadRequest("repoUrl is required.");
 
             try
             {
@@ -32,16 +33,15 @@ public static class FetchRepoInfoEndpoint
                 }
 
                 // Return the branches and commits
-                return Results.Ok(new FetchRepoInfoResponse(branches, commits));
+                return ApiResults.Ok(new FetchRepoInfoResponse(branches, commits));
             }
             catch (NotSupportedException ex)
             {
-                return Results.BadRequest(new { message = ex.Message });
+                return ApiResults.BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                return Results.Problem(detail: ex.Message, 
-                    statusCode: StatusCodes.Status500InternalServerError);
+                return ApiResults.InternalServerError(ex.Message);
             }
         });
     }

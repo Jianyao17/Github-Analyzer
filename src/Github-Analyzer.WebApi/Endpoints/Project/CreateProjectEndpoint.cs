@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Entities.Repo;
+using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Models;
 
@@ -31,7 +32,7 @@ public static class CreateProjectEndpoint
             
             // Try to parse user ID
             if (!Guid.TryParse(userIdStr, out var userId))
-                return Results.Unauthorized();
+                return ApiResults.Unauthorized("Invalid user identifier.");
 
             // Fetch and Extract Code
             RepositoryResult repoResult;
@@ -42,12 +43,11 @@ public static class CreateProjectEndpoint
             }
             catch (NotSupportedException ex)
             {
-                return Results.BadRequest(new { message = ex.Message });
+                return ApiResults.BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                return Results.Problem(detail: ex.Message, 
-                    statusCode: StatusCodes.Status500InternalServerError);
+                return ApiResults.InternalServerError(ex.Message);
             }
 
             // Create Project Entity
@@ -102,7 +102,9 @@ public static class CreateProjectEndpoint
                 project.LastCommitHash,
                 project.CreatedAtUtc);
 
-            return Results.Created($"/api/projects/{project.Id}", response);
+            return ApiResults.Created(
+                $"/api/projects/{project.Id}",
+                response, "Project created successfully.");
         });
     }
 }

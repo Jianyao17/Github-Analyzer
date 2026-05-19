@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using GithubAnalyzer.WebApi.Config;
 using GithubAnalyzer.WebApi.Entities.Auth;
+using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
@@ -20,10 +21,8 @@ public static class GoogleLoginEndpoint
 
                 if (!googleConfig.IsEnabled)
                 {
-                    return Results.Problem(
-                        title: "Google login is not configured.",
-                        detail: "Set Authentication:Google:ClientId and Authentication:Google:ClientSecret before using Google login.",
-                        statusCode: StatusCodes.Status503ServiceUnavailable);
+                    return ApiResults.ServiceUnavailable(
+                        "Google login is not configured. Set Authentication:Google:ClientId and Authentication:Google:ClientSecret before using Google login.");
                 }
 
                 var frontendBaseUrl = configuration["Frontend:BaseUrl"]?.TrimEnd('/')
@@ -48,13 +47,13 @@ public static class GoogleLoginEndpoint
                 var externalResult = await httpContext.AuthenticateAsync(IdentityConstants.ExternalScheme);
                 if (!externalResult.Succeeded)
                 {
-                    return Results.Unauthorized();
+                    return ApiResults.Unauthorized("External authentication failed.");
                 }
 
                 var email = externalResult.Principal?.FindFirstValue(ClaimTypes.Email);
                 if (string.IsNullOrWhiteSpace(email))
                 {
-                    return Results.BadRequest(new { message = "Google account did not provide an email address." });
+                    return ApiResults.BadRequest("Google account did not provide an email address.");
                 }
 
                 var user = await userManager.FindByEmailAsync(email);

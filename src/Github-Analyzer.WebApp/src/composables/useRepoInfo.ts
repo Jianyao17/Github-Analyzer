@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue';
 import type { FetchRepoInfoResponse, RepoBranch, RepoCommit } from '../types/repo-info';
+import type { ApiResponse } from '../types/api-response';
 import apiClient from '../api/axios';
 
 /**
@@ -35,10 +36,10 @@ export const useRepoInfo = () =>
 
     try 
     {
-      const response = await apiClient.get<FetchRepoInfoResponse>(
+      const response = await apiClient.get<ApiResponse<FetchRepoInfoResponse>>(
         `/projects/github/info?repoUrl=${encodeURIComponent(repoUrl)}`
       );
-      branches.value = response.data.branches ?? [];
+      branches.value = response.data.data?.branches ?? [];
     }
     catch (err: any) 
     {
@@ -64,10 +65,10 @@ export const useRepoInfo = () =>
 
     try 
     {
-      const response = await apiClient.get<FetchRepoInfoResponse>(
+      const response = await apiClient.get<ApiResponse<FetchRepoInfoResponse>>(
         `/projects/github/info?repoUrl=${encodeURIComponent(repoUrl)}&branch=${encodeURIComponent(branchName)}`
       );
-      commits.value = response.data.commits ?? [];
+      commits.value = response.data.data?.commits ?? [];
     }
     catch (err: any) 
     {

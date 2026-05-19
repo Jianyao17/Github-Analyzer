@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using GithubAnalyzer.WebApi.Entities.Auth;
+using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Services;
 using Microsoft.AspNetCore.Identity;
 
@@ -9,7 +10,10 @@ public sealed record RegisterRequest(
     [Required, EmailAddress] string Email,
     [Required, MinLength(8)] string Password,
     [Required, StringLength(50, MinimumLength = 2)] string Username);
-    
+
+public sealed record RegisterResponse(
+    Guid Id, string Email, string Username, string AccessToken);
+
 public static class RegisterEndpoint
 {
     public static RouteHandlerBuilder MapRegisterEndpoint(this RouteGroupBuilder group)
@@ -23,7 +27,7 @@ public static class RegisterEndpoint
 
                 var existingUser = await userManager.FindByEmailAsync(email);
                 if (existingUser is not null)
-                    return Results.Conflict(new { message = "Email is already registered." });
+                    return ApiResults.Conflict("Email is already registered.");
 
                 var user = new ApplicationUser
                 {
@@ -42,7 +46,15 @@ public static class RegisterEndpoint
                 }
 
                 var accessToken = jwtIdentityService.CreateToken(user);
-                return Results.Created("/api/auth/me", accessToken);
+                var message = "Registration successful.";
+
+                var responseData = new RegisterResponse(
+                    user.Id, // Return the new user's ID
+                    user.Email ?? string.Empty, 
+                    user.UserName ?? string.Empty, 
+                    accessToken);
+
+                return ApiResults.Created("/api/auth/me", responseData, message);
             });
     }
 }

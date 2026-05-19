@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using GithubAnalyzer.WebApi.Entities.Auth;
+using GithubAnalyzer.WebApi.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 
@@ -20,14 +21,14 @@ public static class GetCurrentUserEndpoint
                     ?? claimsPrincipal.FindFirstValue("sub");
 
                 if (!Guid.TryParse(userId, out var parsedUserId))
-                    return Results.Unauthorized();
+                    return ApiResults.Unauthorized("Invalid user identifier.");
 
                 var user = await userManager.FindByIdAsync(parsedUserId.ToString());
                 if (user is null)
-                    return Results.Unauthorized();
+                    return ApiResults.Unauthorized("User not found.");
 
                 
-                return Results.Ok(
+                return ApiResults.Ok(
                     new UserProfileResponse(
                         user.Id,
                         user.Email ?? string.Empty,

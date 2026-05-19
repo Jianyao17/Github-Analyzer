@@ -1,3 +1,5 @@
+using GithubAnalyzer.WebApi.Models;
+
 namespace GithubAnalyzer.WebApi.Endpoints.Testing;
 
 public static class Endpoints
@@ -9,8 +11,9 @@ public static class Endpoints
 
         group.MapBenchmarkEndpoint()
             .WithName("BenchmarkRepository")
-            .Produces<BenchmarkResponse>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status500InternalServerError);
+            .Produces<ApiResponse<BenchmarkResponse>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         return app;
     }

@@ -1,5 +1,6 @@
 import apiClient from '../api/axios';
 import type { UserProfile } from '../stores/auth.store';
+import type { ApiResponse } from '../types/api-response';
 
 export interface LoginPayload {
   email?: string;
@@ -16,30 +17,41 @@ export interface GoogleLoginPayload {
   idToken: string;
 }
 
+export interface LoginResponse {
+  accessToken: string;
+}
+
+export interface RegisterResponse {
+  id: string;
+  email: string;
+  username: string;
+  accessToken: string;
+}
+
 export const useAuthApi = () => 
 {
   const login = async (payload: LoginPayload) => 
   {
-    const response = await apiClient.post<string>('/auth/login', payload);
-    return response.data;
+    const response = await apiClient.post<ApiResponse<LoginResponse>>('/auth/login', payload);
+    return response.data.data;
   };
 
   const register = async (payload: RegisterPayload) => 
   {
-    const response = await apiClient.post<string>('/auth/register', payload);
-    return response.data;
+    const response = await apiClient.post<ApiResponse<RegisterResponse>>('/auth/register', payload);
+    return response.data.data;
   };
 
   const googleLogin = async (payload: GoogleLoginPayload) => 
   {
-    const response = await apiClient.post<string>('/auth/google', payload);
-    return response.data;
+    const response = await apiClient.post<ApiResponse<string>>('/auth/google', payload);
+    return response.data.data;
   };
 
   const getCurrentUser = async () => 
   {
-    const response = await apiClient.get<UserProfile>('/auth/me');
-    return response.data;
+    const response = await apiClient.get<ApiResponse<UserProfile>>('/auth/me');
+    return response.data.data;
   };
 
   return {

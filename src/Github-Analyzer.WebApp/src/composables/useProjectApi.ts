@@ -38,13 +38,17 @@ export const useProjectApi = () =>
   const createProject = async (payload: CreateProjectRequest) => 
   {
     const response = await apiClient.post<ApiResponse<ProjectResponse>>('/projects/new', payload);
+    if (!response.data.data)
+    {
+      throw new Error('Failed to create project.');
+    }
     return response.data.data;
   };
 
   const fetchProjects = async () => 
   {
     const response = await apiClient.get<ApiResponse<ProjectResponse[]>>('/projects');
-    return response.data.data;
+    return response.data.data ?? [];
   };
 
   const fetchProject = async (id: string) => 

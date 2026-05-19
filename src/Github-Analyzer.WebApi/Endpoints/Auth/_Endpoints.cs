@@ -1,4 +1,5 @@
 using GithubAnalyzer.WebApi.Models;
+using GithubAnalyzer.WebApi.Extensions;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Auth;
 
@@ -11,6 +12,7 @@ public static class Endpoints
 
         group.MapRegisterEndpoint()
             .WithName("Register")
+            .RequireRateLimiting(RateLimitPolicies.Register)
             .Accepts<RegisterRequest>("application/json")
             .Produces<ApiResponse<string>>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status409Conflict)
@@ -18,6 +20,7 @@ public static class Endpoints
 
         group.MapLoginEndpoint()
             .WithName("Login")
+            .RequireRateLimiting(RateLimitPolicies.Login)
             .Accepts<LoginRequest>("application/json")
             .Produces<ApiResponse<string>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized);

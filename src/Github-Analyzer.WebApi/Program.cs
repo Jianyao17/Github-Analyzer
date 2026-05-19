@@ -18,6 +18,7 @@ builder.AddServiceDefaults();
 builder.Services.AddOpenApi();
 builder.Services.AddApiProblemDetails(builder.Environment);
 builder.Services.AddCorsPolicies(builder.Configuration);
+builder.AddApiRateLimiting();
 
 builder.AddApplicationPersistence();
 builder.AddJwtAuthentication();
@@ -48,6 +49,7 @@ app.UseExceptionHandler();
 app.UseCors(CorsPolicyConfig.Frontend);
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 // Map endpoints
 app.MapDefaultEndpoints();

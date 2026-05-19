@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Mvc;
 
 namespace GithubAnalyzer.WebApi.Extensions;
 
@@ -66,6 +65,8 @@ public static class ProblemDetailsExtensions
                 "https://httpwg.org/specs/rfc9110.html#section-15.5.5",
             StatusCodes.Status409Conflict =>
                 "https://httpwg.org/specs/rfc9110.html#section-15.5.10",
+            StatusCodes.Status429TooManyRequests =>
+                "https://httpwg.org/specs/rfc9110.html#section-15.5.14",
             StatusCodes.Status500InternalServerError =>
                 "https://httpwg.org/specs/rfc9110.html#section-15.6.1",
             StatusCodes.Status503ServiceUnavailable =>

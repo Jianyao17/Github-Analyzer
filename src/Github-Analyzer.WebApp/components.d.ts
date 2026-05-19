@@ -11,9 +11,9 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    AuthLayout: typeof import('./src/components/_layouts/AuthLayout.vue')['default']
+    AuthLayout: typeof import('./src/components/_Layouts/AuthLayout.vue')['default']
     CodeGraphTab: typeof import('./src/components/CodeGraphTab.vue')['default']
-    Dashboard: typeof import('./src/components/_layouts/Dashboard.vue')['default']
+    Dashboard: typeof import('./src/components/_Layouts/Dashboard.vue')['default']
     GoogleAuthButton: typeof import('./src/components/GoogleAuthButton.vue')['default']
     MainSidebar: typeof import('./src/components/MainSidebar.vue')['default']
     NAlert: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Alert.vue')['default']

@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
+using GithubAnalyzer.WebApi.Config;
 
 namespace GithubAnalyzer.WebApi.Extensions;
 
@@ -10,6 +11,12 @@ public static class RateLimitingExtensions
 {
     public static IHostApplicationBuilder AddApiRateLimiting(this IHostApplicationBuilder builder)
     {
+        var rateLimitingConfig = builder.Configuration
+            .GetSection("RateLimiting")
+            .Get<RateLimitingConfig>() ?? new RateLimitingConfig();
+
+        builder.Services.AddSingleton(rateLimitingConfig);
+
         builder.Services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -20,7 +27,7 @@ public static class RateLimitingExtensions
 
 				// Construct a ProblemDetails response for rate limit rejections	
                 var retryAfterSeconds = TryGetRetryAfterSeconds(context.Lease)
-                    ?? GetFallbackRetryAfterSeconds(httpContext);
+                    ?? GetFallbackRetryAfterSeconds(httpContext, rateLimitingConfig);
 
                 var problemDetails = new ProblemDetails
                 {
@@ -55,13 +62,13 @@ public static class RateLimitingExtensions
             {
                 var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
-				// Allow 120 requests per minute per IP address with a sliding window
+				// Allow requests based on configured global options
                 return RateLimitPartition.GetSlidingWindowLimiter(partitionKey: ipAddress,
                     factory: _ => new SlidingWindowRateLimiterOptions
                     {
-                        PermitLimit = 120, 
-                        SegmentsPerWindow = 6, 
-                        Window = TimeSpan.FromMinutes(1), 
+                        PermitLimit = rateLimitingConfig.Global.PermitLimit, 
+                        SegmentsPerWindow = rateLimitingConfig.Global.SegmentsPerWindow, 
+                        Window = TimeSpan.FromSeconds(rateLimitingConfig.Global.WindowInSeconds), 
                         QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                         QueueLimit = 0 
                     });
@@ -71,13 +78,13 @@ public static class RateLimitingExtensions
             {
                 var userKey = GetUserRateLimitKey(httpContext);
 
-				// Allow 3 project creation every 30 seconds per user (identified by user ID or IP address)
+				// Allow project creation based on configured policy options
                 return RateLimitPartition.GetSlidingWindowLimiter(partitionKey: userKey,
                     factory: _ => new SlidingWindowRateLimiterOptions
                     {
-                        PermitLimit = 3,
-                        SegmentsPerWindow = 3,
-                        Window = TimeSpan.FromSeconds(30),
+                        PermitLimit = rateLimitingConfig.CreateProject.PermitLimit,
+                        SegmentsPerWindow = rateLimitingConfig.CreateProject.SegmentsPerWindow,
+                        Window = TimeSpan.FromSeconds(rateLimitingConfig.CreateProject.WindowInSeconds),
                         QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                         QueueLimit = 0
                     });
@@ -87,13 +94,13 @@ public static class RateLimitingExtensions
             {
                 var userKey = GetUserRateLimitKey(httpContext);
 
-				// Allow 5 login attempts per minute per user (identified by user ID or IP address)
+				// Allow logins based on configured policy options
                 return RateLimitPartition.GetSlidingWindowLimiter(partitionKey: userKey,
                     factory: _ => new SlidingWindowRateLimiterOptions
                     {
-                        PermitLimit = 5,
-                        SegmentsPerWindow = 6,
-                        Window = TimeSpan.FromMinutes(1),
+                        PermitLimit = rateLimitingConfig.Login.PermitLimit,
+                        SegmentsPerWindow = rateLimitingConfig.Login.SegmentsPerWindow,
+                        Window = TimeSpan.FromSeconds(rateLimitingConfig.Login.WindowInSeconds),
                         QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                         QueueLimit = 0
                     });
@@ -103,13 +110,13 @@ public static class RateLimitingExtensions
             {
                 var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
-				// Allow 2 registration attempts per minute per IP address
+				// Allow registration attempts based on configured policy options
                 return RateLimitPartition.GetSlidingWindowLimiter(partitionKey: ipAddress,
                     factory: _ => new SlidingWindowRateLimiterOptions
                     {
-                        PermitLimit = 2,
-                        SegmentsPerWindow = 6,
-                        Window = TimeSpan.FromMinutes(1),
+                        PermitLimit = rateLimitingConfig.Register.PermitLimit,
+                        SegmentsPerWindow = rateLimitingConfig.Register.SegmentsPerWindow,
+                        Window = TimeSpan.FromSeconds(rateLimitingConfig.Register.WindowInSeconds),
                         QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                         QueueLimit = 0
                     });
@@ -126,7 +133,7 @@ public static class RateLimitingExtensions
             : null;
     }
 
-    private static int? GetFallbackRetryAfterSeconds(HttpContext httpContext)
+    private static int? GetFallbackRetryAfterSeconds(HttpContext httpContext, RateLimitingConfig config)
     {
         var policyName = httpContext.GetEndpoint()
             ?.Metadata.GetMetadata<EnableRateLimitingAttribute>()
@@ -134,10 +141,10 @@ public static class RateLimitingExtensions
 
         return policyName switch
         {
-            RateLimitPolicies.CreateProject => 30,
-            RateLimitPolicies.Login => 60,
-            RateLimitPolicies.Register => 60,
-            _ => 60
+            RateLimitPolicies.CreateProject => config.CreateProject.WindowInSeconds,
+            RateLimitPolicies.Login         => config.Login.WindowInSeconds,
+            RateLimitPolicies.Register      => config.Register.WindowInSeconds,
+            _ => config.Global.WindowInSeconds
         };
     }
 
@@ -162,3 +169,4 @@ public static class RateLimitPolicies
     public const string Login = "Login";
     public const string Register = "Register";
 }
+

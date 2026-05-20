@@ -23,8 +23,7 @@ public static class RegisterEndpoint
         return group.MapPost("/register", async (
                 RegisterRequest request,
                 UserManager<ApplicationUser> userManager,
-                IEmailService mailService,
-                MailConfig mailConfig,
+                IEmailService mailService, MailConfig mailConfig,
                 IConfiguration configuration) =>
             {
                 var email = request.Email.Trim().ToLowerInvariant();
@@ -50,12 +49,14 @@ public static class RegisterEndpoint
                 }
 
                 // If email verification is disabled, 
-                // mark email as confirmed immediately
+                // skip & mark email as confirmed immediately
                 if (!mailConfig.IsEnabled)
                 {
                     user.EmailConfirmed = true;
                     await userManager.UpdateAsync(user);
                 }
+                // If email verification is enabled, 
+                // send verification email
                 else
                 {
                     // Generate email verification token and send verification email
@@ -87,7 +88,9 @@ public static class RegisterEndpoint
 
                 return ApiResults.Created(
                     "/api/auth/me", responseData,
-                    "Registration successful. Please check your email to verify your account.");
+                    "Registration successful. " + (mailConfig.IsEnabled
+                        ? "Please check your email to verify your account before logging in."
+                        : "You can now log in with your credentials."));
             });
     }
 }

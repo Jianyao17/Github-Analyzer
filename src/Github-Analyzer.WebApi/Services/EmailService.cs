@@ -77,7 +77,6 @@ public sealed class EmailService : IEmailService
             _logger.LogError(ex,
                 "Failed to send email to {ToEmail} with subject \"{Subject}\"",
                 toEmail, mailable.Subject);
-            throw;
         }
         finally
         {

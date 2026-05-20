@@ -19,7 +19,7 @@ public static class Endpoints
 
         group.MapRegisterEndpoint()
             .WithName("Register")
-            .RequireRateLimiting(RateLimitPolicies.Register)
+            .RequireRateLimiting(RateLimitPolicies.AccountManagement)
             .Accepts<RegisterRequest>("application/json")
             .Produces<ApiResponse<string>>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status409Conflict)
@@ -27,7 +27,7 @@ public static class Endpoints
 
         group.MapLoginEndpoint()
             .WithName("Login")
-            .RequireRateLimiting(RateLimitPolicies.Login)
+            .RequireRateLimiting(RateLimitPolicies.Authentication)
             .Accepts<LoginRequest>("application/json")
             .Produces<ApiResponse<string>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
@@ -44,21 +44,28 @@ public static class Endpoints
 
         group.MapVerifyEmailEndpoint()
             .WithName("VerifyEmail")
-            .RequireRateLimiting(RateLimitPolicies.Login)
+            .RequireRateLimiting(RateLimitPolicies.AccountManagement)
             .Accepts<VerifyEmailRequest>("application/json")
             .Produces<ApiResponse<string>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesValidationProblem();
 
+        group.MapResendVerifyEmailEndpoint()
+            .WithName("ResendVerifyEmail")
+            .RequireRateLimiting(RateLimitPolicies.AccountManagement)
+            .Accepts<ResendVerifyEmailRequest>("application/json")
+            .Produces<ApiResponse<string>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
         group.MapForgotPasswordEndpoint()
             .WithName("ForgotPassword")
-            .RequireRateLimiting(RateLimitPolicies.Login)
+            .RequireRateLimiting(RateLimitPolicies.AccountManagement)
             .Accepts<ForgotPasswordRequest>("application/json")
             .Produces<ApiResponse<string>>(StatusCodes.Status200OK);
 
         group.MapResetPasswordEndpoint()
             .WithName("ResetPassword")
-            .RequireRateLimiting(RateLimitPolicies.Login)
+            .RequireRateLimiting(RateLimitPolicies.AccountManagement)
             .Accepts<ResetPasswordRequest>("application/json")
             .Produces<ApiResponse<string>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)

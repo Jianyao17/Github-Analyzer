@@ -13,7 +13,7 @@ public static class RateLimitingExtensions
     {
         var rateLimitingConfig = builder.Configuration
             .GetSection("RateLimiting")
-            .Get<RateLimitingConfig>() ?? new RateLimitingConfig();
+            .Get<RateLimitConfig>() ?? new RateLimitConfig();
 
         builder.Services.AddSingleton(rateLimitingConfig);
 
@@ -74,49 +74,49 @@ public static class RateLimitingExtensions
                     });
             });
 
-            options.AddPolicy(RateLimitPolicies.CreateProject, httpContext =>
+            options.AddPolicy(RateLimitPolicies.Write, httpContext =>
             {
                 var userKey = GetUserRateLimitKey(httpContext);
 
-				// Allow project creation based on configured policy options
+				// Allow data write operations based on configured policy options
                 return RateLimitPartition.GetSlidingWindowLimiter(partitionKey: userKey,
                     factory: _ => new SlidingWindowRateLimiterOptions
                     {
-                        PermitLimit = rateLimitingConfig.CreateProject.PermitLimit,
-                        SegmentsPerWindow = rateLimitingConfig.CreateProject.SegmentsPerWindow,
-                        Window = TimeSpan.FromSeconds(rateLimitingConfig.CreateProject.WindowInSeconds),
+                        PermitLimit = rateLimitingConfig.Write.PermitLimit,
+                        SegmentsPerWindow = rateLimitingConfig.Write.SegmentsPerWindow,
+                        Window = TimeSpan.FromSeconds(rateLimitingConfig.Write.WindowInSeconds),
                         QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                         QueueLimit = 0
                     });
             });
 
-            options.AddPolicy(RateLimitPolicies.Login, httpContext =>
+            options.AddPolicy(RateLimitPolicies.Authentication, httpContext =>
             {
                 var userKey = GetUserRateLimitKey(httpContext);
 
-				// Allow logins based on configured policy options
+				// Allow authentication operations based on configured policy options
                 return RateLimitPartition.GetSlidingWindowLimiter(partitionKey: userKey,
                     factory: _ => new SlidingWindowRateLimiterOptions
                     {
-                        PermitLimit = rateLimitingConfig.Login.PermitLimit,
-                        SegmentsPerWindow = rateLimitingConfig.Login.SegmentsPerWindow,
-                        Window = TimeSpan.FromSeconds(rateLimitingConfig.Login.WindowInSeconds),
+                        PermitLimit = rateLimitingConfig.Authentication.PermitLimit,
+                        SegmentsPerWindow = rateLimitingConfig.Authentication.SegmentsPerWindow,
+                        Window = TimeSpan.FromSeconds(rateLimitingConfig.Authentication.WindowInSeconds),
                         QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                         QueueLimit = 0
                     });
             });
 
-            options.AddPolicy(RateLimitPolicies.Register, httpContext =>
+            options.AddPolicy(RateLimitPolicies.AccountManagement, httpContext =>
             {
                 var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
-				// Allow registration attempts based on configured policy options
+				// Allow account management operations based on configured policy options
                 return RateLimitPartition.GetSlidingWindowLimiter(partitionKey: ipAddress,
                     factory: _ => new SlidingWindowRateLimiterOptions
                     {
-                        PermitLimit = rateLimitingConfig.Register.PermitLimit,
-                        SegmentsPerWindow = rateLimitingConfig.Register.SegmentsPerWindow,
-                        Window = TimeSpan.FromSeconds(rateLimitingConfig.Register.WindowInSeconds),
+                        PermitLimit = rateLimitingConfig.AccountManagement.PermitLimit,
+                        SegmentsPerWindow = rateLimitingConfig.AccountManagement.SegmentsPerWindow,
+                        Window = TimeSpan.FromSeconds(rateLimitingConfig.AccountManagement.WindowInSeconds),
                         QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                         QueueLimit = 0
                     });
@@ -133,7 +133,7 @@ public static class RateLimitingExtensions
             : null;
     }
 
-    private static int? GetFallbackRetryAfterSeconds(HttpContext httpContext, RateLimitingConfig config)
+    private static int? GetFallbackRetryAfterSeconds(HttpContext httpContext, RateLimitConfig config)
     {
         var policyName = httpContext.GetEndpoint()
             ?.Metadata.GetMetadata<EnableRateLimitingAttribute>()
@@ -141,9 +141,9 @@ public static class RateLimitingExtensions
 
         return policyName switch
         {
-            RateLimitPolicies.CreateProject => config.CreateProject.WindowInSeconds,
-            RateLimitPolicies.Login         => config.Login.WindowInSeconds,
-            RateLimitPolicies.Register      => config.Register.WindowInSeconds,
+            RateLimitPolicies.Write         => config.Write.WindowInSeconds,
+            RateLimitPolicies.Authentication => config.Authentication.WindowInSeconds,
+            RateLimitPolicies.AccountManagement => config.AccountManagement.WindowInSeconds,
             _ => config.Global.WindowInSeconds
         };
     }
@@ -165,8 +165,8 @@ public static class RateLimitingExtensions
 
 public static class RateLimitPolicies
 {
-    public const string CreateProject = "CreateProject";
-    public const string Login = "Login";
-    public const string Register = "Register";
+    public const string Write = "Write";
+    public const string Authentication = "Authentication";
+    public const string AccountManagement = "AccountManagement";
 }
 

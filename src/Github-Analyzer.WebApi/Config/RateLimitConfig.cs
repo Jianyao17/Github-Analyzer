@@ -1,6 +1,6 @@
 namespace GithubAnalyzer.WebApi.Config;
 
-public sealed class RateLimitingConfig
+public sealed class RateLimitConfig
 {
     public LimiterConfig Global { get; set; } = new()
     {
@@ -9,21 +9,21 @@ public sealed class RateLimitingConfig
         SegmentsPerWindow = 6
     };
 
-    public LimiterConfig CreateProject { get; set; } = new()
+    public LimiterConfig Write { get; set; } = new()
     {
         PermitLimit = 3,
         WindowInSeconds = 30,
         SegmentsPerWindow = 3
     };
 
-    public LimiterConfig Login { get; set; } = new()
+    public LimiterConfig Authentication { get; set; } = new()
     {
         PermitLimit = 5,
         WindowInSeconds = 60,
         SegmentsPerWindow = 6
     };
 
-    public LimiterConfig Register { get; set; } = new()
+    public LimiterConfig AccountManagement { get; set; } = new()
     {
         PermitLimit = 2,
         WindowInSeconds = 60,

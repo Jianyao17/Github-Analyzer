@@ -28,13 +28,13 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
 
     protected override async Task ProcessJobAsync(ProjectQueue job, CancellationToken cancellationToken)
     {
-        using var scope  = _scopeFactory.CreateScope();
-        var dbContext    = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var analyzer     = scope.ServiceProvider.GetRequiredService<ICodeAnalyzer>();
-        var reader       = scope.ServiceProvider.GetRequiredService<ICodebaseReader>();
-        var repoFetcher  = scope.ServiceProvider.GetRequiredService<IRepositoryFetcher>();
-        var downloadGate = scope.ServiceProvider.GetRequiredService<RepoDownloadGate>();
-        var repoConfig   = scope.ServiceProvider.GetRequiredService<RepoConfig>();
+        using var scope     = _scopeFactory.CreateScope();
+        var dbContext       = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var analyzer        = scope.ServiceProvider.GetRequiredService<ICodeAnalyzer>();
+        var reader          = scope.ServiceProvider.GetRequiredService<ICodebaseReader>();
+        var repoFetcher     = scope.ServiceProvider.GetRequiredService<IRepositoryFetcher>();
+        var downloadGate    = scope.ServiceProvider.GetRequiredService<RepoDownloadGate>();
+        var analysisConfig  = scope.ServiceProvider.GetRequiredService<AnalysisConfig>();
 
         if (job.Project == null) 
         {
@@ -63,7 +63,7 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
         }
 
         // 1. Tentukan bahasa secara otomatis
-        var excluded = repoConfig.ExcludedFolders ?? Array.Empty<string>();
+        var excluded = analysisConfig.ExcludedFolders ?? Array.Empty<string>();
         var language = DetermineLanguage(localPath, excluded);
         _logger.LogInformation("Auto-detected language {Language} for project {ProjectId}", language, job.ProjectId);
 

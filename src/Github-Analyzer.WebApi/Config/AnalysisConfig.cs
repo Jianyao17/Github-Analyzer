@@ -1,6 +1,6 @@
 namespace GithubAnalyzer.WebApi.Config;
 
-public class RepoConfig
+public class AnalysisConfig
 {
     public string BaseTempPath { get; set; } = Path.GetTempPath();
     public string SubDirectory { get; set; } = "Github-Analyzer";

@@ -24,16 +24,16 @@ public sealed class GithubRepositoryProvider : IRepositoryProvider
     // Fields & Constructor
     // -------------------------------------------------------------------------
     private readonly HttpClient _httpClient;
-    private readonly RepoConfig _repoConfig;
+    private readonly AnalysisConfig _analysisConfig;
     private readonly ILogger<GithubRepositoryProvider> _logger;
 
     public GithubRepositoryProvider(
-        HttpClient httpClient, RepoConfig repoConfig,
+        HttpClient httpClient, AnalysisConfig analysisConfig,
         ILogger<GithubRepositoryProvider> logger)
     {
-        _httpClient  = httpClient;
-        _repoConfig   = repoConfig;
-        _logger      = logger;
+        _httpClient     = httpClient;
+        _analysisConfig = analysisConfig;
+        _logger         = logger;
     }
 
     // -------------------------------------------------------------------------
@@ -59,7 +59,7 @@ public sealed class GithubRepositoryProvider : IRepositoryProvider
 
         var randomSuffix  = Convert.ToHexString(RandomNumberGenerator.GetBytes(4)).ToLowerInvariant();
         var repositoryId  = GetDeterministicRepoId(repoUrl, reference, randomSuffix);
-        var tempDirectory = Path.Combine(_repoConfig.GetBaseTempPath(), repositoryId);
+        var tempDirectory = Path.Combine(_analysisConfig.GetBaseTempPath(), repositoryId);
         var extractPath   = Path.Combine(tempDirectory, "extracted");
 
         if (!Directory.Exists(extractPath))

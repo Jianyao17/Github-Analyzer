@@ -35,12 +35,12 @@ public sealed class StatisticAnalysisWorker : BaseQueueWorker
     protected override async Task ProcessJobAsync(
         ProjectQueue job, CancellationToken cancellationToken)
     {
-        using var scope = _scopeFactory.CreateScope();
-        var dbContext    = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var fileSvc      = scope.ServiceProvider.GetRequiredService<IFileStatisticsService>();
-        var repoProvider = scope.ServiceProvider.GetRequiredService<IRepositoryFetcher>();
-        var downloadGate = scope.ServiceProvider.GetRequiredService<RepoDownloadGate>();
-        var repoConfig   = scope.ServiceProvider.GetRequiredService<RepoConfig>();
+        using var scope     = _scopeFactory.CreateScope();
+        var dbContext       = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var fileSvc         = scope.ServiceProvider.GetRequiredService<IFileStatisticsService>();
+        var repoProvider    = scope.ServiceProvider.GetRequiredService<IRepositoryFetcher>();
+        var downloadGate    = scope.ServiceProvider.GetRequiredService<RepoDownloadGate>();
+        var analysisConfig  = scope.ServiceProvider.GetRequiredService<AnalysisConfig>();
 
         if (job.Project is null)
             throw new InvalidOperationException("Project data is missing from the queue job.");
@@ -72,7 +72,7 @@ public sealed class StatisticAnalysisWorker : BaseQueueWorker
         // ─────────────────────────────────────────────────────────────────────
         await NotifyProgressAsync(job, 5, "Analyzing repository filesystem…", cancellationToken);
 
-        var excluded = repoConfig.ExcludedFolders ?? Array.Empty<string>();
+        var excluded = analysisConfig.ExcludedFolders ?? Array.Empty<string>();
         var fsStats  = fileSvc.Analyze(localPath, excluded);
 
         _logger.LogInformation(

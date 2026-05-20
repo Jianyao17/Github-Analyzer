@@ -56,7 +56,7 @@ public static class BenchmarkEndpoint
             IRepositoryFetcher repositoryFetcher,
             ICodebaseReader reader,
             ICodeAnalyzer analyzer,
-            RepoConfig repoConfig,
+            AnalysisConfig analysisConfig,
             CancellationToken ct) =>
         {
             var stages = new List<StageMetrics>();
@@ -87,7 +87,7 @@ public static class BenchmarkEndpoint
             try
             {
                 CodebaseSnapshot snapshot;
-                var excluded = repoConfig.ExcludedFolders ?? Array.Empty<string>();
+                var excluded = analysisConfig.ExcludedFolders ?? Array.Empty<string>();
                 var language = DetermineLanguage(repoResult.ExtractPath, excluded);
                 var options = new CodebaseReadOptions
                 {

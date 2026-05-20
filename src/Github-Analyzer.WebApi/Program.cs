@@ -22,7 +22,7 @@ builder.AddApiRateLimiting();
 
 builder.AddApplicationPersistence();
 builder.AddJwtAuthentication();
-builder.AddRepoConfig();
+builder.AddAnalysisConfig();
 
 builder.Services.AddSingleton<RepoDownloadGate>();
 builder.Services.AddTransient<IRepositoryFetcher, RepositoryFetcher>();

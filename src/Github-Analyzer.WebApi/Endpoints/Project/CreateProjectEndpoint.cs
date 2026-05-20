@@ -103,7 +103,7 @@ public static class CreateProjectEndpoint
                 project.CreatedAtUtc);
 
             return ApiResults.Created(
-                $"/api/projects/{project.Id}",
+                $"/api/v1/projects/{project.Id}",
                 response, "Project created successfully.");
         });
     }

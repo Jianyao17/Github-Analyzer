@@ -5,10 +5,18 @@ import apiClient from '../api/axios';
 
 /**
  * Composable untuk fetch info branch dan commit dari GitHub repository.
- * Menggunakan endpoint GET /api/projects/github/info
+ * Menggunakan endpoint GET /api/v{version}/projects/github/info
+ *
+ * @param version - Versi API yang digunakan, e.g. '1', '2'. Default: '1'.
+ *
+ * @example
+ * const { fetchBranches, fetchCommits } = useRepoInfo()     // menggunakan v1
+ * const { fetchBranches }               = useRepoInfo('2')  // menggunakan v2
  */
-export const useRepoInfo = () => 
+export const useRepoInfo = (version = '1') => 
 {
+  const client = apiClient.withVersion(version);
+
   const branches = ref<RepoBranch[]>([]);
   const commits = ref<RepoCommit[]>([]);
 
@@ -36,7 +44,7 @@ export const useRepoInfo = () =>
 
     try 
     {
-      const response = await apiClient.get<ApiResponse<FetchRepoInfoResponse>>(
+      const response = await client.get<ApiResponse<FetchRepoInfoResponse>>(
         `/projects/github/info?repoUrl=${encodeURIComponent(repoUrl)}`
       );
       branches.value = response.data.data?.branches ?? [];
@@ -65,7 +73,7 @@ export const useRepoInfo = () =>
 
     try 
     {
-      const response = await apiClient.get<ApiResponse<FetchRepoInfoResponse>>(
+      const response = await client.get<ApiResponse<FetchRepoInfoResponse>>(
         `/projects/github/info?repoUrl=${encodeURIComponent(repoUrl)}&branch=${encodeURIComponent(branchName)}`
       );
       commits.value = response.data.data?.commits ?? [];

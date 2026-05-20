@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using GithubAnalyzer.WebApi.Models;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Testing;
@@ -6,7 +7,13 @@ public static class Endpoints
 {
     public static IEndpointRouteBuilder MapTestingEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/testing")
+        var versionSet = app.NewApiVersionSet()
+            .HasApiVersion(new ApiVersion(1, 0))
+            .ReportApiVersions()
+            .Build();
+
+        var group = app.MapGroup("/api/v{version:apiVersion}/testing")
+            .WithApiVersionSet(versionSet)
             .WithTags("Testing");
 
         group.MapBenchmarkEndpoint()

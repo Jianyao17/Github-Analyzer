@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using GithubAnalyzer.Analysis.Interface;
 using GithubAnalyzer.Analysis.Pipeline.Reader;
 using GithubAnalyzer.Analysis.TreeSitter;
@@ -15,7 +16,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-builder.Services.AddOpenApi();
+// API Versioning — URL segment strategy (/api/v1/...)
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ApiVersionReader = new UrlSegmentApiVersionReader();
+});
+
+// OpenAPI documents per version
+builder.Services.AddOpenApi("v1");
 builder.Services.AddApiProblemDetails(builder.Environment);
 builder.Services.AddCorsPolicies(builder.Configuration);
 builder.AddApiRateLimiting();
@@ -62,11 +72,16 @@ if (app.Environment.IsDevelopment() ||
 {
     // Enable OpenAPI documentation and 
     // Scalar API reference in development mode
-    app.MapOpenApi();
-    app.MapScalarApiReference(options =>
+    // OpenAPI JSON: /openapi/v1.json
+    app.MapOpenApi("/openapi/{documentName}.json");
+
+    // Scalar UI at /scalar/v1 — endpoint prefix must be a literal path (no {documentName} placeholder)
+    app.MapScalarApiReference("/scalar/v1", options =>
     {
         options.Title = "Github-Analyzer Web API";
         options.Theme = ScalarTheme.Saturn;
+        options.DefaultOpenAllTags = false;
+        options.OpenApiRoutePattern = "/openapi/v1.json";
     });
 
     // Apply pending migrations on startup in development mode

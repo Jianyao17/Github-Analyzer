@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using GithubAnalyzer.WebApi.Entities.Analysis;
 using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Models;
@@ -8,9 +9,15 @@ public static class Endpoints
 {
     public static IEndpointRouteBuilder MapProjectEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/projects")
-            .WithTags("Projects")
-            .RequireAuthorization();
+        var versionSet = app.NewApiVersionSet()
+            .HasApiVersion(new ApiVersion(1, 0))
+            .ReportApiVersions()
+            .Build();
+
+        var group = app.MapGroup("/api/v{version:apiVersion}/projects")
+            .WithApiVersionSet(versionSet)
+            .RequireAuthorization()
+            .WithTags("Projects");
 
         // Project Management
         group.MapCreateProjectEndpoint()

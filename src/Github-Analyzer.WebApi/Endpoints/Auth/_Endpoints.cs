@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using GithubAnalyzer.WebApi.Models;
 using GithubAnalyzer.WebApi.Extensions;
 
@@ -7,7 +8,13 @@ public static class Endpoints
 {
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/auth")
+        var versionSet = app.NewApiVersionSet()
+            .HasApiVersion(new ApiVersion(1, 0))
+            .ReportApiVersions()
+            .Build();
+
+        var group = app.MapGroup("/api/v{version:apiVersion}/auth")
+            .WithApiVersionSet(versionSet)
             .WithTags("Auth");
 
         group.MapRegisterEndpoint()

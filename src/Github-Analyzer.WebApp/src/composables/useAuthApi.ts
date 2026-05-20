@@ -28,29 +28,39 @@ export interface RegisterResponse {
   accessToken: string;
 }
 
-export const useAuthApi = () => 
+/**
+ * Composable untuk Auth API.
+ * @param version - Versi API yang digunakan, e.g. '1', '2'. Default: '1'.
+ *
+ * @example
+ * const { login, register } = useAuthApi()      // menggunakan v1
+ * const { login }           = useAuthApi('2')    // menggunakan v2
+ */
+export const useAuthApi = (version = '1') => 
 {
+  const client = apiClient.withVersion(version);
+
   const login = async (payload: LoginPayload) => 
   {
-    const response = await apiClient.post<ApiResponse<LoginResponse>>('/auth/login', payload);
+    const response = await client.post<ApiResponse<LoginResponse>>('/auth/login', payload);
     return response.data.data;
   };
 
   const register = async (payload: RegisterPayload) => 
   {
-    const response = await apiClient.post<ApiResponse<RegisterResponse>>('/auth/register', payload);
+    const response = await client.post<ApiResponse<RegisterResponse>>('/auth/register', payload);
     return response.data.data;
   };
 
   const googleLogin = async (payload: GoogleLoginPayload) => 
   {
-    const response = await apiClient.post<ApiResponse<string>>('/auth/google', payload);
+    const response = await client.post<ApiResponse<string>>('/auth/google', payload);
     return response.data.data;
   };
 
   const getCurrentUser = async () => 
   {
-    const response = await apiClient.get<ApiResponse<UserProfile>>('/auth/me');
+    const response = await client.get<ApiResponse<UserProfile>>('/auth/me');
     return response.data.data;
   };
 

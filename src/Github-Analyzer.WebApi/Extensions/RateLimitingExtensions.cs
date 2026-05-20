@@ -55,11 +55,11 @@ public static class RateLimitingExtensions
             {
                 var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
-				// Allow 60 requests per minute per IP address with a sliding window
+				// Allow 120 requests per minute per IP address with a sliding window
                 return RateLimitPartition.GetSlidingWindowLimiter(partitionKey: ipAddress,
                     factory: _ => new SlidingWindowRateLimiterOptions
                     {
-                        PermitLimit = 60, 
+                        PermitLimit = 120, 
                         SegmentsPerWindow = 6, 
                         Window = TimeSpan.FromMinutes(1), 
                         QueueProcessingOrder = QueueProcessingOrder.OldestFirst,

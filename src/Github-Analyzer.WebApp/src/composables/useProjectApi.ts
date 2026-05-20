@@ -2,7 +2,7 @@ import type { CodeGraph, CodeGraphAnalysis } from '../types/code-graph';
 import type { StatisticAnalysis } from '../types/statistic-analysis';
 import type { ApiResponse } from '../types/api-response';
 import { useAuthStore } from '../stores/auth.store';
-import apiClient, { baseURL } from '../api/axios';
+import apiClient from '../api/axios';
 
 export interface CreateProjectRequest {
   repoUrl: string;
@@ -33,11 +33,21 @@ export interface ProgressEvent {
   message: string;
 }
 
-export const useProjectApi = () => 
+/**
+ * Composable untuk Project API.
+ * @param version - Versi API yang digunakan, e.g. '1', '2'. Default: '1'.
+ *
+ * @example
+ * const { fetchProjects, createProject } = useProjectApi()      // menggunakan v1
+ * const { fetchProjects }               = useProjectApi('2')    // menggunakan v2
+ */
+export const useProjectApi = (version = '1') => 
 {
+  const client = apiClient.withVersion(version);
+
   const createProject = async (payload: CreateProjectRequest) => 
   {
-    const response = await apiClient.post<ApiResponse<ProjectResponse>>('/projects/new', payload);
+    const response = await client.post<ApiResponse<ProjectResponse>>('/projects/new', payload);
     if (!response.data.data)
     {
       throw new Error('Failed to create project.');
@@ -47,19 +57,19 @@ export const useProjectApi = () =>
 
   const fetchProjects = async () => 
   {
-    const response = await apiClient.get<ApiResponse<ProjectResponse[]>>('/projects');
+    const response = await client.get<ApiResponse<ProjectResponse[]>>('/projects');
     return response.data.data ?? [];
   };
 
   const fetchProject = async (id: string) => 
   {
-    const response = await apiClient.get<ApiResponse<ProjectResponse>>(`/projects/${id}`);
+    const response = await client.get<ApiResponse<ProjectResponse>>(`/projects/${id}`);
     return response.data.data;
   };
 
   const fetchRepoInfo = async (githubUrl: string) => 
   {
-    const response = await apiClient.get<ApiResponse<RepoInfoResponse>>(
+    const response = await client.get<ApiResponse<RepoInfoResponse>>(
       `/projects/github/info?url=${encodeURIComponent(githubUrl)}`
     );
     return response.data.data;
@@ -67,7 +77,7 @@ export const useProjectApi = () =>
 
   const getCodeGraphAnalysis = async (id: string) => 
   {
-    const response = await apiClient.get<ApiResponse<CodeGraphAnalysis>>(
+    const response = await client.get<ApiResponse<CodeGraphAnalysis>>(
       `/projects/${id}/analysis/code-graph`
     );
     const payload = response.data.data;
@@ -120,7 +130,7 @@ export const useProjectApi = () =>
   {
     try 
     {
-      const response = await apiClient.get<ApiResponse<StatisticAnalysis>>(
+      const response = await client.get<ApiResponse<StatisticAnalysis>>(
         `/projects/${id}/analysis/statistic`
       );
       return response.data.data;
@@ -142,8 +152,9 @@ export const useProjectApi = () =>
     const authStore = useAuthStore();
     const token = authStore.token;
     
-    // Construct the URL using the api base URL. Since apiClient handles prefixes, we will manually do it here.
-    const url = `${baseURL}/api/projects/${projectId}/queue/event?job_type=${jobType}&token=${token}`;
+    // Construct the SSE URL manually — EventSource doesn't go through axios.
+    // Uses client.baseURL and client.version from the VersionedClient.
+    const url = `${client.baseURL}/api/v${client.version}/projects/${projectId}/queue/event?job_type=${jobType}&token=${token}`;
     
     const eventSource = new EventSource(url);
     

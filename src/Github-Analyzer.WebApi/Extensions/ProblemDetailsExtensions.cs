@@ -12,16 +12,19 @@ public static class ProblemDetailsExtensions
         {
             options.CustomizeProblemDetails = context =>
             {
-                // Enrich the ProblemDetails with additional information
                 var httpContext = context.HttpContext;
+
+                // Include request path and method in the problem details instance
                 var path = httpContext.Request.Path.Value ?? string.Empty;
                 var method = httpContext.Request.Method ?? string.Empty;
                 
+                // Include request ID and trace ID for better correlation in logs
+                var requestId = httpContext.TraceIdentifier ?? string.Empty;
                 var traceId = httpContext.Features.Get<IHttpActivityFeature>()
                     ?.Activity?.Id ?? string.Empty;
 
-                context.ProblemDetails.Type = GetProblemType(context.ProblemDetails.Status);
                 context.ProblemDetails.Instance = $"{method} {path}";
+                context.ProblemDetails.Extensions["requestId"] = requestId;
                 context.ProblemDetails.Extensions["traceId"] = traceId;
 
                 if (context.ProblemDetails is HttpValidationProblemDetails validationProblem &&
@@ -53,25 +56,4 @@ public static class ProblemDetailsExtensions
         return services;
     }
 
-    private static string? GetProblemType(int? status)
-    {
-        return status switch
-        {
-            StatusCodes.Status400BadRequest =>
-                "https://httpwg.org/specs/rfc9110.html#section-15.5.1",
-            StatusCodes.Status401Unauthorized =>
-                "https://httpwg.org/specs/rfc9110.html#section-15.5.2",
-            StatusCodes.Status404NotFound =>
-                "https://httpwg.org/specs/rfc9110.html#section-15.5.5",
-            StatusCodes.Status409Conflict =>
-                "https://httpwg.org/specs/rfc9110.html#section-15.5.10",
-            StatusCodes.Status429TooManyRequests =>
-                "https://httpwg.org/specs/rfc9110.html#section-15.5.14",
-            StatusCodes.Status500InternalServerError =>
-                "https://httpwg.org/specs/rfc9110.html#section-15.6.1",
-            StatusCodes.Status503ServiceUnavailable =>
-                "https://httpwg.org/specs/rfc9110.html#section-15.6.4",
-            _ => null
-        };
-    }
 }

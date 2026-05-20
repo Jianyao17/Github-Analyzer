@@ -21,12 +21,11 @@ public static class RateLimitingExtensions
 				// Construct a ProblemDetails response for rate limit rejections	
                 var retryAfterSeconds = TryGetRetryAfterSeconds(context.Lease)
                     ?? GetFallbackRetryAfterSeconds(httpContext);
+
                 var problemDetails = new ProblemDetails
                 {
                     Status = StatusCodes.Status429TooManyRequests,
-                    Title = "Too Many Requests",
                     Detail = "Rate limit exceeded. Please try again later.",
-                    Type = "https://httpwg.org/specs/rfc9110.html#section-15.5.14"
                 };
 
                 if (retryAfterSeconds.HasValue)

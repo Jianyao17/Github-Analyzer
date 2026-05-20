@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
-import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../stores/auth.store';
 import AuthLayout from '../../components/_Layouts/AuthLayout.vue';
 import GoogleAuthButton from '../../components/GoogleAuthButton.vue';
 
 const isGoogleAuthEnabled = ref(false);
 
-const router = useRouter();
 const auth = useAuthStore();
 
 const state = reactive({
@@ -18,6 +16,7 @@ const state = reactive({
 
 const loading = ref(false);
 const error = ref('');
+const success = ref(false);
 const showPassword = ref(false);
 
 async function onSubmit() 
@@ -28,7 +27,7 @@ async function onSubmit()
   try 
   {
     await auth.register(state);
-    router.push('/analysis/new');
+    success.value = true;
   }
   catch (err: any) 
   {
@@ -50,7 +49,24 @@ function registerWithGoogle()
   <AuthLayout title="Create an account"
     subtitle="Get started with Github Analyzer"
   >
-    <NForm :state="state"
+    <div v-if="success" class="text-center space-y-6">
+      <NAlert
+        color="success"
+        variant="subtle"
+        icon="i-lucide-mail"
+        title="Pendaftaran Berhasil!"
+        description="Silakan periksa kotak masuk email Anda untuk melakukan verifikasi akun. Setelah diverifikasi, Anda dapat login."
+      />
+      <NButton to="/login"
+        block
+        color="primary"
+      >
+        Pergi ke Halaman Login
+      </NButton>
+    </div>
+
+    <div v-else class="space-y-6">
+      <NForm :state="state"
       @submit="onSubmit"
       class="space-y-6"
     >
@@ -141,6 +157,7 @@ function registerWithGoogle()
       >
         Sign in
       </RouterLink>
-    </p>
+      </p>
+    </div>
   </AuthLayout>
 </template>

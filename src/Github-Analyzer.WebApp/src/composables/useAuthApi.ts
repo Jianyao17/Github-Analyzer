@@ -25,7 +25,21 @@ export interface RegisterResponse {
   id: string;
   email: string;
   username: string;
-  accessToken: string;
+}
+
+export interface VerifyEmailPayload {
+  userId: string;
+  token: string;
+}
+
+export interface ForgotPasswordPayload {
+  email: string;
+}
+
+export interface ResetPasswordPayload {
+  email: string;
+  token: string;
+  newPassword: string;
 }
 
 /**
@@ -64,10 +78,31 @@ export const useAuthApi = (version = '1') =>
     return response.data.data;
   };
 
+  const verifyEmail = async (payload: VerifyEmailPayload) => 
+  {
+    const response = await client.post<ApiResponse<string>>('/auth/verify-email', payload);
+    return response.data.data;
+  };
+
+  const forgotPassword = async (payload: ForgotPasswordPayload) => 
+  {
+    const response = await client.post<ApiResponse<string>>('/auth/forgot-password', payload);
+    return response.data.data;
+  };
+
+  const resetPassword = async (payload: ResetPasswordPayload) => 
+  {
+    const response = await client.post<ApiResponse<string>>('/auth/reset-password', payload);
+    return response.data.data;
+  };
+
   return {
     login,
     register,
     googleLogin,
     getCurrentUser,
+    verifyEmail,
+    forgotPassword,
+    resetPassword,
   };
 };

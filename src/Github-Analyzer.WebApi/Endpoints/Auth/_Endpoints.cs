@@ -42,6 +42,28 @@ public static class Endpoints
             .Produces(StatusCodes.Status302Found)
             .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
+        group.MapVerifyEmailEndpoint()
+            .WithName("VerifyEmail")
+            .RequireRateLimiting(RateLimitPolicies.Login)
+            .Accepts<VerifyEmailRequest>("application/json")
+            .Produces<ApiResponse<string>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesValidationProblem();
+
+        group.MapForgotPasswordEndpoint()
+            .WithName("ForgotPassword")
+            .RequireRateLimiting(RateLimitPolicies.Login)
+            .Accepts<ForgotPasswordRequest>("application/json")
+            .Produces<ApiResponse<string>>(StatusCodes.Status200OK);
+
+        group.MapResetPasswordEndpoint()
+            .WithName("ResetPassword")
+            .RequireRateLimiting(RateLimitPolicies.Login)
+            .Accepts<ResetPasswordRequest>("application/json")
+            .Produces<ApiResponse<string>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesValidationProblem();
+
         group.MapGoogleCallbackEndpoint()
             .WithName("GoogleCallback")
             .Produces(StatusCodes.Status302Found)

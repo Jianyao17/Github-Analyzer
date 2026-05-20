@@ -1,3 +1,4 @@
+using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Models;
 
 namespace GithubAnalyzer.WebApi.Services;

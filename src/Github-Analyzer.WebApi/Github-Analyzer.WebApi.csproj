@@ -17,6 +17,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+    <PackageReference Include="MailKit" Version="4.16.0" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.14.6" />
   </ItemGroup>
 
@@ -24,6 +25,7 @@
     <Folder Include="Database\Migrations\" />
     <Folder Include="Database\Seeder\" />
   </ItemGroup>
+
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>

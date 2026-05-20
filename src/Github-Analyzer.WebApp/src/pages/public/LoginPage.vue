@@ -82,7 +82,7 @@ function loginWithGoogle()
         name="password"
       >
         <template #hint>
-          <RouterLink to="/forgot-password"
+          <RouterLink :to="{ name: 'public.forgot-password' }"
             class="
               text-primary-600
               hover:text-primary-500

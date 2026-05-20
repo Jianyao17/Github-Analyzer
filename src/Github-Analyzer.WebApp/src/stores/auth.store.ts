@@ -92,13 +92,9 @@ export const useAuthStore = defineStore('auth', () =>
   async function register(payload: RegisterPayload) 
   {
     const response = await authApi.register(payload);
-    if (!response?.accessToken)
-    {
-      throw new Error('Missing access token from register response.');
-    }
-    setAuth(response.accessToken);
-    await loadCurrentUser();
-    return response.accessToken;
+    // Note: Registration no longer logs the user in automatically because email verification is required.
+    // It returns the created user info.
+    return response;
   }
 
   function logout() 

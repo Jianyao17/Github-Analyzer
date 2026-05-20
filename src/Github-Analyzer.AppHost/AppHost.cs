@@ -13,6 +13,9 @@ if (builder.Environment.IsDevelopment())
     postgres.WithPgWeb();
 }
 
+// Mailpit for local email testing (SMTP on 1025, Web UI on 8025)
+var mailpit = builder.AddMailPit("mailpit");
+
 const int webappPort = 5017;
 
 var webapp = builder.AddNpmApp("webapp", "../Github-Analyzer.WebApp", "dev")
@@ -22,6 +25,7 @@ var api = builder.AddProject<Projects.Github_Analyzer_WebApi>("webapi")
     .WithEnvironment("Frontend__BaseUrl", webapp.GetEndpoint("http"))
     .WithEnvironment("Cors__AllowedOrigins__0", webapp.GetEndpoint("http"))
     .WithReference(postgresDb)
+    .WithReference(mailpit)
     .WaitFor(postgresDb);
 
 webapp

@@ -33,6 +33,7 @@ builder.AddApiRateLimiting();
 builder.AddApplicationPersistence();
 builder.AddJwtAuthentication();
 builder.AddAnalysisConfig();
+builder.AddMailService();
 
 builder.Services.AddSingleton<RepoDownloadGate>();
 builder.Services.AddTransient<IRepositoryFetcher, RepositoryFetcher>();

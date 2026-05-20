@@ -1,6 +1,6 @@
 using GithubAnalyzer.WebApi.Models;
 
-namespace GithubAnalyzer.WebApi.Services;
+namespace GithubAnalyzer.WebApi.Interfaces;
 
 /// <summary>
 /// Analyzes the filesystem structure and source code metrics of a local repository directory.

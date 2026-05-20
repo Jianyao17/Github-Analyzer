@@ -62,6 +62,8 @@ public static class JwtAuthBuilderExtensions
                         var accessToken = context.Request.Query["token"];
                         var path = context.HttpContext.Request.Path;
 
+                        // TODO: This is a bit of a hack to allow JWT authentication for the SSE endpoint,
+                        //       which cannot send the token in the Authorization header.
                         // This allows us to get the token from the query string for the SSE connection
                         if (!string.IsNullOrEmpty(accessToken) && 
                             path.StartsWithSegments("/api/projects") && 

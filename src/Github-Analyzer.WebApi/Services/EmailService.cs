@@ -67,6 +67,7 @@ public sealed class EmailService : IEmailService
 
             if (!string.IsNullOrEmpty(_config.Username))
             {
+                // If username is provided, assume authentication is required
                 await client.AuthenticateAsync(_config.Username, _config.Password, ct);
             }
 
@@ -77,6 +78,8 @@ public sealed class EmailService : IEmailService
             _logger.LogError(ex,
                 "Failed to send email to {ToEmail} with subject \"{Subject}\"",
                 toEmail, mailable.Subject);
+
+            throw; // Re-throw exception after logging
         }
         finally
         {

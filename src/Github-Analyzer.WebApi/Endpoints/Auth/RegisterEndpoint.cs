@@ -3,6 +3,7 @@ using GithubAnalyzer.WebApi.Entities.Auth;
 using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Models.Emails;
+using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Config;
 using Microsoft.AspNetCore.Identity;
 
@@ -24,13 +25,16 @@ public static class RegisterEndpoint
                 RegisterRequest request,
                 UserManager<ApplicationUser> userManager,
                 IEmailService mailService, MailConfig mailConfig,
-                IConfiguration configuration) =>
+                IConfiguration configuration, AppDbContext dbContext) =>
             {
                 var email = request.Email.Trim().ToLowerInvariant();
 
                 var existingUser = await userManager.FindByEmailAsync(email);
                 if (existingUser is not null)
                     return ApiResults.Conflict("Email is already registered.");
+
+                // Use a transaction to ensure user creation and email sending are atomic
+                using var transaction = await dbContext.Database.BeginTransactionAsync();
 
                 var user = new ApplicationUser
                 {
@@ -79,6 +83,10 @@ public static class RegisterEndpoint
 
                     await mailService.SendAsync(email, mailable);
                 }
+
+                // Commit transaction after successful 
+                // user creation and email sending
+                await transaction.CommitAsync();
 
                 // Return created response with user info
                 var responseData = new RegisterResponse(

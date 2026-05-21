@@ -1,6 +1,6 @@
-using Asp.Versioning;
-using GithubAnalyzer.WebApi.Models;
 using GithubAnalyzer.WebApi.Extensions;
+using GithubAnalyzer.WebApi.Models;
+using Asp.Versioning;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Auth;
 

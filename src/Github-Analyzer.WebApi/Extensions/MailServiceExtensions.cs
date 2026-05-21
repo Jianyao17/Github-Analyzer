@@ -8,7 +8,7 @@ public static class MailServiceExtensions
 {
     public static IHostApplicationBuilder AddMailService(this IHostApplicationBuilder builder)
     {
-        var mailConfig = builder.Configuration.GetSection("Mail").Get<MailConfig>()
+        var mailConfig = builder.Configuration.GetSection("Mail:Smtp").Get<MailConfig>()
             ?? throw new InvalidOperationException("SMTP settings are missing in configuration.");
 
         // When Aspire injects a Mailpit connection string (e.g. "endpoint=smtp://localhost:1025"),

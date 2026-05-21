@@ -1,7 +1,7 @@
-using Asp.Versioning;
 using GithubAnalyzer.WebApi.Entities.Analysis;
 using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Models;
+using Asp.Versioning;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Project;
 
@@ -22,7 +22,7 @@ public static class Endpoints
         // Project Management
         group.MapCreateProjectEndpoint()
             .WithName("CreateProject")
-            .RequireRateLimiting(RateLimitPolicies.CreateProject)
+            .RequireRateLimiting(RateLimitPolicies.Write)
             .Accepts<CreateProjectRequest>("application/json")
             .Produces<ApiResponse<ProjectResponse>>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)

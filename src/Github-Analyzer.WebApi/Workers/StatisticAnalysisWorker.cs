@@ -1,11 +1,11 @@
-using GithubAnalyzer.WebApi.Config;
 using GithubAnalyzer.WebApi.Database;
+using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Entities;
 using GithubAnalyzer.WebApi.Entities.Analysis;
 using GithubAnalyzer.WebApi.Entities.Repo;
-using GithubAnalyzer.WebApi.Interfaces;
+using GithubAnalyzer.WebApi.Services.Repo;
 using GithubAnalyzer.WebApi.Models;
-using GithubAnalyzer.WebApi.Services;
+using GithubAnalyzer.WebApi.Config;
 
 namespace GithubAnalyzer.WebApi.Workers;
 

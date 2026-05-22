@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace GithubAnalyzer.WebApi.Services;
+namespace GithubAnalyzer.WebApi.Services.Repo;
 
 /// <summary>
 /// Coordinates repository downloads per project in a single instance.

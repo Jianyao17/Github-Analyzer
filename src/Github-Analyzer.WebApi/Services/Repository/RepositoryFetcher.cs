@@ -1,7 +1,7 @@
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Models;
 
-namespace GithubAnalyzer.WebApi.Services;
+namespace GithubAnalyzer.WebApi.Services.Repo;
 
 public sealed class RepositoryFetcher(IEnumerable<IRepositoryProvider> providers) 
     : IRepositoryFetcher

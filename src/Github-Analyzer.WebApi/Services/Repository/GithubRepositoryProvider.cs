@@ -1,12 +1,12 @@
-using GithubAnalyzer.WebApi.Config;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Models;
-using System.IO.Compression;
+using GithubAnalyzer.WebApi.Config;
 using System.Security.Cryptography;
-using System.Text;
+using System.IO.Compression;
 using System.Text.Json;
+using System.Text;
 
-namespace GithubAnalyzer.WebApi.Services;
+namespace GithubAnalyzer.WebApi.Services.Repo;
 
 public sealed class GithubRepositoryProvider : IRepositoryProvider
 {

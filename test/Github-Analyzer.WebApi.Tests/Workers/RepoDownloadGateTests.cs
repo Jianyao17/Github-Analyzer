@@ -1,4 +1,4 @@
-using GithubAnalyzer.WebApi.Services;
+using GithubAnalyzer.WebApi.Services.Repo;
 
 namespace GithubAnalyzer.WebApi.Tests.Workers;
 

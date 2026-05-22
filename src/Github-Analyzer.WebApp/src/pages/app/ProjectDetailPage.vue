@@ -2,11 +2,11 @@
 import { useRoute } from 'vue-router';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useProjectApi } from '../../composables/useProjectApi';
+import StatisticTab from '../../components/project-details-tab/StatisticTab.vue';
+import CodeGraphTab from '../../components/project-details-tab/CodeGraphTab.vue';
 import type { ProjectResponse, ProgressEvent } from '../../composables/useProjectApi';
 import type { StatisticAnalysis } from '../../types/statistic-analysis';
 import type { CodeGraph } from '../../types/code-graph';
-import StatisticTab from '../../components/StatisticTab.vue';
-import CodeGraphTab from '../../components/CodeGraphTab.vue';
 
 const route = useRoute();
 const {

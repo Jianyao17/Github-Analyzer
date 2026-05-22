@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, nextTick } from 'vue';
-import { useCodeGraphD3 } from '../composables/useCodeGraphD3';
-import type { ProgressEvent } from '../composables/useProjectApi';
-import type { CodeGraph } from '../types/code-graph';
+import { useCodeGraphD3 } from '../../composables/useCodeGraphD3';
+import type { ProgressEvent } from '../../composables/useProjectApi';
+import type { CodeGraph } from '../../types/code-graph';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 const props = defineProps<{

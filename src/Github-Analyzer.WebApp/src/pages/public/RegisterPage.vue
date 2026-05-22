@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { useAuthApi } from '../../composables/useAuthApi';
-import AuthLayout from '../../components/_Layouts/AuthLayout.vue';
+import AuthLayout from '../../components/_layouts/AuthLayout.vue';
 import ProviderAuthSection from '../../components/ProviderAuthSection.vue';
 
 const authApi = useAuthApi();

@@ -11,9 +11,9 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    AuthLayout: typeof import('./src/components/_Layouts/AuthLayout.vue')['default']
-    CodeGraphTab: typeof import('./src/components/CodeGraphTab.vue')['default']
-    Dashboard: typeof import('./src/components/_Layouts/Dashboard.vue')['default']
+    AuthLayout: typeof import('./src/components/_layouts/AuthLayout.vue')['default']
+    CodeGraphTab: typeof import('./src/components/project-details-tab/CodeGraphTab.vue')['default']
+    Dashboard: typeof import('./src/components/_layouts/Dashboard.vue')['default']
     GoogleAuthButton: typeof import('./src/components/GoogleAuthButton.vue')['default']
     MainSidebar: typeof import('./src/components/MainSidebar.vue')['default']
     NAlert: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Alert.vue')['default']
@@ -31,7 +31,7 @@ declare module 'vue' {
     ProviderAuthSection: typeof import('./src/components/ProviderAuthSection.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    StatisticTab: typeof import('./src/components/StatisticTab.vue')['default']
+    StatisticTab: typeof import('./src/components/project-details-tab/StatisticTab.vue')['default']
     UserProfileCard: typeof import('./src/components/UserProfileCard.vue')['default']
   }
 }

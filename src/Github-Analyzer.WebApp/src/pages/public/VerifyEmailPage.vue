@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthApi } from '../../composables/useAuthApi';
-import AuthLayout from '../../components/_Layouts/AuthLayout.vue';
+import AuthLayout from '../../components/_layouts/AuthLayout.vue';
 
 const route = useRoute();
 const authApi = useAuthApi();

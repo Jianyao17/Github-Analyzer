@@ -12,6 +12,7 @@ using GithubAnalyzer.WebApi.Workers;
 using GithubAnalyzer.WebApi.Config;
 using Scalar.AspNetCore;
 using Asp.Versioning;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,17 @@ builder.Services.AddOpenApi("v1");
 builder.Services.AddApiProblemDetails(builder.Environment);
 builder.Services.AddCorsPolicies(builder.Configuration);
 builder.AddApiRateLimiting();
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
+        | ForwardedHeaders.XForwardedProto
+        | ForwardedHeaders.XForwardedHost;
+
+    // Railway and other reverse proxies won't be in KnownNetworks/KnownProxies.
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 builder.AddApplicationPersistence();
 builder.AddJwtAuthentication();
@@ -58,6 +70,7 @@ builder.Services.AddHostedService<QueueCleanupWorker>();
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.UseForwardedHeaders();
 app.UseCors(CorsPolicyConfig.Frontend);
 app.UseAuthentication();
 app.UseAuthorization();

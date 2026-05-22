@@ -19,7 +19,31 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<ApplicationUser>().ToTable("Users", "Auth");
+        modelBuilder.Entity<ApplicationUser>(entity =>
+        {
+            entity.ToTable("Users", "Auth");
+
+            entity.Property(x => x.Id)                  .HasColumnOrder(0);
+            entity.Property(x => x.DisplayName)         .HasColumnOrder(1);
+            entity.Property(x => x.AvatarUrl)           .HasColumnOrder(2);
+            entity.Property(x => x.UserName)            .HasColumnOrder(3);
+            entity.Property(x => x.NormalizedUserName)  .HasColumnOrder(4);
+            entity.Property(x => x.Email)               .HasColumnOrder(5);
+            entity.Property(x => x.NormalizedEmail)     .HasColumnOrder(6);
+            entity.Property(x => x.EmailConfirmed)      .HasColumnOrder(7);
+            entity.Property(x => x.PasswordHash)        .HasColumnOrder(8);
+            entity.Property(x => x.SecurityStamp)       .HasColumnOrder(9);
+            entity.Property(x => x.ConcurrencyStamp)    .HasColumnOrder(10);
+            entity.Property(x => x.PhoneNumber)         .HasColumnOrder(11);
+            entity.Property(x => x.PhoneNumberConfirmed).HasColumnOrder(12);
+            entity.Property(x => x.TwoFactorEnabled)    .HasColumnOrder(13);
+            entity.Property(x => x.LockoutEnd)          .HasColumnOrder(14);
+            entity.Property(x => x.LockoutEnabled)      .HasColumnOrder(15);
+            entity.Property(x => x.AccessFailedCount)   .HasColumnOrder(16);
+            entity.Property(x => x.CreatedAtUtc)        .HasColumnOrder(17);
+            entity.Property(x => x.UpdatedAtUtc)        .HasColumnOrder(18);
+        });
+
         modelBuilder.Entity<ApplicationRole>().ToTable("Roles", "Auth");
         modelBuilder.Entity<IdentityUserRole<Guid>>().ToTable("UserRoles", "Auth");
         modelBuilder.Entity<IdentityUserClaim<Guid>>().ToTable("UserClaims", "Auth");

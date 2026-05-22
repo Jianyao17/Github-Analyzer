@@ -78,7 +78,8 @@ export const useProjectApi = (version = '1') =>
   const getCodeGraphAnalysis = async (id: string) => 
   {
     const response = await client.get<ApiResponse<CodeGraphAnalysis>>(
-      `/projects/${id}/analysis/code-graph`
+      `/projects/${id}/analysis/code-graph`,
+      { suppressToast: true }
     );
     const payload = response.data.data;
     // Parse the graphJson automatically for convenience
@@ -131,7 +132,8 @@ export const useProjectApi = (version = '1') =>
     try 
     {
       const response = await client.get<ApiResponse<StatisticAnalysis>>(
-        `/projects/${id}/analysis/statistic`
+        `/projects/${id}/analysis/statistic`,
+        { suppressToast: true }
       );
       return response.data.data;
     }

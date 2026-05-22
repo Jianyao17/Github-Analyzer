@@ -15,6 +15,7 @@ export const baseURL =
  */
 export interface CustomAxiosRequestConfig extends AxiosRequestConfig {
   prefix?: string; // Override full prefix (e.g., '/api/v1')
+  suppressToast?: boolean; // Skip global error toast for expected 404s
 }
 
 /**
@@ -30,16 +31,16 @@ export interface VersionedClient {
   readonly baseURL: string;
 
   /** GET request with automatic version prefix */
-  get<T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
+  get<T = any>(url: string, config?: CustomAxiosRequestConfig): Promise<AxiosResponse<T>>;
 
   /** POST request with automatic version prefix */
-  post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
+  post<T = any>(url: string, data?: any, config?: CustomAxiosRequestConfig): Promise<AxiosResponse<T>>;
 
   /** PUT request with automatic version prefix */
-  put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
+  put<T = any>(url: string, data?: any, config?: CustomAxiosRequestConfig): Promise<AxiosResponse<T>>;
 
   /** DELETE request with automatic version prefix */
-  delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
+  delete<T = any>(url: string, config?: CustomAxiosRequestConfig): Promise<AxiosResponse<T>>;
 }
 
 /**
@@ -94,6 +95,10 @@ class ApiClient {
         return response;
       },
       (error) => {
+        const suppressToast =
+          (error.config as CustomAxiosRequestConfig | undefined)?.suppressToast === true &&
+          error.response?.status === 404;
+
         // Handle different error types
         let errorMessage: string;
 
@@ -123,8 +128,10 @@ class ApiClient {
           errorMessage = error.message || 'Unknown Error';
         }
 
-        // Show toast notification for error
-        showError({ message: errorMessage });
+        if (!suppressToast) {
+          // Show toast notification for error unless the caller explicitly opted out.
+          showError({ message: errorMessage });
+        }
 
         return Promise.reject(new Error(errorMessage));
       },

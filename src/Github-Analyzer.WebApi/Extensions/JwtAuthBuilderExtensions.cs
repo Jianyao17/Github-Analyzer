@@ -67,7 +67,7 @@ public static class JwtAuthBuilderExtensions
                         //       which cannot send the token in the Authorization header.
                         // This allows us to get the token from the query string for the SSE connection
                         if (!string.IsNullOrEmpty(accessToken) && 
-                            path.StartsWithSegments("/api/projects") && 
+                            path.StartsWithSegments("/api/v1") && 
                             path.Value!.EndsWith("/queue/event"))
                         {
                             context.Token = accessToken;
@@ -95,6 +95,7 @@ public static class JwtAuthBuilderExtensions
                     options.SignInScheme = IdentityConstants.ExternalScheme;
                     options.CallbackPath = googleConfig.CallbackPath;
 
+                    // Map additional claims from Google's user info response
                     options.ClaimActions.MapJsonKey("urn:google:picture", "picture");
                     options.ClaimActions.MapJsonKey("urn:google:email_verified", "email_verified");
                 });

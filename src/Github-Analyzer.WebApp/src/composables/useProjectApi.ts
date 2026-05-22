@@ -17,6 +17,8 @@ export interface ProjectResponse {
   branchName: string | null;
   lastCommitHash: string | null;
   createdAtUtc: string;
+  hasStatistic: boolean;
+  hasCodeGraph: boolean;
 }
 
 export interface RepoInfoResponse {

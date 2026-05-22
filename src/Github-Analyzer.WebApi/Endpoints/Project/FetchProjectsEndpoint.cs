@@ -1,7 +1,8 @@
-using System.Security.Claims;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Extensions;
+using GithubAnalyzer.WebApi.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Project;
 
@@ -23,7 +24,7 @@ public static class FetchProjectsEndpoint
             if (!Guid.TryParse(userIdStr, out var userId))
                 return ApiResults.Unauthorized("Invalid user identifier.");
 
-            // Get projects for the user
+            // Get projects for the user, including analysis availability flags
             var projects = await dbContext.Projects
                 .Where(p => p.UserId == userId)
                 .OrderByDescending(p => p.CreatedAtUtc)
@@ -33,7 +34,11 @@ public static class FetchProjectsEndpoint
                     p.RepositoryUrl,
                     p.BranchName,
                     p.LastCommitHash,
-                    p.CreatedAtUtc))
+                    p.CreatedAtUtc,
+                    
+                    // Check if analyses exist for this project to set availability flags
+                    dbContext.StatisticAnalyses.Any(s => s.ProjectId == p.Id),
+                    dbContext.CodeGraphAnalyses.Any(g => g.ProjectId == p.Id)))
                 .ToListAsync(ct);
 
             return ApiResults.Ok(projects);
@@ -55,7 +60,7 @@ public static class FetchProjectsEndpoint
             if (!Guid.TryParse(userIdStr, out var userId))
                 return ApiResults.Unauthorized("Invalid user identifier.");
 
-            // Get project for the user
+            // Get project for the user, including analysis availability flags
             var project = await dbContext.Projects
                 .Where(p => p.Id == projectGuid && p.UserId == userId)
                 .Select(p => new ProjectResponse(
@@ -64,7 +69,11 @@ public static class FetchProjectsEndpoint
                     p.RepositoryUrl,
                     p.BranchName,
                     p.LastCommitHash,
-                    p.CreatedAtUtc))
+                    p.CreatedAtUtc,
+
+                    // Check if analyses exist for this project to set availability flags
+                    dbContext.StatisticAnalyses.Any(s => s.ProjectId == p.Id),
+                    dbContext.CodeGraphAnalyses.Any(g => g.ProjectId == p.Id)))
                 .FirstOrDefaultAsync(ct);
 
             if (project == null)

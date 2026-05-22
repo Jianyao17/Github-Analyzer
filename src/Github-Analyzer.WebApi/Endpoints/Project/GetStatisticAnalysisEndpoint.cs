@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using GithubAnalyzer.WebApi.Database;
-using GithubAnalyzer.WebApi.Entities.Analysis;
 using GithubAnalyzer.WebApi.Extensions;
 using Microsoft.EntityFrameworkCore;
 

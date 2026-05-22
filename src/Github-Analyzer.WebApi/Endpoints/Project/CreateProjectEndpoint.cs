@@ -1,9 +1,9 @@
 using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
 using GithubAnalyzer.WebApi.Database;
+using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Entities.Repo;
 using GithubAnalyzer.WebApi.Extensions;
-using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Models;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Project;
@@ -12,10 +12,6 @@ public sealed record CreateProjectRequest(
     [Required, Url] string RepoUrl,
     [Required, StringLength(100)] string Branch,
     [StringLength(50)] string? CommitHash);
-
-public sealed record ProjectResponse(
-    Guid Id, string RepositoryName, string RepositoryUrl,
-    string? BranchName, string? LastCommitHash, DateTime CreatedAtUtc);
 
 public static class CreateProjectEndpoint
 {
@@ -100,7 +96,9 @@ public static class CreateProjectEndpoint
                 project.RepositoryUrl,
                 project.BranchName,
                 project.LastCommitHash,
-                project.CreatedAtUtc);
+                project.CreatedAtUtc,
+                HasStatistic: false,
+                HasCodeGraph: false);
 
             return ApiResults.Created(
                 $"/api/v1/projects/{project.Id}",

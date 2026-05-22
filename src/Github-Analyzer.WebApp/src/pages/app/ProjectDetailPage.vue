@@ -40,10 +40,27 @@ async function fetchProject()
   try 
   {
     project.value = await getProject(route.params.id as string);
-    subscribeToCodeGraph();
-    subscribeToStatistic();
-    checkExistingCodeGraph();
-    checkExistingStatistic();
+    if (!project.value) return;
+
+    // If statistic data is already available in DB → fetch directly, skip SSE
+    if (project.value.hasStatistic) 
+    {
+      await checkExistingStatistic();
+    } 
+    else 
+    {
+      subscribeToStatistic();
+    }
+
+    // If code graph data is already available in DB → fetch directly, skip SSE
+    if (project.value.hasCodeGraph) 
+    {
+      await checkExistingCodeGraph();
+    } 
+    else 
+    {
+      subscribeToCodeGraph();
+    }
   }
   catch (error) 
   {

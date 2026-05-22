@@ -1,39 +1,55 @@
 <template>
-  <div class="not-found">
-    <h1>404</h1>
-    <h2>Page Not Found</h2>
-    <p>The page you are looking for doesn't exist or has been moved.</p>
-    <RouterLink to="/"
-      class="back-home"
-    >Back to Home</RouterLink>
+  <div class="
+    relative min-h-screen overflow-hidden bg-default
+    dark:bg-default
+  "
+  >
+    <div class="
+      pointer-events-none absolute inset-0
+      bg-linear-to-br from-primary/10 via-transparent to-secondary/10
+    "
+    />
+    <div class="
+      pointer-events-none absolute -left-20 top-16 h-64 w-64 rounded-full
+      bg-primary/20 blur-3xl
+    "
+    />
+    <div class="
+      pointer-events-none absolute -right-24 bottom-10 h-72 w-72 rounded-full
+      bg-secondary/20 blur-3xl
+    "
+    />
+
+    <div class="relative z-10 flex min-h-screen items-center">
+      <div class="mx-auto w-full max-w-3xl px-6 py-16 text-center">
+        <div class="space-y-6">
+          <div class="text-[96px] font-black leading-none text-highlighted sm:text-[140px]">
+            404
+          </div>
+          <div class="space-y-3">
+            <h1 class="text-3xl font-semibold text-highlighted sm:text-4xl">
+              Page not found
+            </h1>
+            <p class="mx-auto max-w-lg text-base text-muted">
+              The page you are looking for does not exist. Check the address or
+              return to the home page.
+            </p>
+          </div>
+          <div class="flex flex-wrap justify-center gap-3">
+            <NButton to="/"
+              color="primary"
+            >
+              Back to Home
+            </NButton>
+            <NButton to="/login"
+              color="neutral"
+              variant="outline"
+            >
+              Go to Login
+            </NButton>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
-
-<style scoped>
-.not-found {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 20px;
-}
-
-h1 { font-size: 80px; font-weight: 800; margin: 0; color: #111827; }
-h2 { font-size: 24px; font-weight: 600; margin: 8px 0; color: #374151; }
-p { color: #6b7280; margin-bottom: 24px; }
-
-.back-home {
-  padding: 10px 20px;
-  background-color: #111827;
-  color: #ffffff;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.dark h1 { color: #f9fafb; }
-.dark h2 { color: #d1d5db; }
-.dark .back-home { background-color: #f9fafb; color: #111827; }
-</style>

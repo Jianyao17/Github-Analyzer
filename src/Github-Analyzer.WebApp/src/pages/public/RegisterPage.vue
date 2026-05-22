@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
-import { useAuthStore } from '../../stores/auth.store';
+import { useAuthApi } from '../../composables/useAuthApi';
 import AuthLayout from '../../components/_Layouts/AuthLayout.vue';
-import GoogleAuthButton from '../../components/GoogleAuthButton.vue';
+import ProviderAuthSection from '../../components/ProviderAuthSection.vue';
 
-const isGoogleAuthEnabled = ref(false);
-
-const auth = useAuthStore();
+const authApi = useAuthApi();
 
 const state = reactive({
   username: '',
@@ -26,7 +24,7 @@ async function onSubmit()
 
   try 
   {
-    await auth.register(state);
+    await authApi.register(state);
     success.value = true;
   }
   catch (err: any) 
@@ -39,10 +37,6 @@ async function onSubmit()
   }
 }
 
-function registerWithGoogle() 
-{
-  console.log('Register with Google clicked');
-}
 </script>
 
 <template>
@@ -68,7 +62,7 @@ function registerWithGoogle()
     <div v-else class="space-y-6">
       <NForm :state="state"
       @submit="onSubmit"
-      class="space-y-6"
+      class="space-y-4"
     >
       <NAlert v-if="error"
         color="error"
@@ -78,7 +72,7 @@ function registerWithGoogle()
       />
 
       <NFormField label="Username"
-        name="username"
+        name="username" required
       >
         <NInput v-model="state.username"
           id="username"
@@ -91,7 +85,7 @@ function registerWithGoogle()
       </NFormField>
 
       <NFormField label="Email Address"
-        name="email"
+        name="email" required
       >
         <NInput v-model="state.email"
           id="email"
@@ -105,7 +99,7 @@ function registerWithGoogle()
       </NFormField>
 
       <NFormField label="Password"
-        name="password"
+        name="password" required
       >
         <NInput v-model="state.password"
           id="password"
@@ -128,17 +122,16 @@ function registerWithGoogle()
       </NFormField>
 
       <NButton type="submit"
-        block
         :loading="loading"
         color="primary"
+        class="mt-2"
+        block
       >
         Create account
       </NButton>
     </NForm>
 
-    <GoogleAuthButton v-if="isGoogleAuthEnabled"
-      @click="registerWithGoogle"
-    />
+    <ProviderAuthSection />
 
     <p class="
       mt-6 text-center text-sm text-gray-500

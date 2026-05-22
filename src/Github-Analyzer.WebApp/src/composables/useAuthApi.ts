@@ -1,4 +1,5 @@
-import apiClient from '../api/axios';
+import apiClient, { baseURL } from '../api/axios';
+import { useAuthStore } from '../stores/auth.store';
 import type { UserProfile } from '../stores/auth.store';
 import type { ApiResponse } from '../types/api-response';
 
@@ -53,11 +54,65 @@ export interface ResetPasswordPayload {
 export const useAuthApi = (version = '1') => 
 {
   const client = apiClient.withVersion(version);
+  const authStore = useAuthStore();
+
+  const getCurrentUser = async () => 
+  {
+    const response = await client.get<ApiResponse<UserProfile>>('/auth/me');
+    return response.data.data;
+  };
+
+  const logout = () => 
+  {
+    authStore.clearAuth();
+  };
+
+  const loadCurrentUser = async () => 
+  {
+    authStore.setLoading(true);
+    try 
+    {
+      const data = await getCurrentUser();
+      authStore.setUser(data);
+      return data;
+    } 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    catch (error) 
+    {
+      logout();
+      return null;
+    } 
+    finally 
+    {
+      authStore.setLoading(false);
+    }
+  };
+
+  const initialize = async () => 
+  {
+    if (authStore.initialized) return;
+    
+    if (authStore.token) 
+    {
+      await loadCurrentUser();
+    }
+    
+    authStore.setInitialized(true);
+  };
 
   const login = async (payload: LoginPayload) => 
   {
     const response = await client.post<ApiResponse<LoginResponse>>('/auth/login', payload);
-    return response.data.data;
+    const data = response.data.data;
+    if (!data?.accessToken)
+    {
+      throw new Error('Missing access token from login response.');
+    }
+    
+    authStore.setToken(data.accessToken);
+
+    await loadCurrentUser();
+    return data.accessToken;
   };
 
   const register = async (payload: RegisterPayload) => 
@@ -66,16 +121,27 @@ export const useAuthApi = (version = '1') =>
     return response.data.data;
   };
 
-  const googleLogin = async (payload: GoogleLoginPayload) => 
+  const isGoogleAuthEnabled = async () => 
   {
-    const response = await client.post<ApiResponse<string>>('/auth/google', payload);
-    return response.data.data;
-  };
+    const response = await client.get<ApiResponse<{ IsEnabled: boolean }>>('/auth/google/isEnabled');
+    const data = response.data.data as unknown;
 
-  const getCurrentUser = async () => 
+    if (typeof data === 'boolean') return data;
+    if (data && typeof data === 'object')
+    {
+      const payload = data as { IsEnabled?: boolean; isEnabled?: boolean };
+      return payload.IsEnabled ?? payload.isEnabled ?? false;
+    }
+
+    return false;
+  }
+
+  const googleAuth = async (returnPath?: string) => 
   {
-    const response = await client.get<ApiResponse<UserProfile>>('/auth/me');
-    return response.data.data;
+    // Redirect the user to the backend endpoint that initiates 
+    // the Google OAuth flow with the optional returnPath as a query parameter.
+    window.location.href = baseURL + '/api/v1/auth/google' + 
+      (returnPath ? `?returnPath=${encodeURIComponent(returnPath)}` : ''); 
   };
 
   const verifyEmail = async (payload: VerifyEmailPayload) => 
@@ -99,7 +165,11 @@ export const useAuthApi = (version = '1') =>
   return {
     login,
     register,
-    googleLogin,
+    logout,
+    initialize,
+    loadCurrentUser,
+    googleAuth,
+    isGoogleAuthEnabled,
     getCurrentUser,
     verifyEmail,
     forgotPassword,

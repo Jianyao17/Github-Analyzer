@@ -155,7 +155,7 @@ onUnmounted(() =>
     `min-h-0` is critical: it prevents the flex child from overflowing its parent
     by allowing it to shrink below its intrinsic min-content height.
   -->
-  <div class="flex h-full min-h-0 w-full flex-col">
+  <div class="flex h-full min-h-0 w-full flex-col p-4 lg:p-6">
 
     <!-- Loading -->
     <div v-if="loading"

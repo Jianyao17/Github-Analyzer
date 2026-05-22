@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, shallowRef, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { computed, shallowRef, watch } from 'vue';
 import type { DropdownMenuItem } from '@nuxt/ui';
 import { useAuthStore } from '../stores/auth.store';
+import { useAuthApi } from '../composables/useAuthApi';
 import { useThemeStore } from '../stores/theme.store';
 
 type UserProfileCardProps = {
@@ -15,16 +16,18 @@ const {
 } = defineProps<UserProfileCardProps>();
 
 const auth = useAuthStore();
+const authApi = useAuthApi();
 const theme = useThemeStore();
 const router = useRouter();
 
+const displayName = computed(() => auth.user?.displayName || auth.user?.username || 'Guest');
 const username = computed(() => auth.user?.username || 'Guest');
 const email = computed(() => auth.user?.email || 'Not logged in');
 const isDark = computed(() => theme.theme === 'dark');
 
 function handleLogout() 
 {
-  auth.logout();
+  authApi.logout();
   router.push('/login');
 }
 
@@ -39,19 +42,21 @@ const menuContentClass = computed(() =>
     ? 'w-64 z-[60]'
     : 'w-(--reka-dropdown-menu-trigger-width) z-[60]'));
 
-watch([username, email, isDark], () => 
+watch([displayName, username, email, isDark], () => 
 {
   menuItems.value = [
     [
       {
-        label: username.value,
+        label: displayName.value,
         description: email.value,
         avatar: {
-          alt: username.value,
-          text: username.value,
+          src: auth.user?.avatarUrl || undefined,
+          icon: auth.user?.avatarUrl ? undefined : 'i-lucide-user',
+          text: displayName.value,
+          alt: displayName.value,
           size: 'lg'
         },
-        type: 'label'
+        type: 'label',
       }
     ],
     [
@@ -112,7 +117,11 @@ watch([username, email, isDark], () =>
               'mx-auto': isCollapsed && !isMobile,
               'ml-0': !isCollapsed || isMobile
             }"
-            :alt="auth.user?.username || 'GitHub Analyzer'"
+            :src="auth.user?.avatarUrl || undefined"
+            :icon="auth.user?.avatarUrl ? undefined : 'i-lucide-user'"
+            :alt="auth.user?.displayName || 
+                  auth.user?.username || 
+                  'GitHub Analyzer'"
             size="lg"
           />
           <div v-if="!isCollapsed || isMobile"
@@ -123,7 +132,7 @@ watch([username, email, isDark], () =>
               dark:text-white
             "
             >
-              {{ auth.user?.username || 'Guest' }}
+              {{ auth.user?.displayName || auth.user?.username || 'Guest' }}
             </p>
             <p class="
               truncate text-start text-[11px] text-gray-500

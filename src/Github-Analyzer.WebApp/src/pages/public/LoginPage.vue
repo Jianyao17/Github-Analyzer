@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { useAuthStore } from '../../stores/auth.store';
+import { useAuthApi } from '../../composables/useAuthApi';
 import AuthLayout from '../../components/_Layouts/AuthLayout.vue';
-import GoogleAuthButton from '../../components/GoogleAuthButton.vue';
+import ProviderAuthSection from '../../components/ProviderAuthSection.vue';
 
-const isGoogleAuthEnabled = ref(false);
-
-const router = useRouter();
 const route = useRoute();
-const auth = useAuthStore();
+const router = useRouter();
+const authApi = useAuthApi();
 
 const state = reactive({
   email: '',
@@ -27,7 +25,7 @@ async function onSubmit()
 
   try 
   {
-    await auth.login(state);
+    await authApi.login(state);
     const redirect = route.query.redirect as string || '/app/analysis/new';
 
     
@@ -43,10 +41,6 @@ async function onSubmit()
   }
 }
 
-function loginWithGoogle() 
-{
-  console.log('Login with Google clicked');
-}
 </script>
 
 <template>
@@ -55,7 +49,7 @@ function loginWithGoogle()
   >
     <NForm :state="state"
       @submit="onSubmit"
-      class="space-y-6"
+      class="space-y-4"
     >
       <NAlert v-if="error"
         color="error"
@@ -115,17 +109,16 @@ function loginWithGoogle()
       </NFormField>
 
       <NButton type="submit"
-        block
         :loading="loading"
         color="primary"
+        class="mt-2"
+        block
       >
         Sign in
       </NButton>
     </NForm>
 
-    <GoogleAuthButton v-if="isGoogleAuthEnabled"
-      @click="loginWithGoogle"
-    />
+    <ProviderAuthSection />
 
     <p class="
       mt-6 text-center text-sm text-gray-500

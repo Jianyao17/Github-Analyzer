@@ -1,103 +1,62 @@
 import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
-import { useAuthApi } from '../composables/useAuthApi';
-import type { LoginPayload, RegisterPayload } from '../composables/useAuthApi';
 import apiClient from '../api/axios';
 
-export interface UserProfile {
+export interface UserProfile 
+{
   id: string
-  email: string
+  displayName: string
+  avatarUrl: string | null
   username: string
+  email: string
 }
 
 export const useAuthStore = defineStore('auth', () => 
 {
   const token = ref<string>(localStorage.getItem('auth_token') || '');
   const user = ref<UserProfile | null>(null);
+
   const initialized = ref(false);
   const loading = ref(false);
-  
-  const authApi = useAuthApi();
 
   // Initialize token in apiClient if it exists from localStorage
-  if (token.value) 
-  {
+  if (token.value) {
     apiClient.setToken(token.value);
   }
 
   const isAuthenticated = computed(() => !!token.value && !!user.value);
-  
+
   const initials = computed(() => 
   {
-    if (!user.value?.username) return 'GA';
-    return user.value.username
+    // Ambil nama pengguna dari displayName atau username, lalu ambil inisialnya
+    const source = user.value?.displayName || user.value?.username || 'GA';
+    return source
       .split(' ')
       .slice(0, 2)
       .map(part => part.charAt(0).toUpperCase())
       .join('');
   });
 
-  function setAuth(accessToken: string) 
+  function setToken(accessToken: string) 
   {
     token.value = accessToken;
     localStorage.setItem('auth_token', accessToken);
     apiClient.setToken(accessToken);
   }
 
-  async function initialize() 
-  {
-    if (initialized.value) return;
-    
-    if (token.value) 
-    {
-      await loadCurrentUser();
-    }
-    
-    initialized.value = true;
+  function setUser(userProfile: UserProfile | null) {
+    user.value = userProfile;
   }
 
-  async function loadCurrentUser() 
-  {
-    loading.value = true;
-    try 
-    {
-      const data = await authApi.getCurrentUser();
-      user.value = data;
-      return data;
-    } 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    catch (error) 
-    {
-      logout();
-      return null;
-    } 
-    finally 
-    {
-      loading.value = false;
-    }
+  function setInitialized(value: boolean) {
+    initialized.value = value;
   }
 
-  async function login(payload: LoginPayload) 
-  {
-    const response = await authApi.login(payload);
-    if (!response?.accessToken)
-    {
-      throw new Error('Missing access token from login response.');
-    }
-    setAuth(response.accessToken);
-    await loadCurrentUser();
-    return response.accessToken;
+  function setLoading(value: boolean) {
+    loading.value = value;
   }
 
-  async function register(payload: RegisterPayload) 
-  {
-    const response = await authApi.register(payload);
-    // Note: Registration no longer logs the user in automatically because email verification is required.
-    // It returns the created user info.
-    return response;
-  }
-
-  function logout() 
+  function clearAuth() 
   {
     token.value = '';
     user.value = null;
@@ -112,11 +71,10 @@ export const useAuthStore = defineStore('auth', () =>
     initialized,
     isAuthenticated,
     initials,
-    initialize,
-    login,
-    register,
-    logout,
-    setAuth,
-    loadCurrentUser
+    setToken,
+    setUser,
+    setInitialized,
+    setLoading,
+    clearAuth
   };
 });

@@ -36,10 +36,9 @@ public static class RegisterEndpoint
                 // Use execution strategy to handle transient failures during user creation and email sending
                 var executionStrategy = dbContext.Database.CreateExecutionStrategy();
 
-                return await executionStrategy
-                    .ExecuteAsync<AppDbContext, IResult>(dbContext, async (
+                return await executionStrategy.ExecuteAsync<AppDbContext, IResult>(dbContext, async (
                         context, _, cancellationToken) =>
-                    {
+                {
                     
                     // Start a transaction to ensure atomicity of user creation and email sending
                     await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
@@ -47,6 +46,7 @@ public static class RegisterEndpoint
                     var user = new ApplicationUser
                     {
                         Id = Guid.NewGuid(),
+                        DisplayName = request.Username.Trim(),
                         UserName = request.Username.Trim(),
                         Email = email
                     };
@@ -107,9 +107,9 @@ public static class RegisterEndpoint
                         "Registration successful. " + (mailConfig.IsEnabled
                             ? "Please check your email to verify your account before logging in."
                             : "You can now log in with your credentials."));
-                    },
-                    verifySucceeded: null,
-                    cancellationToken: default);
+                },
+                verifySucceeded: null,
+                cancellationToken: default);
             });
     }
 }

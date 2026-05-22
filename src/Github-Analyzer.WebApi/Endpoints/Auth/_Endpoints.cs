@@ -37,11 +37,6 @@ public static class Endpoints
             .Produces<ApiResponse<UserProfileResponse>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
-        group.MapGoogleLoginEndpoint()
-            .WithName("GoogleLogin")
-            .Produces(StatusCodes.Status302Found)
-            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
-
         group.MapVerifyEmailEndpoint()
             .WithName("VerifyEmail")
             .RequireRateLimiting(RateLimitPolicies.AccountManagement)
@@ -70,6 +65,15 @@ public static class Endpoints
             .Produces<ApiResponse<string>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesValidationProblem();
+
+        group.MapGoogleAuthIsEnabledEndpoint()
+            .WithName("GoogleAuthIsEnabled")
+            .Produces(StatusCodes.Status200OK);
+            
+        group.MapGoogleLoginEndpoint()
+            .WithName("GoogleLogin")
+            .Produces(StatusCodes.Status302Found)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
         group.MapGoogleCallbackEndpoint()
             .WithName("GoogleCallback")

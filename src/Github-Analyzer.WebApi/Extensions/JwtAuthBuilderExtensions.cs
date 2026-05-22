@@ -2,6 +2,7 @@ using GithubAnalyzer.WebApi.Config;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Entities.Auth;
 using GithubAnalyzer.WebApi.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -80,7 +81,7 @@ public static class JwtAuthBuilderExtensions
                 options.Cookie.Name = "github-analyzer.external";
                 options.Cookie.SameSite = SameSiteMode.Lax;
                 options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-                options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
             });
 
         if (googleConfig.IsEnabled)
@@ -93,6 +94,9 @@ public static class JwtAuthBuilderExtensions
                     options.ClientSecret = googleConfig.ClientSecret;
                     options.SignInScheme = IdentityConstants.ExternalScheme;
                     options.CallbackPath = googleConfig.CallbackPath;
+
+                    options.ClaimActions.MapJsonKey("urn:google:picture", "picture");
+                    options.ClaimActions.MapJsonKey("urn:google:email_verified", "email_verified");
                 });
         }
 

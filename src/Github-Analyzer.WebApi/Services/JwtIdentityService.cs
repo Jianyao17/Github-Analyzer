@@ -1,9 +1,9 @@
+using GithubAnalyzer.WebApi.Entities.Auth;
+using GithubAnalyzer.WebApi.Config;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using GithubAnalyzer.WebApi.Config;
-using GithubAnalyzer.WebApi.Entities.Auth;
-using Microsoft.IdentityModel.Tokens;
 
 namespace GithubAnalyzer.WebApi.Services;
 

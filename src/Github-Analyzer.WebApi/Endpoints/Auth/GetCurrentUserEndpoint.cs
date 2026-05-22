@@ -7,7 +7,8 @@ using Microsoft.AspNetCore.Identity;
 namespace GithubAnalyzer.WebApi.Endpoints.Auth;
 
 public sealed record UserProfileResponse(
-    Guid Id, string Email, string Username);
+    Guid Id, string DisplayName, string? AvatarUrl, 
+    string Username, string Email);
 
 public static class GetCurrentUserEndpoint
 {
@@ -30,9 +31,11 @@ public static class GetCurrentUserEndpoint
                 
                 return ApiResults.Ok(
                     new UserProfileResponse(
-                        user.Id,
-                        user.Email ?? string.Empty,
-                        user.UserName ?? string.Empty));
+                        user.Id, 
+                        user.DisplayName, 
+                        user.AvatarUrl, 
+                        user.UserName!, 
+                        user.Email!));
             });
     }
 }

@@ -5,7 +5,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace GithubAnalyzer.WebApi.Services;
+namespace GithubAnalyzer.WebApi.Services.Auth;
 
 public sealed class JwtIdentityService(JwtConfig config)
 {

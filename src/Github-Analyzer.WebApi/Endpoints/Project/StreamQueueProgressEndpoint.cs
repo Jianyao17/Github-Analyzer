@@ -1,42 +1,39 @@
-using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
+using GithubAnalyzer.WebApi.Services.Auth;
+using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Project;
+
+public sealed record StreamProgressRequest(
+    [property: FromRoute(Name = "projectGuid")]  Guid ProjectGuid,
+    [property: FromQuery(Name = "job_type")]     string JobType,
+    [property: FromQuery(Name = "stream_token")] string StreamToken);
 
 public static class StreamQueueProgressEndpoint
 {
     public static RouteHandlerBuilder MapStreamQueueProgressEndpoint(this RouteGroupBuilder group)
     {
+        // GET /api/v1/projects/{projectGuid}/queue/event?job_type=analysis&stream_token=abc123
         return group.MapGet("/{projectGuid:guid}/queue/event", async (
-            Guid projectGuid, string job_type, ClaimsPrincipal claimsPrincipal,
-            AppDbContext dbContext, IQueueProgressNotifier progressNotifier,
+            [AsParameters] StreamProgressRequest request,
+            StreamTokenService streamTokenService,
+            IQueueProgressNotifier progressNotifier,
             HttpContext context, CancellationToken ct) =>
         {
-            // Get User ID from claims
-            var userIdStr = claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? 
-                            claimsPrincipal.FindFirstValue("sub");
-            
-            // Try to parse user ID
-            if (!Guid.TryParse(userIdStr, out var userId))
-                return ApiResults.Unauthorized("Invalid user identifier.");
-
-            var projectExists = await dbContext.Projects
-                .AnyAsync(p => p.Id == projectGuid && p.UserId == userId, ct);
-
-            if (!projectExists)
-                return ApiResults.NotFound("Project not found or access denied.");
+            // Validate stream token to ensure the client is authorized to receive events for this project
+            var payload = streamTokenService.ValidateToken(request.StreamToken, request.ProjectGuid);
+            if (payload is null)
+                return ApiResults.Unauthorized("Stream token invalid, expired, or does not match project.");
 
             // Set headers for Server-Sent Events (SSE)
             context.Response.Headers.Append("Content-Type", "text/event-stream");
             context.Response.Headers.Append("Cache-Control", "no-cache");
             context.Response.Headers.Append("Connection", "keep-alive");
 
-            // Get the progress stream for the job type
-            var stream = progressNotifier.SubscribeAsync(projectGuid, job_type, ct);
+            // Subscribe to progress events for the specified project and job type
+            var stream = progressNotifier.SubscribeAsync(request.ProjectGuid, request.JobType, ct);
 
             try
             {
@@ -50,10 +47,11 @@ public static class StreamQueueProgressEndpoint
             }
             catch (OperationCanceledException)
             {
-                // Client disconnected
+                // Client disconnected — normal
             }
 
-            return Results.Empty; // Response has already started
-        });
+            return Results.Empty; 
+        })
+        .AllowAnonymous(); // Auth is handled via stream token, not Authorization header
     }
 }

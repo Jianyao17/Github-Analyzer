@@ -1,5 +1,5 @@
 using GithubAnalyzer.WebApi.Interfaces;
-using GithubAnalyzer.WebApi.Models;
+using GithubAnalyzer.WebApi.Models.Analysis;
 
 namespace GithubAnalyzer.WebApi.Services;
 

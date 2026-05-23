@@ -12,6 +12,7 @@ const route = useRoute();
 const {
   fetchProject: getProject,
   streamQueueProgress,
+  issueStreamToken,
   getCodeGraphAnalysis,
   getStatisticAnalysis
 } = useProjectApi();
@@ -42,24 +43,33 @@ async function fetchProject()
     project.value = await getProject(route.params.id as string);
     if (!project.value) return;
 
-    // If statistic data is already available in DB → fetch directly, skip SSE
+    // Fetch 1 shared token jika ada minimal 1 analisis yang belum selesai.
+    // Satu token berlaku untuk kedua stream (CodeGraph & Statistic) pada project yang sama.
+    let sharedStreamToken: string | undefined;
+    if (!project.value.hasStatistic || !project.value.hasCodeGraph)
+    {
+      const { token } = await issueStreamToken(project.value.id);
+      sharedStreamToken = token;
+    }
+
+    // Statistic: fetch langsung dari DB jika sudah ada, subscribe SSE jika belum
     if (project.value.hasStatistic) 
     {
       await checkExistingStatistic();
     } 
     else 
     {
-      subscribeToStatistic();
+      await subscribeToStatistic(sharedStreamToken);
     }
 
-    // If code graph data is already available in DB → fetch directly, skip SSE
+    // Code Graph: fetch langsung dari DB jika sudah ada, subscribe SSE jika belum
     if (project.value.hasCodeGraph) 
     {
       await checkExistingCodeGraph();
     } 
     else 
     {
-      subscribeToCodeGraph();
+      await subscribeToCodeGraph(sharedStreamToken);
     }
   }
   catch (error) 
@@ -86,12 +96,12 @@ async function checkExistingCodeGraph()
   catch { /* not completed yet */ }
 }
 
-function subscribeToCodeGraph() 
+async function subscribeToCodeGraph(token?: string) 
 {
   if (!project.value) return;
   try 
   {
-    const unsub = streamQueueProgress(
+    const unsub = await streamQueueProgress(
       project.value.id, 'CodeGraph',
       async (event) => 
       {
@@ -103,10 +113,13 @@ function subscribeToCodeGraph()
           await checkExistingCodeGraph();
         }
       },
-      () => 
       {
-        if (!codeGraphProgress.value || codeGraphProgress.value.status !== 'Completed')
-          checkExistingCodeGraph();
+        onComplete: () => 
+        {
+          if (!codeGraphProgress.value || codeGraphProgress.value.status !== 'Completed')
+            checkExistingCodeGraph();
+        },
+        token
       }
     );
     if (typeof unsub === 'function') unsubCodeGraph = unsub;
@@ -128,12 +141,12 @@ async function checkExistingStatistic()
   catch { /* not completed yet */ }
 }
 
-function subscribeToStatistic() 
+async function subscribeToStatistic(token?: string) 
 {
   if (!project.value) return;
   try 
   {
-    const unsub = streamQueueProgress(
+    const unsub = await streamQueueProgress(
       project.value.id, 'Statistic',
       async (event) => 
       {
@@ -144,10 +157,13 @@ function subscribeToStatistic()
           await checkExistingStatistic();
         }
       },
-      () => 
       {
-        if (!statisticProgress.value || statisticProgress.value.status !== 'Completed')
-          checkExistingStatistic();
+        onComplete: () => 
+        {
+          if (!statisticProgress.value || statisticProgress.value.status !== 'Completed')
+            checkExistingStatistic();
+        },
+        token
       }
     );
     if (typeof unsub === 'function') unsubStatistic = unsub;

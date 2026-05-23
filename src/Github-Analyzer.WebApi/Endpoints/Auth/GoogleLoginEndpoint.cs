@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Identity;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Entities.Auth;
+using GithubAnalyzer.WebApi.Services.Auth;
 using GithubAnalyzer.WebApi.Extensions;
-using GithubAnalyzer.WebApi.Services;
 using GithubAnalyzer.WebApi.Config;
 using System.Security.Claims;
 

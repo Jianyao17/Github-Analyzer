@@ -2,8 +2,9 @@ using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Interfaces;
-using GithubAnalyzer.WebApi.Entities.Repo;
 using GithubAnalyzer.WebApi.Extensions;
+using GithubAnalyzer.WebApi.Entities.Repo;
+using GithubAnalyzer.WebApi.Models.Analysis;
 using GithubAnalyzer.WebApi.Models;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Project;

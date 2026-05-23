@@ -6,13 +6,14 @@ using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Endpoints.Auth;
 using GithubAnalyzer.WebApi.Endpoints.Project;
 using GithubAnalyzer.WebApi.Endpoints.Testing;
+using GithubAnalyzer.WebApi.Services.Auth;
 using GithubAnalyzer.WebApi.Services.Repo;
 using GithubAnalyzer.WebApi.Services;
-using GithubAnalyzer.WebApi.Workers;
 using GithubAnalyzer.WebApi.Config;
+using GithubAnalyzer.WebApi.Workers;
+using Microsoft.AspNetCore.HttpOverrides;
 using Scalar.AspNetCore;
 using Asp.Versioning;
-using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,12 +27,8 @@ builder.Services.AddApiVersioning(options =>
     options.ApiVersionReader = new UrlSegmentApiVersionReader();
 });
 
-// OpenAPI documents per version
-builder.Services.AddOpenApi("v1");
-builder.Services.AddApiProblemDetails(builder.Environment);
-builder.Services.AddCorsPolicies(builder.Configuration);
-builder.AddApiRateLimiting();
-
+// Configure forwarded headers to correctly handle client IP 
+// and protocol when behind reverse proxies (e.g., Railway)
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
@@ -43,8 +40,21 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
+// OpenAPI documents — one per API version.
+// Each document strips the version prefix from paths and moves it into servers[].url,
+// so Scalar displays clean paths like /projects/... instead of /api/v1/projects/...
+builder.Services.AddOpenApi("v1", options =>
+{
+    options.AddVersionedServerTransformer("/api/v1");
+    options.AddProblemDetailsExtensionsSchema();
+});
+
+builder.Services.AddApiProblemDetails(builder.Environment);
+builder.Services.AddCorsPolicies(builder.Configuration);
+
 builder.AddApplicationPersistence();
 builder.AddJwtAuthentication();
+builder.AddApiRateLimiting();
 builder.AddAnalysisConfig();
 builder.AddMailService();
 
@@ -60,6 +70,9 @@ builder.Services.AddScoped<IFileStatisticsService, FileStatisticsService>();
 
 // Queue progress notifier for real-time updates to clients
 builder.Services.AddSingleton<IQueueProgressNotifier, QueueProgressNotifier>();
+
+// Stateless ephemeral stream token service (5-minute tokens for SSE auth)
+builder.Services.AddSingleton<StreamTokenService>();
 
 // Workers for background processing
 builder.Services.AddHostedService<CodeGraphAnalysisWorker>();
@@ -90,13 +103,15 @@ if (app.Environment.IsDevelopment() ||
     // OpenAPI JSON: /openapi/v1.json
     app.MapOpenApi("/openapi/{documentName}.json");
 
-    // Scalar UI at /scalar/v1 — endpoint prefix must be a literal path (no {documentName} placeholder)
-    app.MapScalarApiReference("/scalar/v1", options =>
+    // Scalar UI — single page with a version dropdown to switch between v1 and v2
+    app.MapScalarApiReference("/scalar", options =>
     {
         options.Title = "Github-Analyzer Web API";
         options.Theme = ScalarTheme.Saturn;
         options.DefaultOpenAllTags = false;
-        options.OpenApiRoutePattern = "/openapi/v1.json";
+
+        // Registers both OpenAPI documents; Scalar renders a dropdown to switch between them
+        options.AddDocument("v1", "v1 — Stable",    "/openapi/v1.json", isDefault: true);
     });
 
     // Apply pending migrations on startup in development mode

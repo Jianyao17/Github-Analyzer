@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.IO.Compression;
 using System.Text.Json;
 using System.Text;
+using GithubAnalyzer.WebApi.Models.Analysis;
 
 namespace GithubAnalyzer.WebApi.Services.Repo;
 

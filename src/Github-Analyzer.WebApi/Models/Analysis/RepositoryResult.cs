@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.WebApi.Models;
+namespace GithubAnalyzer.WebApi.Models.Analysis;
 
 public record RepositoryResult(
     string ExtractPath,

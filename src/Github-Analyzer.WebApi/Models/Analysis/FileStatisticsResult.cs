@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.WebApi.Models;
+namespace GithubAnalyzer.WebApi.Models.Analysis;
 
 /// <summary>
 /// Result of a local filesystem statistics analysis for a repository directory.

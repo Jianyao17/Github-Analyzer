@@ -1,7 +1,6 @@
 import type { CodeGraph, CodeGraphAnalysis } from '../types/code-graph';
 import type { StatisticAnalysis } from '../types/statistic-analysis';
 import type { ApiResponse } from '../types/api-response';
-import { useAuthStore } from '../stores/auth.store';
 import apiClient from '../api/axios';
 
 export interface CreateProjectRequest {
@@ -33,6 +32,25 @@ export interface ProgressEvent {
   status: string;
   progress: number;
   message: string;
+}
+
+export interface StreamTokenResponse {
+  token: string;
+  expiresAt: string; // ISO 8601 UTC
+}
+
+/**
+ * Options untuk streamQueueProgress.
+ */
+export interface StreamProgressOptions {
+  onComplete?: () => void;
+  onError?: (err: any) => void;
+  /**
+   * Token yang sudah di-fetch sebelumnya via issueStreamToken().
+   * Jika tidak disediakan, token akan di-fetch otomatis (1 request per stream).
+   * Gunakan ini untuk berbagi 1 token antara beberapa stream dalam 1 project.
+   */
+  token?: string;
 }
 
 /**
@@ -145,32 +163,60 @@ export const useProjectApi = (version = '1') =>
     }
   };
 
-  const streamQueueProgress = (
-    projectId: string, 
-    jobType: string, 
-    onUpdate: (event: ProgressEvent) => void,
-    onComplete?: () => void,
-    onError?: (err: any) => void
-  ) => 
+  /**
+   * Menerbitkan ephemeral stream token (berlaku 5 menit) untuk mengakses
+   * SSE queue progress endpoint. Menggunakan JWT standar via axios interceptor.
+   */
+  const issueStreamToken = async (projectId: string): Promise<StreamTokenResponse> =>
   {
-    const authStore = useAuthStore();
-    const token = authStore.token;
-    
-    // Construct the SSE URL manually — EventSource doesn't go through axios.
-    // Uses client.baseURL and client.version from the VersionedClient.
-    const url = `${client.baseURL}/api/v${client.version}/projects/${projectId}/queue/event?job_type=${jobType}&token=${token}`;
-    
-    const eventSource = new EventSource(url);
-    
-    eventSource.onmessage = (e) => 
+    const response = await client.post<ApiResponse<StreamTokenResponse>>(
+      `/projects/${projectId}/queue/stream-token`
+    );
+    if (!response.data.data)
     {
-      try 
+      throw new Error('Failed to issue stream token.');
+    }
+    return response.data.data;
+  };
+
+  /**
+   * Membuka koneksi SSE untuk memonitor progress queue job.
+   *
+   * Jika `options.token` tidak disediakan, token baru akan di-fetch otomatis
+   * via `issueStreamToken()`. Untuk berbagi 1 token antara beberapa stream
+   * dalam 1 project, fetch token terlebih dahulu lalu teruskan via `options.token`.
+   *
+   * @returns Promise yang resolve ke cleanup function untuk menutup EventSource.
+   */
+  const streamQueueProgress = async (
+    projectId: string,
+    jobType: string,
+    onUpdate: (event: ProgressEvent) => void,
+    options?: StreamProgressOptions
+  ): Promise<() => void> =>
+  {
+    const { onComplete, onError, token: preIssuedToken } = options ?? {};
+
+    // Gunakan token yang sudah ada, atau fetch token baru jika tidak disediakan
+    const streamToken = preIssuedToken ?? (await issueStreamToken(projectId)).token;
+
+    // Buka SSE connection dengan stream token sebagai query param
+    // EventSource tidak bisa mengirim Authorization header, sehingga
+    // ephemeral token (scope sempit, 5 menit) digunakan sebagai pengganti.
+    const url = `${client.baseURL}/api/v${client.version}/projects/${projectId}/queue/event`
+      + `?job_type=${encodeURIComponent(jobType)}&stream_token=${encodeURIComponent(streamToken)}`;
+
+    const eventSource = new EventSource(url);
+
+    eventSource.onmessage = (e) =>
+    {
+      try
       {
         const raw = JSON.parse(e.data);
-        
+
         // Memetakan tipe data C# (PascalCase, Status Enum int) ke Typescript interface (camelCase)
         let statusStr = raw.Status ?? raw.status;
-        if (typeof raw.Status === 'number') 
+        if (typeof raw.Status === 'number')
         {
           // Asumsi pemetaan Status Enum .NET:
           if (raw.Status === 3) statusStr = 'Completed';
@@ -178,7 +224,7 @@ export const useProjectApi = (version = '1') =>
           else if (raw.Progress >= 100) statusStr = 'Completed';
           else statusStr = 'Processing';
         }
-        else if (raw.Progress >= 100) 
+        else if (raw.Progress >= 100)
         {
           statusStr = 'Completed';
         }
@@ -191,25 +237,25 @@ export const useProjectApi = (version = '1') =>
         };
 
         onUpdate(data);
-        if (data.status === 'Completed' || data.status === 'Failed') 
+        if (data.status === 'Completed' || data.status === 'Failed')
         {
           eventSource.close();
           if (onComplete) onComplete();
         }
       }
-      catch (err) 
+      catch (err)
       {
         console.error('Failed to parse SSE data', err);
       }
     };
 
-    eventSource.onerror = (err) => 
+    eventSource.onerror = (err) =>
     {
       eventSource.close();
       if (onError) onError(err);
     };
 
-    return () => 
+    return () =>
     {
       eventSource.close();
     };
@@ -222,6 +268,7 @@ export const useProjectApi = (version = '1') =>
     fetchRepoInfo,
     getCodeGraphAnalysis,
     getStatisticAnalysis,
+    issueStreamToken,
     streamQueueProgress
   };
 };

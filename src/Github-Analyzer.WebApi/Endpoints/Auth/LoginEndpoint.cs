@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using GithubAnalyzer.WebApi.Entities.Auth;
+using GithubAnalyzer.WebApi.Services.Auth;
 using GithubAnalyzer.WebApi.Extensions;
-using GithubAnalyzer.WebApi.Services;
 using Microsoft.AspNetCore.Identity;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Auth;

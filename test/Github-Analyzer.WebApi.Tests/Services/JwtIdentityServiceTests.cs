@@ -4,6 +4,7 @@ using GithubAnalyzer.WebApi.Entities.Auth;
 using GithubAnalyzer.WebApi.Services;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using GithubAnalyzer.WebApi.Services.Auth;
 
 namespace GithubAnalyzer.WebApi.Tests.Services;
 

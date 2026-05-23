@@ -1,4 +1,4 @@
-using GithubAnalyzer.WebApi.Models;
+using GithubAnalyzer.WebApi.Models.Analysis;
 
 namespace GithubAnalyzer.WebApi.Interfaces;
 

@@ -1,7 +1,7 @@
 using GithubAnalyzer.WebApi.Config;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Entities.Auth;
-using GithubAnalyzer.WebApi.Services;
+using GithubAnalyzer.WebApi.Services.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -55,25 +55,6 @@ public static class JwtAuthBuilderExtensions
                     IssuerSigningKey = signingKey,
                     RequireExpirationTime = true,
                     ClockSkew = TimeSpan.FromSeconds(30)
-                };
-                options.Events = new JwtBearerEvents
-                {
-                    OnMessageReceived = context =>
-                    {
-                        var accessToken = context.Request.Query["token"];
-                        var path = context.HttpContext.Request.Path;
-
-                        // TODO: This is a bit of a hack to allow JWT authentication for the SSE endpoint,
-                        //       which cannot send the token in the Authorization header.
-                        // This allows us to get the token from the query string for the SSE connection
-                        if (!string.IsNullOrEmpty(accessToken) && 
-                            path.StartsWithSegments("/api/v1") && 
-                            path.Value!.EndsWith("/queue/event"))
-                        {
-                            context.Token = accessToken;
-                        }
-                        return Task.CompletedTask;
-                    }
                 };
             })
             .AddCookie(IdentityConstants.ExternalScheme, options =>

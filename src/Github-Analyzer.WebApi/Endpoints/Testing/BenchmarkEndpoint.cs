@@ -4,9 +4,9 @@ using GithubAnalyzer.Analysis.Domain.Reader;
 using GithubAnalyzer.Analysis.Domain.TreeSitter;
 using GithubAnalyzer.Analysis.Interface;
 using GithubAnalyzer.WebApi.Interfaces;
-using GithubAnalyzer.WebApi.Config;
 using GithubAnalyzer.WebApi.Extensions;
-using GithubAnalyzer.WebApi.Models;
+using GithubAnalyzer.WebApi.Models.Analysis;
+using GithubAnalyzer.WebApi.Config;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Testing;
 

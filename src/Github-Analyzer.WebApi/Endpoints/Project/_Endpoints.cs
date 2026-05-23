@@ -42,10 +42,15 @@ public static class Endpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         // Queues and Status
+        group.MapIssueStreamTokenEndpoint()
+            .WithName("IssueStreamToken")
+            .Produces<ApiResponse<StreamTokenResponse>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
+
         group.MapStreamQueueProgressEndpoint()
             .WithName("StreamQueueProgress")
             .Produces(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         // Analysis Results

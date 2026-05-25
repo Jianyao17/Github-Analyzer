@@ -1,6 +1,8 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using GithubAnalyzer.WebApi.Entities.Analysis;
 using GithubAnalyzer.WebApi.Entities.Auth;
 using GithubAnalyzer.WebApi.Entities.Cache;
@@ -90,13 +92,21 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.HasIndex(sa => sa.GeneratedAtUtc);
         });
 
+        // ValueConverter allows in-memory provider (used in tests) to round-trip
+        // JsonDocument as a string. Npgsql ignores this converter for jsonb columns
+        // and uses its own native mapping instead.
+        var jsonDocumentConverter = new ValueConverter<JsonDocument, string>(
+            doc => doc.RootElement.GetRawText(),
+            raw => JsonDocument.Parse(raw));
+
         modelBuilder.Entity<CodeGraphAnalysis>(entity =>
         {
             entity.HasIndex(cg => cg.ProjectId);
             entity.HasIndex(cg => cg.CommitHash);
             entity.HasIndex(cg => cg.GeneratedAtUtc);
-            
+
             entity.Property(cg => cg.GraphJson)
+                .HasConversion(jsonDocumentConverter)
                 .HasColumnType("jsonb");
         });
 
@@ -107,6 +117,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.HasIndex(c => c.CommitHash);
 
             entity.Property(c => c.GraphJson)
+                .HasConversion(jsonDocumentConverter)
                 .HasColumnType("jsonb");
         });
 

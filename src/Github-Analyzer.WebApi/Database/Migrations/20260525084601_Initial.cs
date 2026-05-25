@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -33,7 +32,7 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
                     Branch = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     CommitHash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     GeneratedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    GraphJson = table.Column<JsonDocument>(type: "jsonb", nullable: false),
+                    GraphJson = table.Column<string>(type: "jsonb", nullable: false),
                     NodeCount = table.Column<int>(type: "integer", nullable: false),
                     EdgeCount = table.Column<int>(type: "integer", nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -215,7 +214,7 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
                     Branch = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     CommitHash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     GeneratedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    GraphJson = table.Column<JsonDocument>(type: "jsonb", nullable: false),
+                    GraphJson = table.Column<string>(type: "jsonb", nullable: false),
                     NodeCount = table.Column<int>(type: "integer", nullable: false),
                     EdgeCount = table.Column<int>(type: "integer", nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),

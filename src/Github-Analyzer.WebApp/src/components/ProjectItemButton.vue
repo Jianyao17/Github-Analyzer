@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ProjectResponse } from '../composables/useProjectApi';
+import type { ProjectResponse } from '../types/project';
 
 type ProjectItemButtonProps = {
   project: ProjectResponse

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
 import { computed, onMounted, ref, watch } from 'vue';
-import type { ProjectResponse } from '../composables/useProjectApi';
+import type { ProjectResponse } from '../types/project';
 import { useProjectApi } from '../composables/useProjectApi';
 import ProjectItemButton from './ProjectItemButton.vue';
 import UserProfileCard from './UserProfileCard.vue';

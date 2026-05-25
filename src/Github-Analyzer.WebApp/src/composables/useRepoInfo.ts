@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue';
-import type { FetchRepoInfoResponse, RepoBranch, RepoCommit } from '../types/repo-info';
-import type { ApiResponse } from '../types/api-response';
-import apiClient from '../api/axios';
+import type { ApiVersion } from '../types/api';
+import type { RepoBranch, RepoCommit } from '../types/repo-info';
+import { getRepoBranchesApi, getRepoCommitsApi } from '../api/repo-info.api';
 
 /**
  * Composable untuk fetch info branch dan commit dari GitHub repository.
@@ -13,10 +13,8 @@ import apiClient from '../api/axios';
  * const { fetchBranches, fetchCommits } = useRepoInfo()     // menggunakan v1
  * const { fetchBranches }               = useRepoInfo('2')  // menggunakan v2
  */
-export const useRepoInfo = (version = '1') => 
+export const useRepoInfo = (version: ApiVersion = '1') => 
 {
-  const client = apiClient.withVersion(version);
-
   const branches = ref<RepoBranch[]>([]);
   const commits = ref<RepoCommit[]>([]);
 
@@ -44,10 +42,8 @@ export const useRepoInfo = (version = '1') =>
 
     try 
     {
-      const response = await client.get<ApiResponse<FetchRepoInfoResponse>>(
-        `/projects/github/info?repoUrl=${encodeURIComponent(repoUrl)}`
-      );
-      branches.value = response.data.data?.branches ?? [];
+      const response = await getRepoBranchesApi(repoUrl, version);
+      branches.value = response.data?.branches ?? [];
     }
     catch (err: any) 
     {
@@ -73,10 +69,8 @@ export const useRepoInfo = (version = '1') =>
 
     try 
     {
-      const response = await client.get<ApiResponse<FetchRepoInfoResponse>>(
-        `/projects/github/info?repoUrl=${encodeURIComponent(repoUrl)}&branch=${encodeURIComponent(branchName)}`
-      );
-      commits.value = response.data.data?.commits ?? [];
+      const response = await getRepoCommitsApi(repoUrl, branchName, version);
+      commits.value = response.data?.commits ?? [];
     }
     catch (err: any) 
     {

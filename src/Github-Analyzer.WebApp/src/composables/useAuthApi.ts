@@ -1,47 +1,25 @@
-import apiClient, { baseURL } from '../api/axios';
 import { useAuthStore } from '../stores/auth.store';
-import type { UserProfile } from '../stores/auth.store';
-import type { ApiResponse } from '../types/api-response';
+import type { ApiVersion } from '../types/api';
+import type {
+  LoginPayload,
+  RegisterPayload,
+  LoginResponse,
+  RegisterResponse,
+  VerifyEmailPayload,
+  ForgotPasswordPayload,
+  ResetPasswordPayload,
+} from '../types/auth';
 
-export interface LoginPayload {
-  email?: string;
-  password?: string;
-}
-
-export interface RegisterPayload {
-  email?: string;
-  password?: string;
-  username?: string;
-}
-
-export interface GoogleLoginPayload {
-  idToken: string;
-}
-
-export interface LoginResponse {
-  accessToken: string;
-}
-
-export interface RegisterResponse {
-  id: string;
-  email: string;
-  username: string;
-}
-
-export interface VerifyEmailPayload {
-  userId: string;
-  token: string;
-}
-
-export interface ForgotPasswordPayload {
-  email: string;
-}
-
-export interface ResetPasswordPayload {
-  email: string;
-  token: string;
-  newPassword: string;
-}
+import {
+  loginApi,
+  registerApi,
+  verifyEmailApi,
+  getCurrentUserApi,
+  isGoogleAuthEnabledApi,
+  getGoogleAuthRedirectUrl,
+  forgotPasswordApi,
+  resetPasswordApi,
+} from '../api/auth.api';
 
 /**
  * Composable untuk Auth API.
@@ -51,15 +29,14 @@ export interface ResetPasswordPayload {
  * const { login, register } = useAuthApi()      // menggunakan v1
  * const { login }           = useAuthApi('2')    // menggunakan v2
  */
-export const useAuthApi = (version = '1') => 
+export const useAuthApi = (version: ApiVersion = '1') => 
 {
-  const client = apiClient.withVersion(version);
+  // Version is forwarded to API helpers below.
   const authStore = useAuthStore();
 
-  const getCurrentUser = async () => 
-  {
-    const response = await client.get<ApiResponse<UserProfile>>('/auth/me');
-    return response.data.data;
+  const getCurrentUser = async () => {
+    const response = await getCurrentUserApi(version);
+    return response.data;
   };
 
   const logout = () => 
@@ -102,8 +79,8 @@ export const useAuthApi = (version = '1') =>
 
   const login = async (payload: LoginPayload) => 
   {
-    const response = await client.post<ApiResponse<LoginResponse>>('/auth/login', payload);
-    const data = response.data.data;
+    const response = await loginApi(payload, version);
+    const data = response.data as LoginResponse | undefined;
     if (!data?.accessToken)
     {
       throw new Error('Missing access token from login response.');
@@ -117,14 +94,14 @@ export const useAuthApi = (version = '1') =>
 
   const register = async (payload: RegisterPayload) => 
   {
-    const response = await client.post<ApiResponse<RegisterResponse>>('/auth/register', payload);
-    return response.data.data;
+    const response = await registerApi(payload, version);
+    return response.data as RegisterResponse;
   };
 
   const isGoogleAuthEnabled = async () => 
   {
-    const response = await client.get<ApiResponse<{ IsEnabled: boolean }>>('/auth/google/isEnabled');
-    const data = response.data.data as unknown;
+    const response = await isGoogleAuthEnabledApi(version);
+    const data = response.data as unknown;
 
     if (typeof data === 'boolean') return data;
     if (data && typeof data === 'object')
@@ -140,35 +117,34 @@ export const useAuthApi = (version = '1') =>
   {
     // Redirect the user to the backend endpoint that initiates 
     // the Google OAuth flow with the optional returnPath as a query parameter.
-    window.location.href = baseURL + '/api/v1/auth/google' + 
-      (returnPath ? `?returnPath=${encodeURIComponent(returnPath)}` : ''); 
+    window.location.href = getGoogleAuthRedirectUrl(returnPath, version);
   };
 
   const verifyEmail = async (payload: VerifyEmailPayload) => 
   {
-    const response = await client.post<ApiResponse<string>>('/auth/verify-email', payload);
-    return response.data.data;
+    const response = await verifyEmailApi(payload, version);
+    return response.data;
   };
 
   const forgotPassword = async (payload: ForgotPasswordPayload) => 
   {
-    const response = await client.post<ApiResponse<string>>('/auth/forgot-password', payload);
-    return response.data.data;
+    const response = await forgotPasswordApi(payload, version);
+    return response.data;
   };
 
   const resetPassword = async (payload: ResetPasswordPayload) => 
   {
-    const response = await client.post<ApiResponse<string>>('/auth/reset-password', payload);
-    return response.data.data;
+    const response = await resetPasswordApi(payload, version);
+    return response.data;
   };
 
   return {
     login,
     register,
     logout,
+    googleAuth,
     initialize,
     loadCurrentUser,
-    googleAuth,
     isGoogleAuthEnabled,
     getCurrentUser,
     verifyEmail,

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { ApiVersion } from '../types/api';
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { showError, showSuccess } from '../lib/toast';
 
@@ -13,7 +14,8 @@ export const baseURL =
 /**
  * Extended AxiosRequestConfig with custom prefix option
  */
-export interface CustomAxiosRequestConfig extends AxiosRequestConfig {
+export interface ApiRequestConfig extends AxiosRequestConfig 
+{
   prefix?: string; // Override full prefix (e.g., '/api/v1')
   suppressToast?: boolean; // Skip global error toast for expected 404s
 }
@@ -23,120 +25,161 @@ export interface CustomAxiosRequestConfig extends AxiosRequestConfig {
  * Returned by `apiClient.withVersion()` and used internally by composables.
  * All requests through this client are automatically prefixed with `/api/v{version}`.
  */
-export interface VersionedClient {
+export interface VersionedClient 
+{
   /** The locked API version string, e.g. '1', '2' */
-  readonly version: string;
+  readonly version: ApiVersion;
 
   /** The base URL of the API server */
   readonly baseURL: string;
 
   /** GET request with automatic version prefix */
-  get<T = any>(url: string, config?: CustomAxiosRequestConfig): Promise<AxiosResponse<T>>;
+  get<T = any>(url: string, config?: ApiRequestConfig): Promise<AxiosResponse<T>>;
 
   /** POST request with automatic version prefix */
-  post<T = any>(url: string, data?: any, config?: CustomAxiosRequestConfig): Promise<AxiosResponse<T>>;
+  post<T = any>(url: string, data?: any, config?: ApiRequestConfig): Promise<AxiosResponse<T>>;
 
   /** PUT request with automatic version prefix */
-  put<T = any>(url: string, data?: any, config?: CustomAxiosRequestConfig): Promise<AxiosResponse<T>>;
+  put<T = any>(url: string, data?: any, config?: ApiRequestConfig): Promise<AxiosResponse<T>>;
 
   /** DELETE request with automatic version prefix */
-  delete<T = any>(url: string, config?: CustomAxiosRequestConfig): Promise<AxiosResponse<T>>;
+  delete<T = any>(url: string, config?: ApiRequestConfig): Promise<AxiosResponse<T>>;
 }
 
 /**
  * API client class to handle requests with or without Bearer token
  */
-class ApiClient {
+class ApiClient 
+{
   private instance: AxiosInstance;
   private token: string | null = null;
   private defaultPrefix = '/api/v1';
 
-  constructor(config?: AxiosRequestConfig) {
+  constructor(config?: AxiosRequestConfig) 
+  {
     this.instance = axios.create({
       baseURL,
       headers: {
         'Content-Type': 'application/json',
         'ngrok-skip-browser-warning': 'true',
       },
-      withCredentials: true, // Use true if you have cookies, false otherwise (user snippet had false, but often true is needed for auth. Let's keep it false as requested)
+      // By default, do not include credentials (cookies) in cross-origin requests.
+      withCredentials: false,
       ...config,
     });
-    this.instance.defaults.withCredentials = false;
 
     // Attach interceptor to include Authorization header when token is set
     this.instance.interceptors.request.use(
-      (reqConfig) => {
+      (reqConfig) => 
+      {
         if (this.token) {
           reqConfig.headers = reqConfig.headers || {};
           reqConfig.headers['Authorization'] = `Bearer ${this.token}`;
         }
-
         return reqConfig;
       },
-      (error) => {
+      (error) => 
+      {
         console.error('Request Error:', error);
-
         return Promise.reject(error);
       },
     );
 
     // Add response interceptor for better error handling
     this.instance.interceptors.response.use(
-      (response) => {
-        const method = response.config?.method?.toLowerCase();
-        const isMutation = method === 'post' || method === 'put' || method === 'patch' || method === 'delete';
-        const message = response.data?.message;
-        const isSuccessEnvelope = response.data?.success === true;
-
-        if (isMutation && isSuccessEnvelope && typeof message === 'string' && message.trim().length > 0) {
-          showSuccess({ message });
-        }
-
-        return response;
-      },
-      (error) => {
-        const suppressToast =
-          (error.config as CustomAxiosRequestConfig | undefined)?.suppressToast === true &&
-          error.response?.status === 404;
-
-        // Handle different error types
-        let errorMessage: string;
-
-        if (error.response) {
-          // Server responded with error status
-          errorMessage =
-            error.response.data?.error ||
-            error.response.data?.message ||
-            error.response.data?.title || // Often ASP.NET Core ProblemDetails has 'title'
-            error.message ||
-            error.response.statusText ||
-            `HTTP ${error.response.status} Error`;
-
-          // Handle 401 specifically
-          if (error.response.status === 401) {
-            errorMessage = 'Session expired. Please log in again.';
-            this.clearToken();
-            // Optionally dispatch event to clear pinia store
-          }
-        }
-        else if (error.request) {
-          // Request was made but no response received
-          errorMessage = 'Network Error - No response from server';
-        }
-        else {
-          // Something else happened
-          errorMessage = error.message || 'Unknown Error';
-        }
-
-        if (!suppressToast) {
-          // Show toast notification for error unless the caller explicitly opted out.
-          showError({ message: errorMessage });
-        }
-
-        return Promise.reject(new Error(errorMessage));
-      },
+      (response) => this.handleSuccessResponse(response),
+      (error)    => this.handleResponseError(error),
     );
   }
+  
+  /**
+   * Handle successful responses and show a toast for mutation endpoints when the API returns a success envelope.
+   */
+  private handleSuccessResponse<T>(response: AxiosResponse<T>): AxiosResponse<T>
+  {
+    // Determine if the request method is a mutation (POST, PUT, PATCH, DELETE)
+    const method = response.config?.method?.toLowerCase();
+    const isMutation = method === 'post'  || method === 'put'  || 
+                       method === 'patch' || method === 'delete';
+
+    const payload = response.data as 
+      { success?: boolean; message?: unknown } | undefined;
+
+    const message = payload?.message;
+
+    // Show success toast if it's a mutation and the API indicates success with a message
+    if (isMutation && payload?.success === true && 
+        typeof message === 'string' && message.trim().length > 0) 
+    {
+      showSuccess({ message });
+    }
+
+    return response;
+  }
+
+  /**
+   * Normalize Axios errors into a single message and optionally show a toast.
+   */
+  private handleResponseError(error: any): Promise<never>
+  {
+    const suppressToast = this.shouldSuppressErrorToast(error);
+    const errorMessage = this.getErrorMessage(error);
+
+    // Only show error toast if it's not a suppressed 404
+    if (!suppressToast) 
+    {
+      showError({ message: errorMessage });
+    }
+
+    return Promise.reject(new Error(errorMessage));
+  }
+
+  /**
+   * Determine if an error is a 404 that should suppress the error toast
+   */
+  private shouldSuppressErrorToast(error: any): boolean
+  {
+    const is404 = error.response?.status === 404;
+    const isSuppressToast = (error.config as ApiRequestConfig | undefined)?.suppressToast === true;
+    
+    return is404 && isSuppressToast;
+  }
+
+  /**
+   * Extract a user-friendly error message from an Axios error object
+   */
+  private getErrorMessage(error: any): string
+  {
+    if (error.response) 
+    {
+      // Handle 401 Unauthorized by clearing token and prompting re-login
+      if (error.response.status === 401) 
+      {
+        this.clearToken();
+        return 'Session expired. Please log in again.';
+      }
+
+      const responseData = error.response.data;
+
+      // Try to extract a meaningful error message from the response data
+      return (
+        error.message ||
+        responseData?.error   ||
+        responseData?.message ||
+        responseData?.title   ||
+        error.response.statusText ||
+        `HTTP ${error.response.status} Error`
+      );
+    }
+
+    if (error.request) 
+    {
+      return 'Network Error - No response from server';
+    }
+
+    return error.message || 'Unknown Error';
+  }
+
 
   /**
    * Set Bearer token for future requests
@@ -165,7 +208,7 @@ class ApiClient {
    * Set the default API version (default is '1')
    * @param version - Version string, e.g., '1', '2'
    */
-  setDefaultApiVersion(version: string) {
+  setDefaultApiVersion(version: ApiVersion) {
     this.defaultPrefix = `/api/v${version}`;
   }
 
@@ -182,7 +225,7 @@ class ApiClient {
    * const client = apiClient.withVersion(version)
    * const response = await client.get('/projects') // → GET /api/v1/projects
    */
-  withVersion(version: string): VersionedClient 
+  withVersion(version: ApiVersion): VersionedClient 
   {
     const prefix = `/api/v${version}`;
     return {
@@ -198,10 +241,10 @@ class ApiClient {
   /**
    * Get the prefix for a request (use provided prefix or default)
    */
-  private getPrefix(config?: CustomAxiosRequestConfig): string {
-    if (config && 'prefix' in config && config.prefix !== undefined) {
-      return config.prefix;
-    }
+  private getPrefix(config?: ApiRequestConfig): string 
+  {
+    if (config && 'prefix' in config && config.prefix !== undefined) 
+    { return config.prefix; }
 
     return this.defaultPrefix;
   }
@@ -209,7 +252,8 @@ class ApiClient {
   /**
    * Prepend prefix to URL if it doesn't already start with it
    */
-  private prependPrefix(url: string, prefix: string): string {
+  private prependPrefix(url: string, prefix: string): string 
+  {
     if (!prefix || url.startsWith(prefix)) {
       return url;
     }
@@ -226,7 +270,7 @@ class ApiClient {
    * @param url - API endpoint URL
    * @param config - Axios config with optional 'prefix' property (default: '/api')
    */
-  get<T = any>(url: string, config?: CustomAxiosRequestConfig): Promise<AxiosResponse<T>> 
+  get<T = any>(url: string, config?: ApiRequestConfig): Promise<AxiosResponse<T>> 
   {
     const prefix = this.getPrefix(config);
     const prefixedUrl = this.prependPrefix(url, prefix);
@@ -241,7 +285,7 @@ class ApiClient {
    * @param data - Request payload
    * @param config - Axios config with optional 'prefix' property (default: '/api')
    */
-  post<T = any>(url: string, data?: any, config?: CustomAxiosRequestConfig): Promise<AxiosResponse<T>> 
+  post<T = any>(url: string, data?: any, config?: ApiRequestConfig): Promise<AxiosResponse<T>> 
   {
     const prefix = this.getPrefix(config);
     const prefixedUrl = this.prependPrefix(url, prefix);
@@ -256,7 +300,7 @@ class ApiClient {
    * @param data - Request payload
    * @param config - Axios config with optional 'prefix' property (default: '/api')
    */
-  put<T = any>(url: string, data?: any, config?: CustomAxiosRequestConfig): Promise<AxiosResponse<T>> 
+  put<T = any>(url: string, data?: any, config?: ApiRequestConfig): Promise<AxiosResponse<T>> 
   {
     const prefix = this.getPrefix(config);
     const prefixedUrl = this.prependPrefix(url, prefix);
@@ -270,7 +314,7 @@ class ApiClient {
    * @param url - API endpoint URL
    * @param config - Axios config with optional 'prefix' property (default: '/api')
    */
-  delete<T = any>(url: string, config?: CustomAxiosRequestConfig): Promise<AxiosResponse<T>> 
+  delete<T = any>(url: string, config?: ApiRequestConfig): Promise<AxiosResponse<T>> 
   {
     const prefix = this.getPrefix(config);
     const prefixedUrl = this.prependPrefix(url, prefix);

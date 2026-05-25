@@ -97,7 +97,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
         // and uses its own native mapping instead.
         var jsonDocumentConverter = new ValueConverter<JsonDocument, string>(
             doc => doc.RootElement.GetRawText(),
-            raw => JsonDocument.Parse(raw));
+            raw => JsonDocument.Parse(raw, default));
 
         modelBuilder.Entity<CodeGraphAnalysis>(entity =>
         {

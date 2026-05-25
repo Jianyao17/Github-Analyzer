@@ -1,42 +1,29 @@
-import type { CodeGraph, CodeGraphAnalysis } from '../types/code-graph';
+import type { ApiVersion } from '../types/api';
+import type { CodeGraph } from '../types/code-graph';
 import type { StatisticAnalysis } from '../types/statistic-analysis';
-import type { ApiResponse } from '../types/api-response';
-import apiClient from '../api/axios';
+import type { 
+  CreateProjectRequest, 
+  StreamTokenResponse 
+} from '../types/project';
 
-export interface CreateProjectRequest {
-  repoUrl: string;
-  branch: string;
-  commitHash?: string;
-}
+import {
+  createProjectApi,
+  fetchProjectsApi,
+  fetchProjectApi,
+  fetchRepoInfoApi,
+  getCodeGraphAnalysisApi,
+  getStatisticAnalysisApi,
+  getProjectQueueEventUrl,
+  issueStreamTokenApi,
+} from '../api/project.api';
 
-export interface ProjectResponse {
-  id: string;
-  repositoryName: string;
-  repositoryUrl: string;
-  branchName: string | null;
-  lastCommitHash: string | null;
-  createdAtUtc: string;
-  hasStatistic: boolean;
-  hasCodeGraph: boolean;
-}
 
-export interface RepoInfoResponse {
-  name: string;
-  defaultBranch: string;
-  description: string | null;
-  url: string;
-}
-
-export interface ProgressEvent {
+export interface ProgressEvent 
+{
   jobType: string;
   status: string;
   progress: number;
   message: string;
-}
-
-export interface StreamTokenResponse {
-  token: string;
-  expiresAt: string; // ISO 8601 UTC
 }
 
 /**
@@ -61,47 +48,40 @@ export interface StreamProgressOptions {
  * const { fetchProjects, createProject } = useProjectApi()      // menggunakan v1
  * const { fetchProjects }               = useProjectApi('2')    // menggunakan v2
  */
-export const useProjectApi = (version = '1') => 
+export const useProjectApi = (version: ApiVersion = '1') => 
 {
-  const client = apiClient.withVersion(version);
-
   const createProject = async (payload: CreateProjectRequest) => 
   {
-    const response = await client.post<ApiResponse<ProjectResponse>>('/projects/new', payload);
-    if (!response.data.data)
+    const response = await createProjectApi(payload, version);
+    if (!response.data)
     {
       throw new Error('Failed to create project.');
     }
-    return response.data.data;
+    return response.data;
   };
 
   const fetchProjects = async () => 
   {
-    const response = await client.get<ApiResponse<ProjectResponse[]>>('/projects');
-    return response.data.data ?? [];
+    const response = await fetchProjectsApi(version);
+    return response.data ?? [];
   };
 
   const fetchProject = async (id: string) => 
   {
-    const response = await client.get<ApiResponse<ProjectResponse>>(`/projects/${id}`);
-    return response.data.data;
+    const response = await fetchProjectApi(id, version);
+    return response.data;
   };
 
   const fetchRepoInfo = async (githubUrl: string) => 
   {
-    const response = await client.get<ApiResponse<RepoInfoResponse>>(
-      `/projects/github/info?url=${encodeURIComponent(githubUrl)}`
-    );
-    return response.data.data;
+    const response = await fetchRepoInfoApi(githubUrl, version);
+    return response.data;
   };
 
   const getCodeGraphAnalysis = async (id: string) => 
   {
-    const response = await client.get<ApiResponse<CodeGraphAnalysis>>(
-      `/projects/${id}/analysis?type=codegraph`,
-      { suppressToast: true }
-    );
-    const payload = response.data.data;
+    const response = await getCodeGraphAnalysisApi(id, version, { suppressToast: true });
+    const payload = response.data;
     // Parse the graphJson automatically for convenience
     if (payload && payload.graphJson) 
     {
@@ -151,11 +131,8 @@ export const useProjectApi = (version = '1') =>
   {
     try 
     {
-      const response = await client.get<ApiResponse<StatisticAnalysis>>(
-        `/projects/${id}/analysis?type=statistic`,
-        { suppressToast: true }
-      );
-      return response.data.data;
+      const response = await getStatisticAnalysisApi(id, version, { suppressToast: true });
+      return response.data;
     }
     catch 
     {
@@ -169,14 +146,12 @@ export const useProjectApi = (version = '1') =>
    */
   const issueStreamToken = async (projectId: string): Promise<StreamTokenResponse> =>
   {
-    const response = await client.post<ApiResponse<StreamTokenResponse>>(
-      `/projects/${projectId}/queue/stream-token`
-    );
-    if (!response.data.data)
+    const response = await issueStreamTokenApi(projectId, version);
+    if (!response.data)
     {
       throw new Error('Failed to issue stream token.');
     }
-    return response.data.data;
+    return response.data;
   };
 
   /**
@@ -203,8 +178,7 @@ export const useProjectApi = (version = '1') =>
     // Buka SSE connection dengan stream token sebagai query param
     // EventSource tidak bisa mengirim Authorization header, sehingga
     // ephemeral token (scope sempit, 5 menit) digunakan sebagai pengganti.
-    const url = `${client.baseURL}/api/v${client.version}/projects/${projectId}/queue/event`
-      + `?job_type=${encodeURIComponent(jobType)}&stream_token=${encodeURIComponent(streamToken)}`;
+    const url = getProjectQueueEventUrl(projectId, jobType, streamToken, version);
 
     const eventSource = new EventSource(url);
 

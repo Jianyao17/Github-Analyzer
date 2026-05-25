@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
-import apiClient from '../api/axios';
+import apiClient from '../api/_axios';
 
 export interface UserProfile 
 {

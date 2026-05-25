@@ -22,7 +22,7 @@ namespace GithubAnalyzer.WebApi.Workers;
 /// </summary>
 public sealed class StatisticAnalysisWorker : BaseQueueWorker
 {
-    public override string JobType => nameof(JobTypeEnum.Statistic);
+    public override string JobType => nameof(AnalysisType.Statistic);
 
     public StatisticAnalysisWorker(
         IServiceScopeFactory scopeFactory,

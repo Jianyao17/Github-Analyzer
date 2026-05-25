@@ -16,7 +16,7 @@ namespace GithubAnalyzer.WebApi.Workers;
 
 public class CodeGraphAnalysisWorker : BaseQueueWorker
 {
-    public override string JobType => nameof(JobTypeEnum.CodeGraph);
+    public override string JobType => nameof(AnalysisType.CodeGraph);
 
     public CodeGraphAnalysisWorker(
         IServiceScopeFactory scopeFactory,

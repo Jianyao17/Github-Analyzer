@@ -33,7 +33,8 @@ public static class IssueStreamTokenEndpoint
                 return ApiResults.NotFound("Project not found or access denied.");
 
             // Create a stream token valid for 5 minutes
-            var (token, expiresAt) = streamTokenService.CreateToken(userId, projectGuid);
+            // UserId is omitted from the token — ownership is already enforced by the DB check above
+            var (token, expiresAt) = streamTokenService.CreateToken(projectGuid);
 
             return ApiResults.Ok(new StreamTokenResponse(token, expiresAt));
         });

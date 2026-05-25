@@ -54,6 +54,7 @@ builder.Services.AddCorsPolicies(builder.Configuration);
 
 builder.AddApplicationPersistence();
 builder.AddJwtAuthentication();
+builder.AddStreamTokenService();
 builder.AddApiRateLimiting();
 builder.AddAnalysisConfig();
 builder.AddMailService();
@@ -70,9 +71,6 @@ builder.Services.AddScoped<IFileStatisticsService, FileStatisticsService>();
 
 // Queue progress notifier for real-time updates to clients
 builder.Services.AddSingleton<IQueueProgressNotifier, QueueProgressNotifier>();
-
-// Stateless ephemeral stream token service (5-minute tokens for SSE auth)
-builder.Services.AddSingleton<StreamTokenService>();
 
 // Workers for background processing
 builder.Services.AddHostedService<CodeGraphAnalysisWorker>();

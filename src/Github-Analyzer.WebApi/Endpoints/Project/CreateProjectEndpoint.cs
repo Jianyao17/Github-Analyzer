@@ -73,7 +73,7 @@ public static class CreateProjectEndpoint
             var statisticJob = new ProjectQueue
             {
                 Project = project,
-                JobType = JobTypeEnum.Statistic.ToString(),
+                JobType = AnalysisType.Statistic.ToString(),
                 Status = Entities.QueueStatus.Pending,
                 Priority = 10
             };
@@ -81,7 +81,7 @@ public static class CreateProjectEndpoint
             var codeGraphJob = new ProjectQueue
             {
                 Project = project,
-                JobType = JobTypeEnum.CodeGraph.ToString(),
+                JobType = AnalysisType.CodeGraph.ToString(),
                 Status = Entities.QueueStatus.Pending,
                 Priority = 10
             };

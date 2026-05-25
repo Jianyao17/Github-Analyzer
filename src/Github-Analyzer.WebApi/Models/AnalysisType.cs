@@ -1,6 +1,6 @@
 ﻿namespace GithubAnalyzer.WebApi.Models;
 
-public enum JobTypeEnum
+public enum AnalysisType
 {
     Statistic,
     CodeGraph

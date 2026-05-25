@@ -54,15 +54,11 @@ public static class Endpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         // Analysis Results
-        group.MapGetStatisticAnalysisEndpoint()
-            .WithName("GetStatisticAnalysis")
+        group.MapGetAnalysisEndpoint()
+            .WithName("GetAnalysis")
             .Produces<ApiResponse<StatisticAnalysis>>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
-
-        group.MapGetCodeGraphAnalysisEndpoint()
-            .WithName("GetCodeGraphAnalysis")
             .Produces<ApiResponse<CodeGraphAnalysis>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 

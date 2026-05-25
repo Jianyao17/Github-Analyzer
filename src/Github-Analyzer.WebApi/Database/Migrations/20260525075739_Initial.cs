@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -16,7 +17,34 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
                 name: "Repo");
 
             migrationBuilder.EnsureSchema(
+                name: "Cache");
+
+            migrationBuilder.EnsureSchema(
                 name: "Auth");
+
+            migrationBuilder.CreateTable(
+                name: "CodeGraphCaches",
+                schema: "Cache",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    LookupKey = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    RepoUrl = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Branch = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    CommitHash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    GeneratedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    GraphJson = table.Column<JsonDocument>(type: "jsonb", nullable: false),
+                    NodeCount = table.Column<int>(type: "integer", nullable: false),
+                    EdgeCount = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CodeGraphCaches", x => x.Id);
+                });
 
             migrationBuilder.CreateTable(
                 name: "Projects",
@@ -57,6 +85,37 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Roles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "StatisticCaches",
+                schema: "Cache",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    LookupKey = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    RepoUrl = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Branch = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    CommitHash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    GeneratedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    TotalFolders = table.Column<int>(type: "integer", nullable: true),
+                    TotalFiles = table.Column<int>(type: "integer", nullable: true),
+                    SizeInBytes = table.Column<int>(type: "integer", nullable: true),
+                    TotalLinesOfCode = table.Column<long>(type: "bigint", nullable: true),
+                    CodeLines = table.Column<long>(type: "bigint", nullable: true),
+                    CommentLines = table.Column<long>(type: "bigint", nullable: true),
+                    BlankLines = table.Column<long>(type: "bigint", nullable: true),
+                    TotalCommits = table.Column<int>(type: "integer", nullable: true),
+                    TotalContributors = table.Column<int>(type: "integer", nullable: true),
+                    TotalBranches = table.Column<int>(type: "integer", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StatisticCaches", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -123,43 +182,6 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "StatisticAnalyses",
-                schema: "Repo",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProjectId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Branch = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    CommitHash = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    GeneratedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    TotalFolders = table.Column<int>(type: "integer", nullable: true),
-                    TotalFiles = table.Column<int>(type: "integer", nullable: true),
-                    SizeInBytes = table.Column<int>(type: "integer", nullable: true),
-                    TotalLinesOfCode = table.Column<long>(type: "bigint", nullable: true),
-                    CodeLines = table.Column<long>(type: "bigint", nullable: true),
-                    CommentLines = table.Column<long>(type: "bigint", nullable: true),
-                    BlankLines = table.Column<long>(type: "bigint", nullable: true),
-                    TotalCommits = table.Column<int>(type: "integer", nullable: true),
-                    TotalContributors = table.Column<int>(type: "integer", nullable: true),
-                    TotalBranches = table.Column<int>(type: "integer", nullable: true),
-                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    DeletedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_StatisticAnalyses", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_StatisticAnalyses_Projects_ProjectId",
-                        column: x => x.ProjectId,
-                        principalSchema: "Repo",
-                        principalTable: "Projects",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "RoleClaims",
                 schema: "Auth",
                 columns: table => new
@@ -190,10 +212,10 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     ProjectId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Branch = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    CommitHash = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Branch = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    CommitHash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     GeneratedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    GraphJson = table.Column<string>(type: "text", nullable: false),
+                    GraphJson = table.Column<JsonDocument>(type: "jsonb", nullable: false),
                     NodeCount = table.Column<int>(type: "integer", nullable: false),
                     EdgeCount = table.Column<int>(type: "integer", nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -213,6 +235,51 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_CodeGraphAnalyses_Users_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "Auth",
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "StatisticAnalyses",
+                schema: "Repo",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProjectId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Branch = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    CommitHash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    GeneratedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    TotalFolders = table.Column<int>(type: "integer", nullable: true),
+                    TotalFiles = table.Column<int>(type: "integer", nullable: true),
+                    SizeInBytes = table.Column<int>(type: "integer", nullable: true),
+                    TotalLinesOfCode = table.Column<long>(type: "bigint", nullable: true),
+                    CodeLines = table.Column<long>(type: "bigint", nullable: true),
+                    CommentLines = table.Column<long>(type: "bigint", nullable: true),
+                    BlankLines = table.Column<long>(type: "bigint", nullable: true),
+                    TotalCommits = table.Column<int>(type: "integer", nullable: true),
+                    TotalContributors = table.Column<int>(type: "integer", nullable: true),
+                    TotalBranches = table.Column<int>(type: "integer", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DeletedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StatisticAnalyses", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_StatisticAnalyses_Projects_ProjectId",
+                        column: x => x.ProjectId,
+                        principalSchema: "Repo",
+                        principalTable: "Projects",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_StatisticAnalyses_Users_UserId",
                         column: x => x.UserId,
                         principalSchema: "Auth",
                         principalTable: "Users",
@@ -339,6 +406,19 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_CodeGraphCaches_CommitHash",
+                schema: "Cache",
+                table: "CodeGraphCaches",
+                column: "CommitHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CodeGraphCaches_LookupKey",
+                schema: "Cache",
+                table: "CodeGraphCaches",
+                column: "LookupKey",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ProjectQueues_CompletedAtUtc",
                 schema: "Repo",
                 table: "ProjectQueues",
@@ -388,6 +468,25 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
                 column: "ProjectId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_StatisticAnalyses_UserId",
+                schema: "Repo",
+                table: "StatisticAnalyses",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StatisticCaches_CommitHash",
+                schema: "Cache",
+                table: "StatisticCaches",
+                column: "CommitHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StatisticCaches_LookupKey",
+                schema: "Cache",
+                table: "StatisticCaches",
+                column: "LookupKey",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserClaims_UserId",
                 schema: "Auth",
                 table: "UserClaims",
@@ -427,6 +526,10 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
                 schema: "Repo");
 
             migrationBuilder.DropTable(
+                name: "CodeGraphCaches",
+                schema: "Cache");
+
+            migrationBuilder.DropTable(
                 name: "ProjectQueues",
                 schema: "Repo");
 
@@ -437,6 +540,10 @@ namespace GithubAnalyzer.WebApi.Database.Migrations
             migrationBuilder.DropTable(
                 name: "StatisticAnalyses",
                 schema: "Repo");
+
+            migrationBuilder.DropTable(
+                name: "StatisticCaches",
+                schema: "Cache");
 
             migrationBuilder.DropTable(
                 name: "UserClaims",

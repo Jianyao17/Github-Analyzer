@@ -2,24 +2,15 @@ using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Entities;
 using GithubAnalyzer.WebApi.Entities.Analysis;
+using GithubAnalyzer.WebApi.Entities.Cache;
 using GithubAnalyzer.WebApi.Entities.Repo;
 using GithubAnalyzer.WebApi.Services.Repo;
 using GithubAnalyzer.WebApi.Models;
 using GithubAnalyzer.WebApi.Config;
+using Microsoft.EntityFrameworkCore;
 
 namespace GithubAnalyzer.WebApi.Workers;
 
-/// <summary>
-/// Background worker that computes and persists <see cref="StatisticAnalysis"/> records.
-/// <para>
-/// Data sources:
-/// <list type="bullet">
-///   <item>Filesystem (LocalPath): folder count, file count, size, and line-count metrics.</item>
-///   <item>GitHub API: total branches, total commits, and total contributors via Link-header pagination.</item>
-/// </list>
-/// GitHub API fields remain <see langword="null"/> if the repository is unreachable.
-/// </para>
-/// </summary>
 public sealed class StatisticAnalysisWorker : BaseQueueWorker
 {
     public override string JobType => nameof(AnalysisType.Statistic);
@@ -37,13 +28,63 @@ public sealed class StatisticAnalysisWorker : BaseQueueWorker
     {
         using var scope     = _scopeFactory.CreateScope();
         var dbContext       = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        if (job.Project is null)
+            throw new InvalidOperationException("Project data is missing from the queue job.");
+
+        var repoUrl    = job.Project.RepositoryUrl;
+        var branch     = job.Project.BranchName;
+        var commitHash = job.Project.LastCommitHash;
+        var lookupKey  = CacheLookupKey.Generate(repoUrl, branch, commitHash);
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Cache check — copy at DB level if a previous analysis exists
+        // ─────────────────────────────────────────────────────────────────────
+        var cacheHit = await dbContext.StatisticCaches
+            .AnyAsync(c => c.LookupKey == lookupKey, cancellationToken);
+
+        if (cacheHit)
+        {
+            _logger.LogInformation(
+                "Cache hit for Statistic (LookupKey={LookupKey}), copying to project {ProjectId} via DB-level INSERT.",
+                lookupKey, job.ProjectId);
+
+            // INSERT INTO ... SELECT — copies all statistic columns directly inside PostgreSQL
+            await dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"""
+                INSERT INTO "Repo"."StatisticAnalyses"
+                    ("Id", "UserId", "ProjectId",
+                     "Branch", "CommitHash", "GeneratedAtUtc",
+                     "TotalFolders", "TotalFiles", "SizeInBytes",
+                     "TotalLinesOfCode", "CodeLines", "CommentLines", "BlankLines",
+                     "TotalCommits", "TotalContributors", "TotalBranches",
+                     "CreatedAtUtc", "IsDeleted")
+                SELECT
+                    gen_random_uuid(),
+                    {job.Project.UserId},
+                    {job.ProjectId},
+                    "Branch", "CommitHash", "GeneratedAtUtc",
+                    "TotalFolders", "TotalFiles", "SizeInBytes",
+                    "TotalLinesOfCode", "CodeLines", "CommentLines", "BlankLines",
+                    "TotalCommits", "TotalContributors", "TotalBranches",
+                    now() AT TIME ZONE 'utc',
+                    false
+                FROM "Cache"."StatisticCaches"
+                WHERE "LookupKey" = {lookupKey}
+                LIMIT 1
+            """, cancellationToken);
+
+            _logger.LogInformation("StatisticAnalysis copied from cache for project {ProjectId}", job.ProjectId);
+            return;
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Cache miss — run full analysis pipeline
+        // ─────────────────────────────────────────────────────────────────────
         var fileSvc         = scope.ServiceProvider.GetRequiredService<IFileStatisticsService>();
         var repoProvider    = scope.ServiceProvider.GetRequiredService<IRepositoryFetcher>();
         var downloadGate    = scope.ServiceProvider.GetRequiredService<RepoDownloadGate>();
         var analysisConfig  = scope.ServiceProvider.GetRequiredService<AnalysisConfig>();
-
-        if (job.Project is null)
-            throw new InvalidOperationException("Project data is missing from the queue job.");
 
         var localPath = job.Project.LocalPath;
         if (!Directory.Exists(localPath))
@@ -63,9 +104,6 @@ public sealed class StatisticAnalysisWorker : BaseQueueWorker
             if (!Directory.Exists(localPath))
                 throw new DirectoryNotFoundException($"Repository path not found after re-download: {localPath}");
         }
-
-        var repoUrl = job.Project.RepositoryUrl;
-        var branch  = job.Project.BranchName;
 
         // ─────────────────────────────────────────────────────────────────────
         // Step 1/3 — Filesystem analysis
@@ -114,18 +152,22 @@ public sealed class StatisticAnalysisWorker : BaseQueueWorker
         }
 
         // ─────────────────────────────────────────────────────────────────────
-        // Step 3/3 — Persist to database
+        // Step 3/3 — Persist to database (cache + per-user/project)
         // ─────────────────────────────────────────────────────────────────────
         await NotifyProgressAsync(job, 90, "Saving statistics…", cancellationToken);
 
+        var generatedAt = DateTime.UtcNow;
+
+        // Save to per-user/project table dulu (pasti unik, Id = Guid baru)
         var analysis = new StatisticAnalysis
         {
+            UserId    = job.Project.UserId,
             ProjectId = job.ProjectId,
 
-            Branch     = job.Project.BranchName,
-            CommitHash = job.Project.LastCommitHash,
+            Branch     = branch,
+            CommitHash = commitHash,
 
-            GeneratedAtUtc = DateTime.UtcNow,
+            GeneratedAtUtc = generatedAt,
 
             // Filesystem metrics
             TotalFolders    = fsStats.TotalFolders,
@@ -147,8 +189,42 @@ public sealed class StatisticAnalysisWorker : BaseQueueWorker
         dbContext.StatisticAnalyses.Add(analysis);
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        // Save to cache — jika sudah ada (race condition), abaikan
+        try
+        {
+            var cache = new StatisticCache
+            {
+                LookupKey      = lookupKey,
+                RepoUrl        = repoUrl,
+                Branch         = branch,
+                CommitHash     = commitHash,
+                GeneratedAtUtc = generatedAt,
+
+                TotalFolders    = fsStats.TotalFolders,
+                TotalFiles      = fsStats.TotalFiles,
+                SizeInBytes     = (int?)fsStats.SizeInBytes,
+
+                TotalLinesOfCode = fsStats.TotalLinesOfCode,
+                CodeLines        = fsStats.CodeLines,
+                CommentLines     = fsStats.CommentLines,
+                BlankLines       = fsStats.BlankLines,
+
+                TotalBranches     = totalBranches,
+                TotalCommits      = totalCommits,
+                TotalContributors = totalContributors,
+            };
+
+            dbContext.StatisticCaches.Add(cache);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            _logger.LogInformation(
+                "Cache already populated by another worker for LookupKey={LookupKey}", lookupKey);
+        }
+
         _logger.LogInformation(
-            "StatisticAnalysis saved successfully for project {ProjectId}", job.ProjectId);
+            "StatisticAnalysis saved (+ cached) for project {ProjectId}", job.ProjectId);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -169,3 +245,4 @@ public sealed class StatisticAnalysisWorker : BaseQueueWorker
         return _progressNotifier.NotifyAsync(ev);
     }
 }
+

@@ -1,5 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 using GithubAnalyzer.WebApi.Entities.Auth;
 using GithubAnalyzer.WebApi.Entities.Repo;
 
@@ -17,13 +18,14 @@ public class CodeGraphAnalysis : BaseEntity
     [ForeignKey(nameof(ProjectId))] 
     public Project Project { get; set; } = default!;
     
-    [MaxLength(50)] public string? Branch { get; set; }
-    [MaxLength(50)] public string? CommitHash { get; set; }
+    [MaxLength(64)] public string? Branch { get; set; }
+    [MaxLength(64)] public string? CommitHash { get; set; }
     
     public DateTime? GeneratedAtUtc { get; set; }
 
     [Required]
-    public string GraphJson { get; set; } = default!;
+    [Column(TypeName = "jsonb")]
+    public JsonDocument GraphJson { get; set; } = default!;
     
     public int NodeCount { get; set; }
     public int EdgeCount { get; set; }

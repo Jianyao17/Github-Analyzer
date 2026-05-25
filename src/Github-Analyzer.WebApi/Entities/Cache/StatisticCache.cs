@@ -1,25 +1,20 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using GithubAnalyzer.WebApi.Entities.Auth;
-using GithubAnalyzer.WebApi.Entities.Repo;
 
-namespace GithubAnalyzer.WebApi.Entities.Analysis;
+namespace GithubAnalyzer.WebApi.Entities.Cache;
 
-[Table("StatisticAnalyses", Schema = "Repo")]
-public class StatisticAnalysis : BaseEntity
+[Table("StatisticCaches", Schema = "Cache")]
+public class StatisticCache : BaseEntity
 {
-    [Required] public Guid UserId { get; set; }
-    [Required] public Guid ProjectId { get; set; }
+    [Required, MaxLength(50)]
+    public string LookupKey { get; set; } = default!;
 
-    [ForeignKey(nameof(UserId))] 
-    public ApplicationUser User { get; set; } = default!;
-    
-    [ForeignKey(nameof(ProjectId))]
-    public Project Project { get; set; } = default!;
+    [Required, MaxLength(200)]
+    public string RepoUrl { get; set; } = default!;
 
     [MaxLength(64)] public string? Branch { get; set; }
     [MaxLength(64)] public string? CommitHash { get; set; }
-    
+
     public DateTime? GeneratedAtUtc { get; set; }
 
     // Structural Statistics
@@ -27,13 +22,13 @@ public class StatisticAnalysis : BaseEntity
     public int? TotalFiles { get; set; }
     public int? SizeInBytes { get; set; }
 
-    // Code Statistics
+    // Code Statistics 
     public long? TotalLinesOfCode { get; set; }
     public long? CodeLines { get; set; }
     public long? CommentLines { get; set; }
     public long? BlankLines { get; set; }
 
-    // Git Statistics
+    // Git Statistics 
     public int? TotalCommits { get; set; }
     public int? TotalContributors { get; set; }
     public int? TotalBranches { get; set; }

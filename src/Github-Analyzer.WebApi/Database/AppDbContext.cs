@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using GithubAnalyzer.WebApi.Entities.Analysis;
 using GithubAnalyzer.WebApi.Entities.Auth;
+using GithubAnalyzer.WebApi.Entities.Cache;
 using GithubAnalyzer.WebApi.Entities.Repo;
 
 namespace GithubAnalyzer.WebApi.Database;
@@ -14,6 +15,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<ProjectQueue> ProjectQueues { get; set; } = null!;
     public DbSet<StatisticAnalysis> StatisticAnalyses { get; set; } = null!;
     public DbSet<CodeGraphAnalysis> CodeGraphAnalyses { get; set; } = null!;
+    
+    // Cache tables (schema: Cache)
+    public DbSet<CodeGraphCache> CodeGraphCaches { get; set; } = null!;
+    public DbSet<StatisticCache> StatisticCaches { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -90,6 +95,26 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.HasIndex(cg => cg.ProjectId);
             entity.HasIndex(cg => cg.CommitHash);
             entity.HasIndex(cg => cg.GeneratedAtUtc);
+            
+            entity.Property(cg => cg.GraphJson)
+                .HasColumnType("jsonb");
+        });
+
+        // ─── Cache schema ────────────────────────────────────────────────
+        modelBuilder.Entity<CodeGraphCache>(entity =>
+        {
+            entity.HasIndex(c => c.LookupKey).IsUnique();
+            entity.HasIndex(c => c.CommitHash);
+
+            entity.Property(c => c.GraphJson)
+                .HasColumnType("jsonb");
+        });
+
+        modelBuilder.Entity<StatisticCache>(entity =>
+        {
+            entity.HasIndex(c => c.LookupKey).IsUnique();
+            entity.HasIndex(c => c.CommitHash);
         });
     }
 }
+

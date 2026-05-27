@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue';
-import type { ApiVersion } from '../types/api';
-import type { RepoBranch, RepoCommit } from '../types/repo-info';
+import type { ApiVersion } from '../types/_api/api';
+import type { RepoBranch, RepoCommit } from '../types/_api/repo-info';
 import { getRepoBranchesApi, getRepoCommitsApi } from '../api/repo-info.api';
 
 /**

@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import type { Ref } from 'vue';
 import { watch, onUnmounted } from 'vue';
-import type { CodeGraph, GraphNode, GraphEdge } from '../types/code-graph';
+import type { CodeGraph, GraphNode, GraphEdge } from '../types/analysis/code-graph';
 
 export const useCodeGraphD3 = (
   containerRef: Ref<HTMLElement | null>,
@@ -52,7 +52,7 @@ export const useCodeGraphD3 = (
   const renderGraph = () => 
   {
     if (!containerRef.value || !graphDataRef.value) return;
-    
+
     const container = containerRef.value;
     const { nodes, sourceRelEdges, useRelEdges } = graphDataRef.value;
 

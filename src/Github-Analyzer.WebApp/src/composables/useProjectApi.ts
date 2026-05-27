@@ -1,10 +1,10 @@
-import type { ApiVersion } from '../types/api';
-import type { CodeGraph } from '../types/code-graph';
-import type { StatisticAnalysis } from '../types/statistic-analysis';
-import type { 
-  CreateProjectRequest, 
-  StreamTokenResponse 
-} from '../types/project';
+import type { ApiVersion } from '../types/_api/api';
+import type { CodeGraph } from '../types/analysis/code-graph';
+import type { StatisticAnalysis } from '../types/analysis/statistic-analysis';
+import type {
+  CreateProjectRequest,
+  StreamTokenResponse
+} from '../types/_api/project';
 
 import {
   createProjectApi,
@@ -18,8 +18,7 @@ import {
 } from '../api/project.api';
 
 
-export interface ProgressEvent 
-{
+export interface ProgressEvent {
   jobType: string;
   status: string;
   progress: number;
@@ -53,7 +52,7 @@ export const useProjectApi = (version: ApiVersion = '1') =>
   const createProject = async (payload: CreateProjectRequest) => 
   {
     const response = await createProjectApi(payload, version);
-    if (!response.data)
+    if (!response.data) 
     {
       throw new Error('Failed to create project.');
     }
@@ -96,7 +95,7 @@ export const useProjectApi = (version: ApiVersion = '1') =>
         {
           parsed = JSON.parse(parsed);
         }
-         
+
         const rawNodes = parsed.nodes || parsed.Nodes || [];
         const rawSourceEdges = parsed.sourceRelEdges || parsed.SourceRelEdges || [];
         const rawUseEdges = parsed.useRelEdges || parsed.UseRelEdges || [];
@@ -144,10 +143,10 @@ export const useProjectApi = (version: ApiVersion = '1') =>
    * Menerbitkan ephemeral stream token (berlaku 5 menit) untuk mengakses
    * SSE queue progress endpoint. Menggunakan JWT standar via axios interceptor.
    */
-  const issueStreamToken = async (projectId: string): Promise<StreamTokenResponse> =>
+  const issueStreamToken = async (projectId: string): Promise<StreamTokenResponse> => 
   {
     const response = await issueStreamTokenApi(projectId, version);
-    if (!response.data)
+    if (!response.data) 
     {
       throw new Error('Failed to issue stream token.');
     }
@@ -168,7 +167,7 @@ export const useProjectApi = (version: ApiVersion = '1') =>
     jobType: string,
     onUpdate: (event: ProgressEvent) => void,
     options?: StreamProgressOptions
-  ): Promise<() => void> =>
+  ): Promise<() => void> => 
   {
     const { onComplete, onError, token: preIssuedToken } = options ?? {};
 
@@ -182,15 +181,15 @@ export const useProjectApi = (version: ApiVersion = '1') =>
 
     const eventSource = new EventSource(url);
 
-    eventSource.onmessage = (e) =>
+    eventSource.onmessage = (e) => 
     {
-      try
+      try 
       {
         const raw = JSON.parse(e.data);
 
         // Memetakan tipe data C# (PascalCase, Status Enum int) ke Typescript interface (camelCase)
         let statusStr = raw.Status ?? raw.status;
-        if (typeof raw.Status === 'number')
+        if (typeof raw.Status === 'number') 
         {
           // Asumsi pemetaan Status Enum .NET:
           if (raw.Status === 3) statusStr = 'Completed';
@@ -198,7 +197,7 @@ export const useProjectApi = (version: ApiVersion = '1') =>
           else if (raw.Progress >= 100) statusStr = 'Completed';
           else statusStr = 'Processing';
         }
-        else if (raw.Progress >= 100)
+        else if (raw.Progress >= 100) 
         {
           statusStr = 'Completed';
         }
@@ -211,25 +210,25 @@ export const useProjectApi = (version: ApiVersion = '1') =>
         };
 
         onUpdate(data);
-        if (data.status === 'Completed' || data.status === 'Failed')
+        if (data.status === 'Completed' || data.status === 'Failed') 
         {
           eventSource.close();
           if (onComplete) onComplete();
         }
       }
-      catch (err)
+      catch (err) 
       {
         console.error('Failed to parse SSE data', err);
       }
     };
 
-    eventSource.onerror = (err) =>
+    eventSource.onerror = (err) => 
     {
       eventSource.close();
       if (onError) onError(err);
     };
 
-    return () =>
+    return () => 
     {
       eventSource.close();
     };

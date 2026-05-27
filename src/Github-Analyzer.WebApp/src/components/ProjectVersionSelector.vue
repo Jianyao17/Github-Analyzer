@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { useProjectApi } from '../composables/useProjectApi';
-import type { ProjectResponse } from '../types/project';
+import type { ProjectResponse } from '../types/_api/project';
 
 const props = defineProps<{
   repositoryUrl: string;

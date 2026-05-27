@@ -1,5 +1,5 @@
 import { useAuthStore } from '../stores/auth.store';
-import type { ApiVersion } from '../types/api';
+import type { ApiVersion } from '../types/_api/api';
 import type {
   LoginPayload,
   RegisterPayload,
@@ -8,7 +8,7 @@ import type {
   VerifyEmailPayload,
   ForgotPasswordPayload,
   ResetPasswordPayload,
-} from '../types/auth';
+} from '../types/_api/auth';
 
 import {
   loginApi,
@@ -53,13 +53,13 @@ export const useAuthApi = (version: ApiVersion = '1') =>
       const data = await getCurrentUser();
       authStore.setUser(data);
       return data;
-    } 
+    }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     catch (error) 
     {
       logout();
       return null;
-    } 
+    }
     finally 
     {
       authStore.setLoading(false);
@@ -69,12 +69,12 @@ export const useAuthApi = (version: ApiVersion = '1') =>
   const initialize = async () => 
   {
     if (authStore.initialized) return;
-    
+
     if (authStore.token) 
     {
       await loadCurrentUser();
     }
-    
+
     authStore.setInitialized(true);
   };
 
@@ -82,11 +82,11 @@ export const useAuthApi = (version: ApiVersion = '1') =>
   {
     const response = await loginApi(payload, version);
     const data = response.data as LoginResponse | undefined;
-    if (!data?.accessToken)
+    if (!data?.accessToken) 
     {
       throw new Error('Missing access token from login response.');
     }
-    
+
     authStore.setToken(data.accessToken);
 
     await loadCurrentUser();
@@ -105,7 +105,7 @@ export const useAuthApi = (version: ApiVersion = '1') =>
     const data = response.data as unknown;
 
     if (typeof data === 'boolean') return data;
-    if (data && typeof data === 'object')
+    if (data && typeof data === 'object') 
     {
       const payload = data as { IsEnabled?: boolean; isEnabled?: boolean };
       return payload.IsEnabled ?? payload.isEnabled ?? false;

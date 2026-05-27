@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, nextTick } from 'vue';
-import { useCodeGraphD3 } from '../../composables/useCodeGraphD3';
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import type { ProgressEvent } from '../../composables/useProjectApi';
-import type { CodeGraph } from '../../types/code-graph';
+import type { CodeGraph } from '../../types/analysis/code-graph';
+
+import { GraphD3 } from '../../lib/graph/graph.main';
+import { ZoomDragPlugin } from '../../lib/graph/plugins/zoom-drag.plugin';
+import { SelectionPlugin } from '../../lib/graph/plugins/selection.plugin';
+import { HoverPlugin } from '../../lib/graph/plugins/hover.plugin';
+import { GraphDebugger } from '../../lib/graph/graph.debug';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 const props = defineProps<{
@@ -12,27 +17,67 @@ const props = defineProps<{
 
 // ─── Refs ─────────────────────────────────────────────────────────────────────
 const graphContainer = ref<HTMLElement | null>(null);
-const graphData = ref<CodeGraph | null>(props.data);
 
-// ─── D3 ───────────────────────────────────────────────────────────────────────
-const { renderGraph } = useCodeGraphD3(graphContainer, graphData);
+// ─── Graph instance ───────────────────────────────────────────────────────────
+let graph: GraphD3 | null = null;
 
-// Keep graphData ref in sync when the prop changes
-// (useCodeGraphD3 will re-render via its own flush:'post' watch)
+function initGraph(data: CodeGraph): void 
+{
+  if (!graphContainer.value) return;
+
+  if (!graph) 
+  {
+    // First render — create instance and register plugins once
+    graph = new GraphD3({
+      container: graphContainer.value,
+      data,
+    });
+
+    graph
+      .use(new ZoomDragPlugin())
+      .use(new SelectionPlugin())
+      .use(new HoverPlugin());
+
+    // Attach sebelum render() — only active when DEV
+    new GraphDebugger({
+      enabled:      import.meta.env.DEV,
+      logRenderTime: true,
+      logNodeCount:  true,
+      logSimulation: true,
+      logFps:        true,
+      logMemory:     true
+    }).attachTo(graph);
+
+    graph.render();
+  }
+  else 
+  {
+    // Subsequent renders — update data, plugins are preserved
+    graph.update(data);
+  }
+}
+
+// Re-render whenever the prop changes
 watch(() => props.data, (newData) => 
 {
-  graphData.value = newData;
+  if (newData) initGraph(newData);
 });
 
-// When this component mounts (tab becomes active via v-if), re-render if data
-// is already present — ensures D3 gets real container dimensions, not 0×0.
+// When this component mounts (tab becomes active via v-if), render if data is
+// already present — ensures D3 gets real container dimensions, not 0×0.
 onMounted(async () => 
 {
-  if (graphData.value) 
+  if (props.data) 
   {
     await nextTick();
-    renderGraph();
+    initGraph(props.data);
   }
+});
+
+onUnmounted(() => 
+{
+  graph?.destroy();
+  graph = null;
 });
 </script>
 

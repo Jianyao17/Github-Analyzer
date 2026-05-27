@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { ApiVersion } from '../types/api';
+import type { ApiVersion } from '../types/_api/api';
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { showError, showSuccess } from '../lib/toast';
 
@@ -14,8 +14,7 @@ export const baseURL =
 /**
  * Extended AxiosRequestConfig with custom prefix option
  */
-export interface ApiRequestConfig extends AxiosRequestConfig 
-{
+export interface ApiRequestConfig extends AxiosRequestConfig {
   prefix?: string; // Override full prefix (e.g., '/api/v1')
   suppressToast?: boolean; // Skip global error toast for expected 404s
 }
@@ -25,8 +24,7 @@ export interface ApiRequestConfig extends AxiosRequestConfig
  * Returned by `apiClient.withVersion()` and used internally by composables.
  * All requests through this client are automatically prefixed with `/api/v{version}`.
  */
-export interface VersionedClient 
-{
+export interface VersionedClient {
   /** The locked API version string, e.g. '1', '2' */
   readonly version: ApiVersion;
 
@@ -89,28 +87,28 @@ class ApiClient
     // Add response interceptor for better error handling
     this.instance.interceptors.response.use(
       (response) => this.handleSuccessResponse(response),
-      (error)    => this.handleResponseError(error),
+      (error) => this.handleResponseError(error),
     );
   }
-  
+
   /**
    * Handle successful responses and show a toast for mutation endpoints when the API returns a success envelope.
    */
-  private handleSuccessResponse<T>(response: AxiosResponse<T>): AxiosResponse<T>
+  private handleSuccessResponse<T>(response: AxiosResponse<T>): AxiosResponse<T> 
   {
     // Determine if the request method is a mutation (POST, PUT, PATCH, DELETE)
     const method = response.config?.method?.toLowerCase();
-    const isMutation = method === 'post'  || method === 'put'  || 
-                       method === 'patch' || method === 'delete';
+    const isMutation = method === 'post' || method === 'put' ||
+      method === 'patch' || method === 'delete';
 
-    const payload = response.data as 
+    const payload = response.data as
       { success?: boolean; message?: unknown } | undefined;
 
     const message = payload?.message;
 
     // Show success toast if it's a mutation and the API indicates success with a message
-    if (isMutation && payload?.success === true && 
-        typeof message === 'string' && message.trim().length > 0) 
+    if (isMutation && payload?.success === true &&
+      typeof message === 'string' && message.trim().length > 0) 
     {
       showSuccess({ message });
     }
@@ -121,7 +119,7 @@ class ApiClient
   /**
    * Normalize Axios errors into a single message and optionally show a toast.
    */
-  private handleResponseError(error: any): Promise<never>
+  private handleResponseError(error: any): Promise<never> 
   {
     const suppressToast = this.shouldSuppressErrorToast(error);
     const errorMessage = this.getErrorMessage(error);
@@ -138,18 +136,18 @@ class ApiClient
   /**
    * Determine if an error is a 404 that should suppress the error toast
    */
-  private shouldSuppressErrorToast(error: any): boolean
+  private shouldSuppressErrorToast(error: any): boolean 
   {
     const is404 = error.response?.status === 404;
     const isSuppressToast = (error.config as ApiRequestConfig | undefined)?.suppressToast === true;
-    
+
     return is404 && isSuppressToast;
   }
 
   /**
    * Extract a user-friendly error message from an Axios error object
    */
-  private getErrorMessage(error: any): string
+  private getErrorMessage(error: any): string 
   {
     if (error.response) 
     {
@@ -165,9 +163,9 @@ class ApiClient
       // Try to extract a meaningful error message from the response data
       return (
         error.message ||
-        responseData?.error   ||
+        responseData?.error ||
         responseData?.message ||
-        responseData?.title   ||
+        responseData?.title ||
         error.response.statusText ||
         `HTTP ${error.response.status} Error`
       );
@@ -236,10 +234,10 @@ class ApiClient
     return {
       version,
       baseURL,
-      get:    <T>(url: string, config?: AxiosRequestConfig)             => this.get<T>(url, { ...config, prefix }),
-      post:   <T>(url: string, data?: any, config?: AxiosRequestConfig) => this.post<T>(url, data, { ...config, prefix }),
-      put:    <T>(url: string, data?: any, config?: AxiosRequestConfig) => this.put<T>(url, data, { ...config, prefix }),
-      delete: <T>(url: string, config?: AxiosRequestConfig)             => this.delete<T>(url, { ...config, prefix }),
+      get: <T>(url: string, config?: AxiosRequestConfig) => this.get<T>(url, { ...config, prefix }),
+      post: <T>(url: string, data?: any, config?: AxiosRequestConfig) => this.post<T>(url, data, { ...config, prefix }),
+      put: <T>(url: string, data?: any, config?: AxiosRequestConfig) => this.put<T>(url, data, { ...config, prefix }),
+      delete: <T>(url: string, config?: AxiosRequestConfig) => this.delete<T>(url, { ...config, prefix }),
     };
   }
 
@@ -248,8 +246,7 @@ class ApiClient
    */
   private getPrefix(config?: ApiRequestConfig): string 
   {
-    if (config && 'prefix' in config && config.prefix !== undefined) 
-    { return config.prefix; }
+    if (config && 'prefix' in config && config.prefix !== undefined) { return config.prefix; }
 
     return this.defaultPrefix;
   }

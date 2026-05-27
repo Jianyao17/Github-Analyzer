@@ -1,5 +1,5 @@
 import apiClient, { baseURL } from './_axios';
-import type { ApiResponse, ApiVersion } from '../types/api';
+import type { ApiResponse, ApiVersion } from '../types/_api/api';
 import type { UserProfile } from '../stores/auth.store';
 import type {
   LoginPayload,
@@ -9,7 +9,7 @@ import type {
   VerifyEmailPayload,
   ForgotPasswordPayload,
   ResetPasswordPayload,
-} from '../types/auth';
+} from '../types/_api/auth';
 
 /**
  * Auth API helpers: lightweight wrappers around `apiClient`.
@@ -48,7 +48,7 @@ export function getGoogleAuthRedirectUrl(returnPath?: string, version: ApiVersio
 {
   const base = baseURL.replace(/\/$/, '');
 
-  return `${base}/api/v${version}/auth/google` + 
+  return `${base}/api/v${version}/auth/google` +
     (returnPath ? `?returnPath=${encodeURIComponent(returnPath)}` : '');
 }
 

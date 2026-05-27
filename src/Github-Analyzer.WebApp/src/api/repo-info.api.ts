@@ -1,8 +1,8 @@
 import apiClient from './_axios';
-import type { ApiResponse, ApiVersion } from '../types/api';
-import type { FetchRepoInfoResponse } from '../types/repo-info';
+import type { ApiResponse, ApiVersion } from '../types/_api/api';
+import type { FetchRepoInfoResponse } from '../types/_api/repo-info';
 
-export async function getRepoBranchesApi(repoUrl: string, version: ApiVersion = '1')
+export async function getRepoBranchesApi(repoUrl: string, version: ApiVersion = '1') 
 {
   const repoUrlEncoded = encodeURIComponent(repoUrl);
 
@@ -11,7 +11,7 @@ export async function getRepoBranchesApi(repoUrl: string, version: ApiVersion = 
     .then(res => res.data);
 }
 
-export async function getRepoCommitsApi(repoUrl: string, branchName: string, version: ApiVersion = '1')
+export async function getRepoCommitsApi(repoUrl: string, branchName: string, version: ApiVersion = '1') 
 {
   const repoUrlEncoded = encodeURIComponent(repoUrl);
   const branchNameEncoded = encodeURIComponent(branchName);

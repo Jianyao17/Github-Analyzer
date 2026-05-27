@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { StatisticAnalysis } from '../../types/statistic-analysis';
+import type { StatisticAnalysis } from '../../types/analysis/statistic-analysis';
 import type { ProgressEvent } from '../../composables/useProjectApi';
 import { computed } from 'vue';
 

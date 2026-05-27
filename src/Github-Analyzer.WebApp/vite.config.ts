@@ -30,11 +30,11 @@ export default defineConfig({
     })
   ],
   server: {
-    port: Number(process.env.PORT ?? 3002),
+    port: Number(process.env.PORT ?? 5017),
     strictPort: true,
   },
   preview: {
-    port: Number(process.env.PORT ?? 3002),
+    port: Number(process.env.PORT ?? 5017),
     strictPort: true,
   },
   build: {

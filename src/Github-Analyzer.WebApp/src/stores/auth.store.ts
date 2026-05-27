@@ -20,7 +20,8 @@ export const useAuthStore = defineStore('auth', () =>
   const loading = ref(false);
 
   // Initialize token in apiClient if it exists from localStorage
-  if (token.value) {
+  if (token.value) 
+  {
     apiClient.setToken(token.value);
   }
 
@@ -44,15 +45,18 @@ export const useAuthStore = defineStore('auth', () =>
     apiClient.setToken(accessToken);
   }
 
-  function setUser(userProfile: UserProfile | null) {
+  function setUser(userProfile: UserProfile | null) 
+  {
     user.value = userProfile;
   }
 
-  function setInitialized(value: boolean) {
+  function setInitialized(value: boolean) 
+  {
     initialized.value = value;
   }
 
-  function setLoading(value: boolean) {
+  function setLoading(value: boolean) 
+  {
     loading.value = value;
   }
 

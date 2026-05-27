@@ -124,15 +124,13 @@ async function onSubmit()
     <!-- ── Header ─────────────────────────────────────────────────────── -->
     <div class="mb-8 text-center">
       <div class="
-        bg-primary-50
-        dark:bg-primary-950
-        ring-primary-200
-        dark:ring-primary-800
-        mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ring-1
+        mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl
+        bg-primary-50 ring-1 ring-primary-200
+        dark:bg-primary-950 dark:ring-primary-800
       "
       >
         <NIcon name="i-lucide-git-branch-plus"
-          class="text-primary-500 h-6 w-6"
+          class="h-6 w-6 text-primary-500"
         />
       </div>
       <h1 class="
@@ -152,8 +150,8 @@ async function onSubmit()
     <!-- ── Custom Form Card ───────────────────────────────────────────── -->
     <form @submit.prevent="onSubmit"
       class="
-        mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-2xl border border-gray-200
-        bg-white p-6
+        mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-2xl border
+        border-gray-200 bg-white p-6
         sm:p-7
         dark:border-gray-800 dark:bg-gray-900
       "
@@ -195,8 +193,8 @@ async function onSubmit()
             :disabled="creating || !repoUrl"
             aria-label="Mulai analisa"
             class="
-              relative hidden items-center justify-center gap-2 bg-green-500 px-2
-              text-xs font-semibold text-white transition-colors
+              relative hidden items-center justify-center gap-2 bg-green-500
+              px-2 text-xs font-semibold text-white transition-colors
               hover:bg-green-600
               focus:bg-green-600 focus:outline-none
               disabled:cursor-not-allowed disabled:bg-gray-300
@@ -207,7 +205,10 @@ async function onSubmit()
           >
             <span :class="{ 'opacity-0': creating }">Mulai Analisa</span>
             <NIcon name="i-lucide-play"
-              class="h-4 w-4 sm:h-5 sm:w-5"
+              class="
+                h-4 w-4
+                sm:h-5 sm:w-5
+              "
               :class="{ 'opacity-0': creating }"
             />
 
@@ -387,7 +388,10 @@ async function onSubmit()
       >
         <span :class="{ 'opacity-0': creating }">Mulai Analisa</span>
         <NIcon name="i-lucide-play"
-          class="h-4 w-4 sm:h-5 sm:w-5"
+          class="
+            h-4 w-4
+            sm:h-5 sm:w-5
+          "
           :class="{ 'opacity-0': creating }"
         />
 

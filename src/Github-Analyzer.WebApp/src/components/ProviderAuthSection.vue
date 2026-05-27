@@ -28,17 +28,14 @@ const authApi = useAuthApi();
 const isGoogleAuthEnabled = ref(false);
 const isProviderAuthLoading = ref(true);
 
-const visibleProviders = computed(() => {
-  return providerItems.filter(provider => provider.kind !== 'google' || isGoogleAuthEnabled.value);
-});
+const visibleProviders = computed(() => 
+  providerItems.filter(provider => provider.kind !== 'google' || isGoogleAuthEnabled.value));
 
-const displayedProviders = computed(() => {
-  return visibleProviders.value.length ? visibleProviders.value : providerItems;
-});
+const displayedProviders = computed(() => 
+  visibleProviders.value.length ? visibleProviders.value : providerItems);
 
-const isProviderContentVisible = computed(() => {
-  return !isProviderAuthLoading.value && visibleProviders.value.length > 0;
-});
+const isProviderContentVisible = computed(() => 
+  !isProviderAuthLoading.value && visibleProviders.value.length > 0);
 
 onMounted(() => 
 {
@@ -64,16 +61,26 @@ function handleProviderClick(provider: AuthProviderItem)
   <div class="mt-4">
     <div class="relative">
       <div class="flex w-full flex-col gap-4"
-        :class="isProviderContentVisible ? 'visible' : 'invisible pointer-events-none'"
+        :class="isProviderContentVisible ? 'visible' : `
+          pointer-events-none invisible
+        `"
         aria-hidden="true"
       >
         <div class="relative">
           <div class="absolute inset-0 flex items-center">
-            <div class="w-full border-t border-gray-200 dark:border-gray-800"></div>
+            <div class="
+              w-full border-t border-gray-200
+              dark:border-gray-800
+            "
+            ></div>
           </div>
 
           <div class="relative flex justify-center text-sm">
-            <span class="bg-white px-2 text-gray-500 dark:bg-gray-900">
+            <span class="
+              bg-white px-2 text-gray-500
+              dark:bg-gray-900
+            "
+            >
               Atau
             </span>
           </div>

@@ -8,7 +8,7 @@ import { showError, showSuccess } from '../lib/toast';
  */
 export const baseURL =
   import.meta.env.MODE === 'development'
-    ? import.meta.env.VITE_API_BASE_URL || 'http://localhost:5242' // Adjust default port if needed
+    ? import.meta.env.VITE_API_BASE_URL || 'http://localhost:5028'
     : import.meta.env.VITE_API_BASE_URL || '/api';
 
 /**
@@ -72,7 +72,8 @@ class ApiClient
     this.instance.interceptors.request.use(
       (reqConfig) => 
       {
-        if (this.token) {
+        if (this.token) 
+        {
           reqConfig.headers = reqConfig.headers || {};
           reqConfig.headers['Authorization'] = `Bearer ${this.token}`;
         }
@@ -185,14 +186,16 @@ class ApiClient
    * Set Bearer token for future requests
    * @param token - JWT or access token string
    */
-  setToken(token: string) {
+  setToken(token: string) 
+  {
     this.token = token;
   }
 
   /**
    * Clear the stored token (unauthenticated mode)
    */
-  clearToken() {
+  clearToken() 
+  {
     this.token = null;
   }
 
@@ -200,7 +203,8 @@ class ApiClient
    * Set default prefix (default is '/api/v1')
    * @param prefix - Prefix to prepend to all URLs (e.g., '/api/v1', '/api/v2', '')
    */
-  setDefaultPrefix(prefix: string) {
+  setDefaultPrefix(prefix: string) 
+  {
     this.defaultPrefix = prefix;
   }
 
@@ -208,7 +212,8 @@ class ApiClient
    * Set the default API version (default is '1')
    * @param version - Version string, e.g., '1', '2'
    */
-  setDefaultApiVersion(version: ApiVersion) {
+  setDefaultApiVersion(version: ApiVersion) 
+  {
     this.defaultPrefix = `/api/v${version}`;
   }
 
@@ -254,7 +259,8 @@ class ApiClient
    */
   private prependPrefix(url: string, prefix: string): string 
   {
-    if (!prefix || url.startsWith(prefix)) {
+    if (!prefix || url.startsWith(prefix)) 
+    {
       return url;
     }
 

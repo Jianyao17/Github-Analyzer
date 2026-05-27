@@ -120,8 +120,8 @@ watch([displayName, username, email, isDark], () =>
             :src="auth.user?.avatarUrl || undefined"
             :icon="auth.user?.avatarUrl ? undefined : 'i-lucide-user'"
             :alt="auth.user?.displayName || 
-                  auth.user?.username || 
-                  'GitHub Analyzer'"
+              auth.user?.username || 
+              'GitHub Analyzer'"
             size="lg"
           />
           <div v-if="!isCollapsed || isMobile"

@@ -43,7 +43,7 @@ onMounted(async () =>
   <AuthLayout title="Verifikasi Email"
     subtitle="Memverifikasi email Anda..."
   >
-    <div class="text-center space-y-6">
+    <div class="space-y-6 text-center">
       <NAlert v-if="loading"
         color="primary"
         variant="subtle"

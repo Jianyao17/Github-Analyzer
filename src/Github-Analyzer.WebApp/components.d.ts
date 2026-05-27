@@ -26,6 +26,7 @@ declare module 'vue' {
     NIcon: typeof import('./node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']
     NInput: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Input.vue')['default']
     ProjectItemButton: typeof import('./src/components/ProjectItemButton.vue')['default']
+    ProjectVersionSelector: typeof import('./src/components/ProjectVersionSelector.vue')['default']
     ProviderAuthButton: typeof import('./src/components/ProviderAuthButton.vue')['default']
     ProviderAuthSection: typeof import('./src/components/ProviderAuthSection.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

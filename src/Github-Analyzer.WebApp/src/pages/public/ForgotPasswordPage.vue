@@ -91,11 +91,9 @@ async function onSubmit()
       Ingat password Anda?
       <RouterLink :to="{ name: 'public.login' }"
         class="
-          text-primary-600
+          ml-1 font-medium text-primary-600 transition-colors
+          hover:text-primary-500 hover:underline
           dark:text-primary-400
-          hover:text-primary-500
-          ml-1 font-medium transition-colors
-          hover:underline
         "
       >
         Kembali ke Login

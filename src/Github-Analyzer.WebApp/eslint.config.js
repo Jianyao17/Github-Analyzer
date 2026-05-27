@@ -62,7 +62,7 @@ export default [
         'warn',
         {
           printWidth: 80,
-          lineBreakStyle: 'auto',
+          lineBreakStyle: 'unix',
         },
       ],
 
@@ -95,7 +95,7 @@ export default [
         'error',
         { singleline: 'always', multiline: 'always' },
       ],
-      
+
       // Letakkan tanda penutup kurung siku (>) atau self-closing (/>) di baris baru jika atribut multiline
       'vue/html-closing-bracket-newline': [
         'error',

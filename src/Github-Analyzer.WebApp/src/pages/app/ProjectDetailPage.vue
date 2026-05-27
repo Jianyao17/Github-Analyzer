@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useProjectApi } from '../../composables/useProjectApi';
 import StatisticTab from '../../components/project-details-tab/StatisticTab.vue';
 import CodeGraphTab from '../../components/project-details-tab/CodeGraphTab.vue';
@@ -32,9 +32,61 @@ const graphData         = ref<CodeGraph | null>(null);
 const statisticProgress = ref<ProgressEvent | null>(null);
 const statisticData     = ref<StatisticAnalysis | null>(null);
 
+// ─── Repo display helpers ──────────────────────────────────────────────────────
+const githubRepoInfo = computed(() =>
+{
+  if (!project.value) return null;
+
+  const parsed = parseGithubRepositoryUrl(project.value.repositoryUrl);
+  if (!parsed) return null;
+
+  return {
+    owner: parsed.owner,
+    repository: project.value.repositoryName || parsed.repository,
+    ownerUrl: `https://github.com/${parsed.owner}`,
+    repositoryUrl: `https://github.com/${parsed.owner}/${project.value.repositoryName || parsed.repository}`,
+  };
+});
+
+const formattedCreatedAt = computed(() =>
+{
+  if (!project.value?.createdAtUtc) return '';
+  try
+  {
+    const date = new Date(project.value.createdAtUtc);
+    return new Intl.DateTimeFormat('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    }).format(date);
+  }
+  catch
+  {
+    return '';
+  }
+});
+
 // ─── Unsubscribe handles ──────────────────────────────────────────────────────
 let unsubCodeGraph: (() => void) | null = null;
 let unsubStatistic: (() => void) | null = null;
+
+function parseGithubRepositoryUrl(repositoryUrl: string)
+{
+  try
+  {
+    const parsedUrl = new URL(repositoryUrl);
+    const segments = parsedUrl.pathname.replace(/\.git$/, '').split('/').filter(Boolean);
+
+    if (segments.length < 2) return null;
+
+    const [owner, repository] = segments.slice(-2);
+    return { owner, repository };
+  }
+  catch
+  {
+    return null;
+  }
+}
 
 // ─── Fetch ────────────────────────────────────────────────────────────────────
 async function fetchProject() 
@@ -190,14 +242,21 @@ onUnmounted(() =>
     `min-h-0` is critical: it prevents the flex child from overflowing its parent
     by allowing it to shrink below its intrinsic min-content height.
   -->
-  <div class="flex h-full min-h-0 w-full flex-col p-4 lg:p-6">
+  <div class="
+    flex h-full min-h-0 w-full flex-col p-4
+    lg:p-6
+  "
+  >
 
     <!-- Loading -->
     <div v-if="loading"
-      class="flex flex-col items-center gap-4 py-20"
+      class="flex flex-1 flex-col items-center justify-center gap-4"
     >
       <NIcon name="i-lucide-loader-2"
-        class="h-8 w-8 animate-spin text-gray-400"
+        class="
+          h-8 w-8 animate-spin text-gray-400
+          dark:text-gray-500
+        "
       />
       <p class="text-gray-500">Loading analysis details...</p>
     </div>
@@ -206,63 +265,123 @@ onUnmounted(() =>
       class="flex min-h-0 flex-1 flex-col gap-4"
     >
 
-      <!-- ── Repo Info Card ───────────────────────────────────────────────── -->
-      <NCard class="
-        shrink-0 border-0 bg-white shadow-sm ring-1 ring-gray-200
-        dark:bg-gray-900 dark:ring-gray-800
+      <!-- ── Header Info & Version Selector ───────────────────────────────── -->
+      <div class="
+        flex shrink-0 flex-col items-stretch gap-4
+        lg:flex-row
       "
-        :ui="{ body: 'p-5' }"
       >
-        <div class="flex items-start gap-3">
-          <div class="
-            mt-1 rounded-lg bg-gray-100 p-2
-            dark:bg-gray-800
+        <!-- Left: Repo Info Card -->
+        <NCard
+          class="
+            min-w-0 flex-1 border-0 bg-white/70 ring-1 ring-gray-200
+            backdrop-blur-md
+            dark:bg-gray-900/70 dark:ring-gray-800
           "
-          >
-            <NIcon name="i-lucide-github"
-              class="
-                h-5 w-5 text-gray-700
-                dark:text-gray-300
-              "
-            />
-          </div>
-          <div>
-            <h1 class="
-              font-mono text-base font-bold text-gray-900
-              dark:text-white
+          :ui="{ body: 'p-4 md:p-5 h-full flex flex-col justify-center' }"
+        >
+          <div class="flex w-full min-w-0 items-center gap-4">
+            <!-- Left: GitHub Icon Container (No Shadow) -->
+            <div class="
+              flex shrink-0 items-center justify-center rounded-xl
+              bg-[#181717]/8 p-2.5 text-gray-900 ring-1 ring-gray-900/10
+              dark:bg-white/8 dark:text-white dark:ring-white/10
             "
             >
-              {{ project.repositoryUrl }}
-            </h1>
-            <div class="mt-1 flex flex-wrap items-center gap-2">
-              <span v-if="project.branchName"
-                class="
-                  inline-flex items-center gap-1 rounded-full bg-blue-50 px-2
-                  py-0.5 text-xs text-blue-700 ring-1 ring-blue-200
-                  dark:bg-blue-900/30 dark:text-blue-300 dark:ring-blue-800
-                "
+              <NIcon name="i-lucide-github"
+                class="h-6 w-6"
+              />
+            </div>
+            
+            <!-- Middle: Repository Name & Meta Info -->
+            <div class="flex min-w-0 flex-col justify-center gap-2">
+              <h1 class="
+                flex flex-wrap items-center gap-2 text-lg leading-none
+                font-semibold text-gray-900
+                dark:text-white
+              "
               >
-                <NIcon name="i-lucide-git-branch"
-                  class="h-3 w-3"
-                />
-                {{ project.branchName }}
-              </span>
-              <span v-if="project.lastCommitHash"
-                class="
-                  inline-flex items-center gap-1 rounded-full bg-gray-100 px-2
-                  py-0.5 font-mono text-xs text-gray-600
-                  dark:bg-gray-800 dark:text-gray-400
-                "
-              >
-                <NIcon name="i-lucide-git-commit-horizontal"
-                  class="h-3 w-3"
-                />
-                {{ project.lastCommitHash.slice(0, 7) }}
-              </span>
+                <template v-if="githubRepoInfo">
+                  <a
+                    :href="githubRepoInfo.ownerUrl"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    class="
+                      truncate text-base font-semibold transition-colors
+                      hover:text-primary-600 hover:underline
+                      dark:hover:text-primary-400
+                    "
+                  >
+                    {{ githubRepoInfo.owner }}
+                  </a>
+                  <span class="
+                    text-base font-semibold text-gray-300
+                    dark:text-gray-600
+                  "
+                  >/</span>
+                  <a
+                    :href="githubRepoInfo.repositoryUrl"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    class="
+                      truncate text-base font-semibold transition-colors
+                      hover:text-primary-600 hover:underline
+                      dark:hover:text-primary-400
+                    "
+                  >
+                    {{ githubRepoInfo.repository }}
+                  </a>
+                </template>
+                <template v-else>
+                  <span class="truncate text-base font-semibold">
+                    {{ project.repositoryName }}
+                  </span>
+                </template>
+              </h1>
+              
+              <!-- Badges for branch & commit hash (Restored previous design with smaller text-xs size) -->
+              <div class="flex flex-wrap items-center gap-2.5">
+                <span v-if="project.branchName"
+                  class="
+                    inline-flex items-center gap-1 rounded-full bg-blue-50 px-2
+                    py-0.5 text-xs font-medium text-blue-700
+                    dark:bg-blue-900/30 dark:text-blue-300
+                  "
+                >
+                  <NIcon name="i-lucide-git-branch"
+                    class="h-3 w-3"
+                  />
+                  {{ project.branchName }}
+                </span>
+                <span v-if="project.lastCommitHash"
+                  class="
+                    inline-flex items-center gap-1 rounded-full bg-gray-100 px-2
+                    py-0.5 text-xs font-medium text-gray-600
+                    dark:bg-gray-800 dark:text-gray-400
+                  "
+                >
+                  <NIcon name="i-lucide-git-commit-horizontal"
+                    class="h-3 w-3"
+                  />
+                  {{ project.lastCommitHash.slice(0, 7) }}
+                </span>
+                <span v-if="formattedCreatedAt"
+                  class="
+                    inline-flex items-center gap-1 rounded-full bg-gray-100 px-2
+                    py-0.5 text-xs font-medium text-gray-600
+                    dark:bg-gray-800 dark:text-gray-400
+                  "
+                >
+                  <NIcon name="i-lucide-calendar"
+                    class="h-3 w-3"
+                  />
+                  {{ formattedCreatedAt }}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      </NCard>
+        </NCard>
+      </div>
 
       <!-- ── Tab Navigation ───────────────────────────────────────────────── -->
       <div class="

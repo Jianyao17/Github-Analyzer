@@ -94,9 +94,8 @@ function toggleProjectsCollapsed()
           color="gray"
           variant="ghost"
           class="
-            text-primary-600
+            mx-auto flex h-10 w-10 items-center justify-center text-primary-600
             dark:text-primary-400
-            mx-auto flex h-10 w-10 items-center justify-center
           "
           @click="$emit('toggle-collapse')"
         />
@@ -107,8 +106,8 @@ function toggleProjectsCollapsed()
         >
           <div class="flex min-w-0 items-center gap-3">
             <div class="
-              bg-primary-600 flex h-8 w-8 shrink-0 items-center justify-center
-              rounded-lg
+              flex h-8 w-8 shrink-0 items-center justify-center rounded-lg
+              bg-primary-600
             "
             >
               <NIcon name="i-lucide-github"

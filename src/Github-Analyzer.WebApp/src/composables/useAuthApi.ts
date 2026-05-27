@@ -34,7 +34,8 @@ export const useAuthApi = (version: ApiVersion = '1') =>
   // Version is forwarded to API helpers below.
   const authStore = useAuthStore();
 
-  const getCurrentUser = async () => {
+  const getCurrentUser = async () => 
+  {
     const response = await getCurrentUserApi(version);
     return response.data;
   };
@@ -111,7 +112,7 @@ export const useAuthApi = (version: ApiVersion = '1') =>
     }
 
     return false;
-  }
+  };
 
   const googleAuth = async (returnPath?: string) => 
   {

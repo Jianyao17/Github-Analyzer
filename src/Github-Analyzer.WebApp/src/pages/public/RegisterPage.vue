@@ -36,14 +36,15 @@ async function onSubmit()
     loading.value = false;
   }
 }
-
 </script>
 
 <template>
   <AuthLayout title="Create an account"
     subtitle="Get started with Github Analyzer"
   >
-    <div v-if="success" class="text-center space-y-6">
+    <div v-if="success"
+      class="space-y-6 text-center"
+    >
       <NAlert
         color="success"
         variant="subtle"
@@ -59,97 +60,100 @@ async function onSubmit()
       </NButton>
     </div>
 
-    <div v-else class="space-y-6">
+    <div v-else
+      class="space-y-6"
+    >
       <NForm :state="state"
-      @submit="onSubmit"
-      class="space-y-4"
-    >
-      <NAlert v-if="error"
-        color="error"
-        variant="subtle"
-        icon="i-lucide-alert-circle"
-        :title="error"
-      />
-
-      <NFormField label="Username"
-        name="username" required
+        @submit="onSubmit"
+        class="space-y-4"
       >
-        <NInput v-model="state.username"
-          id="username"
+        <NAlert v-if="error"
+          color="error"
+          variant="subtle"
+          icon="i-lucide-alert-circle"
+          :title="error"
+        />
+
+        <NFormField label="Username"
           name="username"
-          autocomplete="username"
-          placeholder="johndoe"
-          icon="i-lucide-user"
-          class="w-full"
-        />
-      </NFormField>
-
-      <NFormField label="Email Address"
-        name="email" required
-      >
-        <NInput v-model="state.email"
-          id="email"
-          name="email"
-          type="email"
-          autocomplete="email"
-          placeholder="you@example.com"
-          icon="i-lucide-mail"
-          class="w-full"
-        />
-      </NFormField>
-
-      <NFormField label="Password"
-        name="password" required
-      >
-        <NInput v-model="state.password"
-          id="password"
-          name="password"
-          placeholder="••••••••"
-          icon="i-lucide-lock"
-          class="w-full"
-          :type="showPassword ? 'text' : 'password'"
-          :ui="{ trailing: 'pe-3' }"
+          required
         >
-          <template #trailing>
-            <NButton color="neutral"
-              variant="link"
-              :padded="false"
-              :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-              @click="showPassword = !showPassword"
-            />
-          </template>
-        </NInput>
-      </NFormField>
+          <NInput v-model="state.username"
+            id="username"
+            name="username"
+            autocomplete="username"
+            placeholder="johndoe"
+            icon="i-lucide-user"
+            class="w-full"
+          />
+        </NFormField>
 
-      <NButton type="submit"
-        :loading="loading"
-        color="primary"
-        class="mt-2"
-        block
+        <NFormField label="Email Address"
+          name="email"
+          required
+        >
+          <NInput v-model="state.email"
+            id="email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            icon="i-lucide-mail"
+            class="w-full"
+          />
+        </NFormField>
+
+        <NFormField label="Password"
+          name="password"
+          required
+        >
+          <NInput v-model="state.password"
+            id="password"
+            name="password"
+            placeholder="••••••••"
+            icon="i-lucide-lock"
+            class="w-full"
+            :type="showPassword ? 'text' : 'password'"
+            :ui="{ trailing: 'pe-3' }"
+          >
+            <template #trailing>
+              <NButton color="neutral"
+                variant="link"
+                :padded="false"
+                :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                @click="showPassword = !showPassword"
+              />
+            </template>
+          </NInput>
+        </NFormField>
+
+        <NButton type="submit"
+          :loading="loading"
+          color="primary"
+          class="mt-2"
+          block
+        >
+          Create account
+        </NButton>
+      </NForm>
+
+      <ProviderAuthSection />
+
+      <p class="
+        mt-6 text-center text-sm text-gray-500
+        dark:text-gray-400
+      "
       >
-        Create account
-      </NButton>
-    </NForm>
-
-    <ProviderAuthSection />
-
-    <p class="
-      mt-6 text-center text-sm text-gray-500
-      dark:text-gray-400
-    "
-    >
-      Sudah punya akun?
-      <RouterLink :to="{ name: 'public.login' }"
-        class="
-          text-primary-600
-          dark:text-primary-400
-          hover:text-primary-500
-          ml-1 font-medium transition-colors
-          hover:underline
-        "
-      >
-        Sign in
-      </RouterLink>
+        Sudah punya akun?
+        <RouterLink :to="{ name: 'public.login' }"
+          class="
+            ml-1 font-medium text-primary-600 transition-colors
+            hover:text-primary-500 hover:underline
+            dark:text-primary-400
+          "
+        >
+          Sign in
+        </RouterLink>
       </p>
     </div>
   </AuthLayout>

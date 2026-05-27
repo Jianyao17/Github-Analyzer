@@ -36,7 +36,7 @@ onMounted(async () =>
   "
   >
     <div class="
-      absolute -left-24 top-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl
+      absolute top-10 -left-24 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl
       dark:bg-emerald-500/10
     "
     />
@@ -48,18 +48,30 @@ onMounted(async () =>
 
     <NCard class="
       relative z-10 w-full max-w-md border border-white/40 bg-white/80
-      shadow-2xl backdrop-blur-xl dark:border-gray-800 dark:bg-gray-900/80
+      shadow-2xl backdrop-blur-xl
+      dark:border-gray-800 dark:bg-gray-900/80
     "
     >
       <template #header>
         <div class="flex flex-col items-center gap-2 text-center">
           <NIcon name="i-lucide-shield-check"
-            class="h-10 w-10 text-emerald-600 dark:text-emerald-400"
+            class="
+              h-10 w-10 text-emerald-600
+              dark:text-emerald-400
+            "
           />
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 class="
+            text-2xl font-bold text-gray-900
+            dark:text-white
+          "
+          >
             Signing you in
           </h1>
-          <p class="text-sm text-gray-600 dark:text-gray-400">
+          <p class="
+            text-sm text-gray-600
+            dark:text-gray-400
+          "
+          >
             Completing authentication
           </p>
         </div>
@@ -67,9 +79,16 @@ onMounted(async () =>
 
       <div class="flex flex-col items-center gap-4 text-center">
         <NIcon name="i-lucide-loader-2"
-          class="h-10 w-10 animate-spin text-primary-600 dark:text-primary-400"
+          class="
+            h-10 w-10 animate-spin text-primary-600
+            dark:text-primary-400
+          "
         />
-        <p class="text-sm text-gray-600 dark:text-gray-400">
+        <p class="
+          text-sm text-gray-600
+          dark:text-gray-400
+        "
+        >
           Please wait, we are preparing your workspace.
         </p>
       </div>

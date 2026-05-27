@@ -71,7 +71,9 @@ async function onSubmit()
   <AuthLayout title="Reset Password"
     subtitle="Buat password baru Anda"
   >
-    <div v-if="success" class="text-center space-y-6">
+    <div v-if="success"
+      class="space-y-6 text-center"
+    >
       <NAlert
         color="success"
         variant="subtle"
@@ -87,7 +89,8 @@ async function onSubmit()
       </NButton>
     </div>
 
-    <NForm v-else :state="state"
+    <NForm v-else
+      :state="state"
       @submit="onSubmit"
       class="space-y-6"
     >
@@ -125,9 +128,9 @@ async function onSubmit()
         name="confirmPassword"
       >
         <NInput v-model="state.confirmPassword"
+          :type="showPassword ? 'text' : 'password'"
           id="confirmPassword"
           name="confirmPassword"
-          :type="showPassword ? 'text' : 'password'"
           placeholder="••••••••"
           icon="i-lucide-lock"
           class="w-full"

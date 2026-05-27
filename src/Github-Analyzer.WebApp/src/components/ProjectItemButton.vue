@@ -23,11 +23,8 @@ defineProps<ProjectItemButtonProps>();
         : 'justify-start',
         
       isActive ? `
-        bg-primary-50
-        dark:bg-primary-950
-        text-primary-600
-        dark:text-primary-400
-        font-bold
+        bg-primary-50 font-bold text-primary-600
+        dark:bg-primary-950 dark:text-primary-400
       ` : ''
     ]"
   >

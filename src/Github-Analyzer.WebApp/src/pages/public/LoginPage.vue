@@ -40,7 +40,6 @@ async function onSubmit()
     loading.value = false;
   }
 }
-
 </script>
 
 <template>
@@ -78,10 +77,9 @@ async function onSubmit()
         <template #hint>
           <RouterLink :to="{ name: 'public.forgot-password' }"
             class="
-              text-primary-600
+              text-sm font-medium text-primary-600
               hover:text-primary-500
               dark:text-primary-400
-              text-sm font-medium
             "
           >
             Lupa password?
@@ -128,11 +126,9 @@ async function onSubmit()
       Belum punya akun?
       <RouterLink :to="{ name: 'public.register' }"
         class="
-          text-primary-600
+          ml-1 font-medium text-primary-600 transition-colors
+          hover:text-primary-500 hover:underline
           dark:text-primary-400
-          hover:text-primary-500
-          ml-1 font-medium transition-colors
-          hover:underline
         "
       >
         Sign up

@@ -5,10 +5,10 @@ import { useProjectApi } from '../../composables/useProjectApi';
 import StatisticTab from '../../components/project-details-tab/StatisticTab.vue';
 import CodeGraphTab from '../../components/project-details-tab/CodeGraphTab.vue';
 
-import type { ProjectResponse } from '../../types/project';
+import type { ProjectResponse } from '../../types/_api/project.ts';
 import type { ProgressEvent } from '../../composables/useProjectApi';
-import type { StatisticAnalysis } from '../../types/statistic-analysis';
-import type { CodeGraph } from '../../types/code-graph';
+import type { StatisticAnalysis } from '../../types/analysis/statistic-analysis.ts';
+import type { CodeGraph } from '../../types/analysis/code-graph.ts';
 
 const route = useRoute();
 const {

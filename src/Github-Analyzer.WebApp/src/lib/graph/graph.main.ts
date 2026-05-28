@@ -138,5 +138,10 @@ export class GraphD3 implements IGraphD3
     // renderer.destroy() removes the SVG DOM element and nulls internal refs.
     // The D3Renderer instance (this.renderer) remains alive for reuse.
     this.renderer.destroy();
+
+    // Release augmented arrays — allows GC to collect D3Node/D3Edge objects.
+    // D3 simulation already released its internal references via stopSimulation().
+    this.d3Nodes = [];
+    this.d3Edges = [];
   }
 }

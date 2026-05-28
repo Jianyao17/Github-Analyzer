@@ -20,8 +20,8 @@ const {
 } = useProjectApi();
 
 // ─── Page state ───────────────────────────────────────────────────────────────
-const project   = ref<ProjectResponse | null>(null);
 const loading   = ref(true);
+const project   = ref<ProjectResponse | null>(null);
 const activeTab = ref<'statistic' | 'codegraph'>('statistic');
 
 // ─── Code Graph state ─────────────────────────────────────────────────────────

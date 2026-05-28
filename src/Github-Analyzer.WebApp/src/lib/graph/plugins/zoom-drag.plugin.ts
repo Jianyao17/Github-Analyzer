@@ -13,6 +13,7 @@ export class ZoomDragPlugin implements GraphPlugin
   readonly name = 'zoom-drag';
 
   private zoom: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null;
+  private svg:  d3.Selection<SVGSVGElement, unknown, null, undefined> | null = null;
 
   setup(graph: IGraphD3): void 
   {
@@ -20,6 +21,8 @@ export class ZoomDragPlugin implements GraphPlugin
     const viewport = graph.renderer.getViewport();
 
     if (!svg || !viewport) return;
+
+    this.svg = svg;
 
     // ── Zoom & Pan ──────────────────────────────────────────────
     this.zoom = d3
@@ -61,5 +64,37 @@ export class ZoomDragPlugin implements GraphPlugin
   teardown(): void 
   {
     this.zoom = null;
+    this.svg  = null;
+  }
+
+  /**
+   * Programmatically pans and zooms to a point in graph-space.
+   * Triggers through the official D3 zoom behavior so subsequent
+   * user interactions start from the correct zoom state.
+   *
+   * @param x        Target X coordinate in graph space
+   * @param y        Target Y coordinate in graph space
+   * @param scale    Zoom scale (default: 2)
+   * @param duration Transition duration in ms (default: 750)
+   */
+  zoomTo(x: number, y: number, scale = 2, duration = 750): void
+  {
+    if (!this.svg || !this.zoom) return;
+
+    const svgEl = this.svg.node();
+    if (!svgEl) return;
+
+    const width  = svgEl.clientWidth;
+    const height = svgEl.clientHeight;
+    const tx     = width  / 2 - x * scale;
+    const ty     = height / 2 - y * scale;
+
+    this.svg
+      .transition()
+      .duration(duration)
+      .call(
+        this.zoom.transform,
+        d3.zoomIdentity.translate(tx, ty).scale(scale),
+      );
   }
 }

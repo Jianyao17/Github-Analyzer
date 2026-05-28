@@ -45,6 +45,16 @@ export function createSimulation(
 export function stopSimulation(
   sim: d3.Simulation<D3Node, D3Edge>): void 
 {
+  // Release internal D3 references before stopping:
+  // - forceManyBody builds a Barnes-Hut quadtree that holds node references
+  // - forceLink holds an array of link objects with source/target references
+  // Simply calling sim.stop() halts the timer but keeps all these alive.
+  (sim.force('link') as d3.ForceLink<D3Node, D3Edge> | null)?.links([]);
+  sim.force('charge', null);
+  sim.force('center', null);
+  sim.force('collide', null);
+  sim.force('link', null);
+  sim.nodes([]);
   sim.stop();
 }
 

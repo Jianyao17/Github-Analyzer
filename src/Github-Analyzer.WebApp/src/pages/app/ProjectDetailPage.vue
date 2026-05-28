@@ -441,29 +441,29 @@ onUnmounted(() =>
       <div class="flex min-h-0 flex-1 flex-col">
 
         <!-- STATISTIC tab — scrolls internally, page does not scroll -->
-        <StatisticTab
-          v-if="activeTab === 'statistic'"
-          :data="statisticData"
-          :progress="statisticProgress"
-          class="min-h-0 flex-1 overflow-y-auto"
-        />
+        <KeepAlive>
+          <StatisticTab
+            v-if="activeTab === 'statistic'"
+            :data="statisticData"
+            :progress="statisticProgress"
+            class="min-h-0 flex-1 overflow-y-auto"
+          />
+        </KeepAlive>
 
         <!-- CODE GRAPH tab — fills remaining height, D3 renders inside absolute container -->
-        <div
-          v-if="activeTab === 'codegraph'"
-          class="
-            relative min-h-0 flex-1 overflow-hidden rounded-xl border-2
-            border-dashed border-gray-200
-            dark:border-gray-800
-          "
-          style="min-height: 400px"
-        >
+        <KeepAlive>
           <CodeGraphTab
+            v-if="activeTab === 'codegraph'"
             :data="graphData"
             :progress="codeGraphProgress"
-            class="absolute inset-0"
+            class="
+              relative min-h-0 flex-1 overflow-hidden rounded-xl border-2
+              border-dashed border-gray-200
+              dark:border-gray-800
+            "
+            style="min-height: 400px"
           />
-        </div>
+        </KeepAlive>
 
       </div>
     </div>

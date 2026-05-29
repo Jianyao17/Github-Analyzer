@@ -158,67 +158,125 @@ function toggleProjectsCollapsed()
 
       <!-- Navigation Links -->
       <div class="flex min-h-0 flex-1 flex-col p-3">
-        <div class="group mb-2 flex items-center justify-between px-2"
-          v-if="!isCollapsed || isMobile"
-        >
-          <div class="w-1/2">
-            <span class="
-              text-sm font-medium text-gray-600
-              dark:text-gray-300
-            "
-            >
-              Projects
-            </span>
-          </div>
-          <div class="w-1/2">
-            <NButton
-              variant="ghost"
-              color="gray"
-              size="sm"
-              class="
-                group w-full justify-end gap-1.5 px-0 text-xs text-gray-500
-                hover:text-gray-700
-                dark:text-gray-400
-                dark:hover:text-gray-200
-              "
-              @click="toggleProjectsCollapsed"
-            >
+        <template v-if="!isCollapsed || isMobile">
+          <div class="group mb-2 flex items-center justify-between px-2">
+            <div class="w-1/2">
               <span class="
-                opacity-0 transition-opacity
-                group-hover:opacity-100
+                text-sm font-medium text-gray-600
+                dark:text-gray-300
               "
               >
-                {{ isProjectsCollapsed ? 'Expand' : 'Collapse' }}
+                Projects
               </span>
-              <NIcon
-                :name="isProjectsCollapsed ? 'i-lucide-chevron-down' : 'i-lucide-chevron-up'"
-                class="h-3.5 w-3.5"
-              />
-            </NButton>
+            </div>
+            <div class="w-1/2">
+              <NButton
+                variant="ghost"
+                color="gray"
+                size="sm"
+                class="
+                  group w-full justify-end gap-1.5 px-0 text-xs text-gray-500
+                  hover:text-gray-700
+                  dark:text-gray-400
+                  dark:hover:text-gray-200
+                "
+                @click="toggleProjectsCollapsed"
+              >
+                <span class="
+                  opacity-0 transition-opacity
+                  group-hover:opacity-100
+                "
+                >
+                  {{ isProjectsCollapsed ? 'Expand' : 'Collapse' }}
+                </span>
+                <NIcon
+                  :name="isProjectsCollapsed ? 'i-lucide-chevron-down' : 'i-lucide-chevron-up'"
+                  class="h-3.5 w-3.5"
+                />
+              </NButton>
+            </div>
           </div>
-        </div>
 
-        <div class="sidebar-scroll flex-1 space-y-1 overflow-y-auto pr-1"
-          v-show="!isProjectsCollapsed || isCollapsed"
-        >
-          <div v-if="projects.length === 0"
-            class="px-2 py-4 text-center text-xs text-gray-500"
+          <div class="sidebar-scroll flex-1 space-y-1 overflow-y-auto pr-1"
+            v-show="!isProjectsCollapsed"
           >
-            <span v-if="!isCollapsed || isMobile">No projects yet</span>
-            <NIcon v-else
-              name="i-lucide-folder-open"
-              class="mx-auto h-5 w-5"
+            <div v-if="projects.length === 0"
+              class="px-2 py-4 text-center text-xs text-gray-500"
+            >
+              <span>No projects yet</span>
+            </div>
+            <ProjectItemButton
+              v-for="project in projects"
+              :key="project.id"
+              :project="project"
+              :is-active="activeProjectId === project.id"
+              :is-collapsed="false"
+              :is-mobile="isMobile"
             />
           </div>
-          <ProjectItemButton
-            v-for="project in projects"
-            :key="project.id"
-            :project="project"
-            :is-active="activeProjectId === project.id"
-            :is-collapsed="isCollapsed"
-            :is-mobile="isMobile"
-          />
-        </div>
+        </template>
+        <template v-else>
+          <!-- Collapsed: Dropdown Button -->
+          <div class="flex flex-1 flex-col items-center pt-2">
+            <NPopover
+              :content="{ side: 'right', align: 'start', sideOffset: 0 }"
+              :ui="{ content: 'z-[60]' }"
+            >
+              <template #default="{ open }">
+                <NButton
+                  icon="i-lucide-folder-open"
+                  color="gray"
+                  variant="ghost"
+                  class="
+                    mx-auto flex h-10 w-10 items-center justify-center
+                    transition-all duration-200
+                  "
+                  :class="open 
+                    ? `
+                      bg-gray-100 text-primary-600
+                      dark:bg-gray-800 dark:text-primary-400
+                    ` 
+                    : `
+                      hover:bg-gray-100 hover:text-gray-900
+                      dark:hover:bg-gray-800 dark:hover:text-white
+                    `"
+                />
+              </template>
+              <template #content="{ close }">
+                <div class="flex w-64 flex-col p-3">
+                  <div class="group mb-2 flex items-center justify-between px-2">
+                    <span class="
+                      text-sm font-medium text-gray-600
+                      dark:text-gray-300
+                    "
+                    >
+                      Projects
+                    </span>
+                  </div>
+                  <div class="
+                    sidebar-scroll max-h-[60vh] space-y-1 overflow-y-auto pr-1
+                  "
+                  >
+                    <div v-if="projects.length === 0"
+                      class="px-2 py-4 text-center text-xs text-gray-500"
+                    >
+                      <span>No projects yet</span>
+                    </div>
+                    <ProjectItemButton
+                      v-for="project in projects"
+                      :key="project.id"
+                      :project="project"
+                      :is-active="activeProjectId === project.id"
+                      :is-collapsed="false"
+                      :is-mobile="isMobile"
+                      @click="close"
+                    />
+                  </div>
+                </div>
+              </template>
+            </NPopover>
+          </div>
+        </template>
       </div>
 
       <UserProfileCard

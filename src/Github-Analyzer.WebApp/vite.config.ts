@@ -34,6 +34,7 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       '@graph': fileURLToPath(new URL('./src/lib/graph', import.meta.url)),
+      '@graph.types': fileURLToPath(new URL('./src/lib/graph/types/_index.ts', import.meta.url)),
     },
   },
   server: {

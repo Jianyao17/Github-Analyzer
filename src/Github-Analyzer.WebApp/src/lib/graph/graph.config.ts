@@ -1,4 +1,4 @@
-import type { GraphConfig } from './graph.types';
+import type { GraphConfig } from './types/_index';
 
 // ─── Default Graph Config ─────────────────────────────────────────────────────
 // Node/edge styles are defined as config objects — no switch-case.

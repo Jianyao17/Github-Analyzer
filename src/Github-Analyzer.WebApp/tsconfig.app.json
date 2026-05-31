@@ -13,7 +13,8 @@
     /* Path aliases — must mirror vite.config.ts resolve.alias */
     "paths": {
       "@/*": ["./src/*"],
-      "@graph/*": ["./src/lib/graph/*"]
+      "@graph/*": ["./src/lib/graph/*"],
+      "@graph.types": ["./src/lib/graph/types/_index.ts"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "auto-imports.d.ts", "components.d.ts"]

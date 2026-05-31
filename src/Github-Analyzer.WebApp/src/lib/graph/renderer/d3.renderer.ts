@@ -1,52 +1,52 @@
 import * as d3 from 'd3';
-import type { D3Node, D3Edge, GraphConfig, IGraphRenderer, INodeRenderer } from '../graph.types';
+import type { D3Node, D3Edge, GraphConfig, IGraphRenderer } from '@graph.types';
 import { NodeRenderer } from './node.renderer';
 import { EdgeRenderer } from './edge.renderer';
 
 /**
- * D3Renderer — orchestrates SVG setup and delegates rendering to sub-renderers.
+ * D3Renderer — orchestrates SVG setup dan mendelegasikan rendering ke sub-renderers.
  *
  * Responsibilities:
- *   - Create and own the root <svg> and <g class="viewport">
- *   - Render edges first (z-order: edges below nodes)
- *   - Proxy tick updates to sub-renderers
+ *   - Membuat dan memiliki root <svg> dan <g class="viewport">
+ *   - Render edges dulu (z-order: edges di bawah nodes)
+ *   - Proxy tick updates ke sub-renderers
  *
- * Does NOT contain: business logic, selection state, or interaction handling.
+ * Tidak mengandung: business logic, selection state, atau interaction handling.
  */
-export class D3Renderer implements IGraphRenderer 
+export class D3Renderer implements IGraphRenderer
 {
-  private svg: d3.Selection<SVGSVGElement, unknown, null, undefined> | null = null;
-  private viewport: d3.Selection<SVGGElement, unknown, null, undefined> | null = null;
+  private svg:      d3.Selection<SVGSVGElement, unknown, null, undefined> | null = null;
+  private viewport: d3.Selection<SVGGElement,   unknown, null, undefined> | null = null;
 
-  // Sub-renderers — exposed as readonly so plugins can access their selections
-  readonly nodeRenderer: NodeRenderer & INodeRenderer = new NodeRenderer();
+  // Sub-renderers — typed oleh interface agar konsumen hanya akses kontrak yang didefinisikan
+  readonly nodeRenderer: NodeRenderer = new NodeRenderer();
   readonly edgeRenderer: EdgeRenderer = new EdgeRenderer();
 
-  /** Creates the root SVG and viewport group inside the given container. */
-  init(container: HTMLElement): void 
+  /** Membuat root SVG dan viewport group di dalam container. */
+  init(container: HTMLElement): void
   {
-    // Clear any pre-existing SVG (safe to call on re-render after destroy)
+    // Hapus SVG lama yang ada (safe untuk re-render setelah destroy)
     d3.select(container).selectAll('svg').remove();
 
-    const width = container.clientWidth || 800;
+    const width  = container.clientWidth  || 800;
     const height = container.clientHeight || 600;
 
     this.svg = d3
       .select(container)
       .append('svg')
-      .attr('width', '100%')
-      .attr('height', '100%')
+      .attr('width',   '100%')
+      .attr('height',  '100%')
       .attr('viewBox', `0 0 ${width} ${height}`);
 
-    // All rendered content lives inside viewport so zoom transform applies cleanly
+    // Semua konten yang dirender ada di dalam viewport agar zoom transform bersih
     this.viewport = this.svg.append('g').attr('class', 'viewport');
   }
 
   /**
-   * Renders edges then nodes (z-order: edges are drawn below nodes).
-   * Must be called after init().
+   * Render edges lalu nodes (z-order: edges di bawah nodes).
+   * Harus dipanggil setelah init().
    */
-  render(nodes: D3Node[], edges: D3Edge[], config: GraphConfig): void 
+  render(nodes: D3Node[], edges: D3Edge[], config: GraphConfig): void
   {
     if (!this.svg || !this.viewport) return;
 
@@ -54,34 +54,33 @@ export class D3Renderer implements IGraphRenderer
     this.nodeRenderer.render(this.viewport, nodes, config);
   }
 
-  /** Proxies position updates to sub-renderers. Called on every simulation tick. */
-  onTick(): void 
+  /** Proxy position updates ke sub-renderers. Dipanggil setiap simulation tick. */
+  onTick(): void
   {
     this.edgeRenderer.updatePositions();
     this.nodeRenderer.updatePositions();
   }
 
-  /** Returns the root SVG selection, used by plugins to add custom elements. */
-  getSvg(): d3.Selection<SVGSVGElement, unknown, null, undefined> | null 
+  /** Returns root SVG selection. */
+  getSvg(): d3.Selection<SVGSVGElement, unknown, null, undefined> | null
   {
     return this.svg;
   }
 
-  /** Returns the viewport group selection, used by plugins to add custom elements. */
-  getViewport(): d3.Selection<SVGGElement, unknown, null, undefined> | null 
+  /** Returns viewport group selection. */
+  getViewport(): d3.Selection<SVGGElement, unknown, null, undefined> | null
   {
     return this.viewport;
   }
 
   /**
-   * Removes the SVG from the DOM and resets internal references.
-   * The D3Renderer instance itself is NOT destroyed — it can be reused
-   * by calling init() + render() again (e.g. after GraphD3.update()).
+   * Menghapus SVG dari DOM dan mereset internal references.
+   * Instance D3Renderer TIDAK dihancurkan — bisa reuse dengan init() + render() lagi.
    */
-  destroy(): void 
+  destroy(): void
   {
     this.svg?.remove();
-    this.svg = null;
+    this.svg      = null;
     this.viewport = null;
     this.nodeRenderer.clear();
     this.edgeRenderer.clear();

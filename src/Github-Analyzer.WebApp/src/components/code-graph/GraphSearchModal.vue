@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
-import type { D3Node } from '@graph/graph.types';
 import { NODE_TYPE_KEYS, defaultGraphConfig } from '@graph/graph.config';
+import type { D3Node } from '@graph.types';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 const props = defineProps<{

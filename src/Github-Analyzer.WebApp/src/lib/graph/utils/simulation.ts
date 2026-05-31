@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import type { D3Node, D3Edge, GraphConfig } from '../graph.types';
+import type { D3Node, D3Edge, GraphConfig } from '@graph.types';
 
 /**
  * Creates a configured D3 force simulation.

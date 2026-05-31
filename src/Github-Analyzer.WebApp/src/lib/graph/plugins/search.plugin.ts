@@ -1,37 +1,35 @@
 import * as d3 from 'd3';
-import type { GraphPlugin, IGraphD3, D3Node } from '../graph.types';
-import type { ZoomDragPlugin } from './zoom-drag.plugin';
+import type { GraphPlugin, GraphData, GraphView, D3Node } from '@graph.types';
 
 // ─── Visual constants ─────────────────────────────────────────────────────────
 
-/** Opacity applied to nodes that do NOT match the current search query. */
-const DIM_OPACITY       = 0.12;
+/** Opacity untuk node yang TIDAK cocok dengan query pencarian. */
+const DIM_OPACITY      = 0.12;
 
-/** Stroke color for nodes that DO match the search query. */
-const HIGHLIGHT_COLOR   = '#FCD34D'; // amber-300
+/** Stroke color untuk node yang cocok dengan query pencarian. */
+const HIGHLIGHT_COLOR  = '#FCD34D'; // amber-300
 
-/** Stroke width for highlighted nodes. */
-const HIGHLIGHT_STROKE  = 3;
+/** Stroke width untuk node yang ter-highlight. */
+const HIGHLIGHT_STROKE = 3;
 
 // ─── SearchPlugin ─────────────────────────────────────────────────────────────
 
 /**
- * SearchPlugin — find nodes by label / path and zoom-focus to results.
+ * SearchPlugin — cari node by label / path dan zoom-focus ke hasil.
  *
- * Requires a `ZoomDragPlugin` reference for programmatic zoom.
- * Register it AFTER `ZoomDragPlugin`:
+ * Tidak memerlukan dependency ke plugin lain.
+ * Zoom menggunakan view.zoomTo() yang sudah built-in di GraphView.
  *
  * ```ts
- * const zoomPlugin   = new ZoomDragPlugin();
- * const searchPlugin = new SearchPlugin(zoomPlugin);
+ * const searchPlugin = new SearchPlugin();
  *
  * graph
- *   .use(zoomPlugin)
+ *   .use(new ZoomDragPlugin())
  *   .use(searchPlugin);
  *
  * graph.render();
  *
- * // Later, from a Vue component:
+ * // Dari Vue component:
  * const results = searchPlugin.search('UserService');
  * if (results[0]) searchPlugin.focusNode(results[0]);
  * ```
@@ -40,40 +38,37 @@ export class SearchPlugin implements GraphPlugin
 {
   readonly name = 'search';
 
-  private graph:      IGraphD3 | null  = null;
-  private zoomPlugin: ZoomDragPlugin;
+  private view:      GraphView | null = null;
   private onResults?: (results: D3Node[]) => void;
 
   /**
-   * @param zoomPlugin  Reference to the ZoomDragPlugin — used for `zoomTo`.
-   * @param onResults   Optional callback fired every time `search()` returns results.
+   * @param onResults  Optional callback yang dipanggil setiap kali search() menemukan hasil.
    */
-  constructor(zoomPlugin: ZoomDragPlugin, onResults?: (results: D3Node[]) => void)
+  constructor(onResults?: (results: D3Node[]) => void)
   {
-    this.zoomPlugin = zoomPlugin;
-    this.onResults  = onResults;
+    this.onResults = onResults;
   }
 
-  setup(graph: IGraphD3): void
+  setup(_data: GraphData, view: GraphView): void
   {
-    this.graph = graph;
+    this.view = view;
   }
 
   teardown(): void
   {
     this.clearSearch();
-    this.graph = null;
+    this.view = null;
   }
 
   // ─── Public API ─────────────────────────────────────────────────────────────
 
   /**
-   * Searches all nodes by label or pathId (case-insensitive substring match).
-   * Automatically highlights matching nodes and dims the rest.
-   * Call `clearSearch()` to reset visual state.
+   * Mencari semua node by label atau pathId (case-insensitive substring match).
+   * Otomatis highlight node yang cocok dan dim sisanya.
+   * Panggil clearSearch() untuk reset visual state.
    *
-   * @param query  Search string. Empty string clears the search.
-   * @returns      Array of matching D3Node objects.
+   * @param query  Search string. String kosong untuk clear search.
+   * @returns      Array D3Node yang cocok.
    */
   search(query: string): D3Node[]
   {
@@ -85,10 +80,10 @@ export class SearchPlugin implements GraphPlugin
       return [];
     }
 
-    const nodes   = this.graph?.simulation?.nodes() ?? [];
+    const nodes   = this.view?.nodes ?? [];
     const results = nodes.filter(
       (n) => n.label.toLowerCase().includes(trimmed)
-           || n.pathId.toLowerCase().includes(trimmed),
+          || n.pathId.toLowerCase().includes(trimmed),
     );
 
     this.applyHighlight(results);
@@ -98,33 +93,28 @@ export class SearchPlugin implements GraphPlugin
   }
 
   /**
-   * Smoothly pans and zooms the viewport to center on a specific node.
+   * Pan dan zoom secara smooth ke node tertentu.
    *
-   * @param node   The node to focus on.
-   * @param scale  Zoom level to apply (default: 2).
+   * @param node   Node yang akan di-focus.
+   * @param scale  Zoom level (default 2).
    */
   focusNode(node: D3Node, scale = 2): void
   {
-    const x = node.x ?? 0;
-    const y = node.y ?? 0;
-    this.zoomPlugin.zoomTo(x, y, scale);
+    this.view?.zoomTo(node.x ?? 0, node.y ?? 0, scale);
   }
 
   /**
-   * Zooms out to show all matching results at once.
-   * Computes the bounding box of all result nodes and fits it in the viewport.
+   * Zoom out untuk menampilkan semua hasil sekaligus.
+   * Menghitung bounding box dari semua result nodes dan fit di viewport.
    *
-   * @param results  Array of matching nodes (from `search()`).
-   * @param padding  Extra padding around the bounding box in px (default: 60).
+   * @param results  Array node hasil search().
+   * @param padding  Padding ekstra di sekitar bounding box dalam px (default 60).
    */
   focusResults(results: D3Node[], padding = 60): void
   {
-    if (!results.length || !this.graph) return;
+    if (!results.length || !this.view) return;
 
-    const svg = this.graph.renderer.getSvg();
-    if (!svg) return;
-
-    const svgEl = svg.node();
+    const svgEl = this.view.svg?.node();
     if (!svgEl) return;
 
     const xs = results.map((n) => n.x ?? 0);
@@ -135,21 +125,21 @@ export class SearchPlugin implements GraphPlugin
     const minY = Math.min(...ys);
     const maxY = Math.max(...ys);
 
-    const boxW  = maxX - minX + padding * 2;
-    const boxH  = maxY - minY + padding * 2;
-    const cx    = (minX + maxX) / 2;
-    const cy    = (minY + maxY) / 2;
+    const boxW = maxX - minX + padding * 2;
+    const boxH = maxY - minY + padding * 2;
+    const cx   = (minX + maxX) / 2;
+    const cy   = (minY + maxY) / 2;
 
-    const svgW  = svgEl.clientWidth;
-    const svgH  = svgEl.clientHeight;
+    const svgW = svgEl.clientWidth;
+    const svgH = svgEl.clientHeight;
 
-    // Fit scale: show the whole bounding box, capped at 2×
+    // Fit scale: tampilkan seluruh bounding box, cap di 2×
     const scale = Math.min(2, svgW / boxW, svgH / boxH);
 
-    this.zoomPlugin.zoomTo(cx, cy, scale);
+    this.view.zoomTo(cx, cy, scale);
   }
 
-  /** Resets all visual highlighting applied by `search()`. */
+  /** Reset semua visual highlighting yang diapply oleh search(). */
   clearSearch(): void
   {
     this.applyHighlight([]);
@@ -159,29 +149,30 @@ export class SearchPlugin implements GraphPlugin
 
   private applyHighlight(results: D3Node[]): void
   {
-    const nodeSelection = this.graph?.renderer.nodeRenderer.getSelection();
-    if (!nodeSelection) return;
+    if (!this.view) return;
 
     const matchIds = new Set(results.map((n) => n.id));
     const hasQuery = results.length > 0;
 
-    // Operate on each <g> and its children via d3.select(this)
-    nodeSelection.each(function (d)
+    this.view.updateNodes((sel) =>
     {
-      const g       = d3.select<SVGGElement, D3Node>(this);
-      const matched = matchIds.has(d.id);
+      sel.each(function (d)
+      {
+        const g       = d3.select<SVGGElement, D3Node>(this);
+        const matched = matchIds.has(d.id);
 
-      // Dim / restore opacity on the whole group
-      g.transition()
-        .duration(200)
-        .attr('opacity', hasQuery && !matched ? DIM_OPACITY : 1);
+        // Dim / restore opacity pada seluruh group
+        g.transition()
+          .duration(200)
+          .attr('opacity', hasQuery && !matched ? DIM_OPACITY : 1);
 
-      // Highlight circle stroke for matching nodes
-      g.select<SVGCircleElement>('circle')
-        .transition()
-        .duration(200)
-        .attr('stroke',       matched ? HIGHLIGHT_COLOR : '#fff')
-        .attr('stroke-width', matched ? HIGHLIGHT_STROKE  : 1.5);
+        // Highlight circle stroke untuk node yang cocok
+        g.select<SVGCircleElement>('circle')
+          .transition()
+          .duration(200)
+          .attr('stroke',       matched ? HIGHLIGHT_COLOR  : '#fff')
+          .attr('stroke-width', matched ? HIGHLIGHT_STROKE : 1.5);
+      });
     });
   }
 }

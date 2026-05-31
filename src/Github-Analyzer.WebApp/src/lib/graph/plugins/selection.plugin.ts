@@ -1,46 +1,47 @@
-import type { GraphPlugin, IGraphD3, D3Node } from '../graph.types';
+import type { GraphPlugin, GraphData, GraphView, D3Node } from '@graph.types';
 
 /**
- * SelectionPlugin — click a node to select/highlight it.
+ * SelectionPlugin — klik node untuk select/highlight.
  *
- * - Selected node stays at full opacity
- * - All other nodes are dimmed
- * - Clicking the same node again deselects it
+ * - Node yang dipilih tetap full opacity
+ * - Semua node lain di-dim
+ * - Klik node yang sama lagi untuk deselect
  *
- * Callback receives the selected D3Node, or null on deselect.
+ * Callback menerima D3Node yang dipilih, atau null saat deselect.
  */
-export class SelectionPlugin implements GraphPlugin 
+export class SelectionPlugin implements GraphPlugin
 {
   readonly name = 'selection';
 
-  private selectedId: string | null = null;
+  private selectedId: string | null                      = null;
   private readonly onSelectCallback?: (node: D3Node | null) => void;
 
-  constructor(onSelect?: (node: D3Node | null) => void) 
+  constructor(onSelect?: (node: D3Node | null) => void)
   {
     this.onSelectCallback = onSelect;
   }
 
-  setup(graph: IGraphD3): void 
+  setup(_data: GraphData, view: GraphView): void
   {
-    const nodeSelection = graph.renderer.nodeRenderer.getSelection();
-    if (!nodeSelection) return;
+    if (!view.nodeSelection) return;
 
-    nodeSelection.on('click.selection', (_event, d) => 
+    view.nodeSelection.on('click.selection', (_event, d) =>
     {
-      // Toggle: clicking the selected node again deselects it
+      // Toggle: klik node yang sudah dipilih untuk deselect
       this.selectedId = this.selectedId === d.id ? null : d.id;
-      const selected = this.selectedId;
+      const selected  = this.selectedId;
 
-      // Highlight selected node, dim all others
-      nodeSelection.select('circle')
-        .attr('opacity', (n) => (!selected || n.id === selected ? 1 : 0.25));
+      // Highlight node yang dipilih, dim semua node lain
+      view.updateNodes((sel) =>
+        sel.select('circle')
+          .attr('opacity', (n) => (!selected || n.id === selected ? 1 : 0.25))
+      );
 
       this.onSelectCallback?.(selected ? d : null);
     });
   }
 
-  teardown(): void 
+  teardown(): void
   {
     this.selectedId = null;
   }

@@ -1,100 +1,46 @@
 import * as d3 from 'd3';
-import type { GraphPlugin, IGraphD3 } from '../graph.types';
-import { restartSimulation, coolSimulation } from '../utils/simulation';
+import type { GraphPlugin, GraphData, GraphView } from '@graph.types';
 
 /**
- * ZoomDragPlugin — adds pan/zoom on the SVG and drag behavior on nodes.
+ * ZoomDragPlugin — menambahkan drag behavior pada node.
  *
- * - Zoom/pan: transforms the viewport <g> via d3.zoom
- * - Drag: fixes node position during drag, releases on end
+ * Pan/zoom pada SVG sudah ditangani secara built-in oleh GraphView.
+ * Plugin ini hanya bertugas mengurus user interaction: drag node.
+ *
+ * - Drag: fix posisi node saat drag, lepas saat selesai
+ * - Menggunakan view.reheat() dan view.cool() dari GraphView
  */
-export class ZoomDragPlugin implements GraphPlugin 
+export class ZoomDragPlugin implements GraphPlugin
 {
   readonly name = 'zoom-drag';
 
-  private zoom: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null;
-  private svg:  d3.Selection<SVGSVGElement, unknown, null, undefined> | null = null;
-
-  setup(graph: IGraphD3): void 
+  setup(_data: GraphData, view: GraphView): void
   {
-    const svg = graph.renderer.getSvg();
-    const viewport = graph.renderer.getViewport();
+    if (!view.nodeSelection) return;
 
-    if (!svg || !viewport) return;
-
-    this.svg = svg;
-
-    // ── Zoom & Pan ──────────────────────────────────────────────
-    this.zoom = d3
-      .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.1, 4])
-      .on('zoom', (event) => 
-        viewport.attr('transform', event.transform));
-
-    svg.call(this.zoom);
-
-    // ── Node Drag ───────────────────────────────────────────────
-    const nodeSelection = graph.renderer.nodeRenderer.getSelection();
-    if (!nodeSelection) return;
-
-    nodeSelection
+    view.nodeSelection
       .attr('cursor', 'grab')
       .call(
         d3.drag<SVGGElement, any>()
-          .on('start', (event, d) => 
+          .on('start', (event, d) =>
           {
-            if (!event.active) restartSimulation(graph.simulation!);
+            if (!event.active) view.reheat();
             d.fx = d.x;
             d.fy = d.y;
           })
-          .on('drag', (event, d) => 
+          .on('drag', (event, d) =>
           {
             d.fx = event.x;
             d.fy = event.y;
           })
-          .on('end', (event, d) => 
+          .on('end', (event, d) =>
           {
-            if (!event.active) coolSimulation(graph.simulation!);
+            if (!event.active) view.cool();
             d.fx = null;
             d.fy = null;
           }),
       );
   }
 
-  teardown(): void 
-  {
-    this.zoom = null;
-    this.svg  = null;
-  }
-
-  /**
-   * Programmatically pans and zooms to a point in graph-space.
-   * Triggers through the official D3 zoom behavior so subsequent
-   * user interactions start from the correct zoom state.
-   *
-   * @param x        Target X coordinate in graph space
-   * @param y        Target Y coordinate in graph space
-   * @param scale    Zoom scale (default: 2)
-   * @param duration Transition duration in ms (default: 750)
-   */
-  zoomTo(x: number, y: number, scale = 2, duration = 750): void
-  {
-    if (!this.svg || !this.zoom) return;
-
-    const svgEl = this.svg.node();
-    if (!svgEl) return;
-
-    const width  = svgEl.clientWidth;
-    const height = svgEl.clientHeight;
-    const tx     = width  / 2 - x * scale;
-    const ty     = height / 2 - y * scale;
-
-    this.svg
-      .transition()
-      .duration(duration)
-      .call(
-        this.zoom.transform,
-        d3.zoomIdentity.translate(tx, ty).scale(scale),
-      );
-  }
+  teardown?(): void {}
 }

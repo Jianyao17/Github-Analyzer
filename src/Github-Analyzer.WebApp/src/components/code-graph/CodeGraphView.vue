@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import type { CodeGraph } from '@/types/analysis/code-graph';
-import { buildGraphData } from '@graph/utils/graph-data';
 import { useGraphD3 } from '@/composables/useGraphD3';
 import GraphSearchModal from './GraphSearchModal.vue';
 import GraphLegend from './GraphLegend.vue';
@@ -13,7 +12,7 @@ const props = defineProps<{
 
 // ─── Graph ────────────────────────────────────────────────────────────────────
 const graphContainer = ref<HTMLElement | null>(null);
-const graphData = computed(() => buildGraphData(props.data));
+const graphData = computed(() => props.data);
 
 const { 
   search, focusNode, focusResults, clearSearch 

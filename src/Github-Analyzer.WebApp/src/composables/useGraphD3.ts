@@ -1,12 +1,14 @@
 import type { Ref } from 'vue';
 import { watch, onMounted, onUnmounted, nextTick } from 'vue';
-import type { GraphData, GraphPlugin, D3Node } from '@graph.types';
+import type { CodeGraph } from '@/types/analysis/code-graph';
+import type { GraphPlugin, D3Node } from '@graph.types';
 
 import { GraphD3 } from '@graph/graph.main';
 import { GraphDebugger } from '@graph/graph.debug';
 import { ZoomDragPlugin } from '@graph/plugins/zoom-drag.plugin';
-import { HoverPlugin } from '@graph/plugins/hover.plugin';
 import { SearchPlugin } from '@graph/plugins/search.plugin';
+import { HoverPlugin } from '@graph/plugins/hover.plugin';
+import { buildGraphData } from '@graph/utils/graph-data';
 
 export interface UseGraphD3Options
 {
@@ -34,7 +36,7 @@ export interface UseGraphD3Options
  */
 export function useGraphD3(
   containerRef: Ref<HTMLElement | null>,
-  dataRef:      Ref<GraphData | null>,
+  dataRef:      Ref<CodeGraph | null>,
   options:      UseGraphD3Options = {},
 )
 {
@@ -44,8 +46,9 @@ export function useGraphD3(
   // SearchPlugin tidak lagi memerlukan ZoomDragPlugin reference.
   const searchPlugin = new SearchPlugin();
 
-  function initGraph(data: GraphData): void
+  function initGraph(raw: CodeGraph): void
   {
+    const data = buildGraphData(raw);
     if (!containerRef.value) return;
 
     if (!graph)

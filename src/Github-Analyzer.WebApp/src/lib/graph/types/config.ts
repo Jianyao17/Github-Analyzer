@@ -2,8 +2,11 @@
 
 export interface NodeTypeStyle
 {
-  color:  string;
-  radius: number;
+  /** Type color — used for the color dot and icon stroke. */
+  color: string;
+
+  /** Lucide icon name, e.g. 'folder', 'file-code', 'braces'. */
+  icon: string;
 }
 
 export interface EdgeTypeStyle
@@ -13,12 +16,65 @@ export interface EdgeTypeStyle
   dashArray:   string; // e.g. 'none' | '4,4'
 }
 
+// ─── Node Card Config ─────────────────────────────────────────────────────────
+// Controls the visual layout of the rectangular card node.
+// All measurements are in SVG user units.
+
+export interface NodeCardConfig
+{
+  /** Total card height. */
+  height: number;
+
+  /** Icon size (width = height). The Lucide SVG is scaled to this. */
+  iconSize: number;
+
+  /** Distance from the card's left edge to the icon. */
+  paddingLeft: number;
+
+  /** Distance from the label text to the card's right edge. */
+  paddingRight: number;
+
+  /** Space between the icon and the label text. */
+  gap: number;
+
+  /** Approximate width of a single character, used to compute dynamic card width. */
+  approxCharWidth: number;
+
+  /** Corner radius of the background rect. */
+  cornerRadius: number;
+
+  /** Label font family (e.g. 'JetBrains Mono, monospace'). */
+  labelFontFamily: string;
+
+  /** Label font size (px). */
+  labelFontSize: number;
+
+  /** Label letter spacing (px). Negative values condense the text. */
+  labelLetterSpacing: number;
+
+  /**
+   * Extra gap (SVG units) between the edge line endpoint and the card border.
+   * Used to avoid arrow overlap with the card rect.
+   */
+  arrowGap: number;
+}
+
+// ─── Graph Config ─────────────────────────────────────────────────────────────
+
 export interface GraphConfig
 {
   width?:  number;
   height?: number;
+
   nodeTypes: Record<string, NodeTypeStyle>;
   edgeTypes: Record<string, EdgeTypeStyle>;
+
+  /**
+   * Visual config for the rectangular card nodes.
+   * If omitted, NodeRenderer falls back to sensible defaults.
+   */
+  nodeCard?: NodeCardConfig;
+
   simulation?:
   {
     /**

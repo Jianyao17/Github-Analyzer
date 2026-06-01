@@ -1,11 +1,19 @@
 import * as d3 from 'd3';
-import type { D3Node, D3Edge, GraphConfig, EdgeSelection, IEdgeRenderer } from '@graph.types';
+import type { 
+  D3Node, D3Edge, GraphConfig, 
+  EdgeSelection, IEdgeRenderer 
+} from '@graph.types';
+
 import { EDGE_TYPE_KEYS } from '../graph.config';
+import { getRectEdgeEndpoint } from '../utils/geometry';
 
 export class EdgeRenderer implements IEdgeRenderer
 {
   // Selection semua edge line — merepresentasikan apa yang tampil di layar
   private selection: EdgeSelection | null = null;
+
+  // Cached config — needed in updatePositions() to know node card dimensions
+  private config: GraphConfig | null = null;
 
   /**
    * Render awal: buat SVG arrow markers dan <line> per edge.
@@ -18,11 +26,12 @@ export class EdgeRenderer implements IEdgeRenderer
     config:   GraphConfig,
   ): void
   {
+    this.config = config;
     this.renderArrowMarkers(svg, config);
 
     // Buat atau ambil container group <g class="edges">
     let container = viewport.select<SVGGElement>('g.edges');
-    
+
     if (container.empty())
       container = viewport.append('g').attr('class', 'edges');
 
@@ -36,6 +45,8 @@ export class EdgeRenderer implements IEdgeRenderer
    */
   applyEdges(edges: D3Edge[], config: GraphConfig): void
   {
+    this.config = config;
+
     if (!this.selection) return;
 
     const firstEdge = this.selection.node();
@@ -48,14 +59,36 @@ export class EdgeRenderer implements IEdgeRenderer
     this.selection  = this._applyUpdatePattern(parentSel, edges, config);
   }
 
-  /** Called on every simulation tick — repositions all edge endpoints. */
+  /**
+   * Called on every simulation tick — repositions all edge endpoints.
+   * Endpoints are shortened to the node card boundary (not center)
+   * so arrows land correctly on rectangular nodes.
+   */
   updatePositions(): void
   {
-    this.selection
-      ?.attr('x1', (d) => (d.source as D3Node).x ?? 0)
-      .attr('y1',  (d) => (d.source as D3Node).y ?? 0)
-      .attr('x2',  (d) => (d.target as D3Node).x ?? 0)
-      .attr('y2',  (d) => (d.target as D3Node).y ?? 0);
+    const card = this.config?.nodeCard;
+    const gap  = card?.arrowGap ?? 2;
+
+    this.selection?.each(function(d)
+    {
+      const s  = d.source as D3Node;
+      const t  = d.target as D3Node;
+      const sx = s.x ?? 0, sy = s.y ?? 0;
+      const tx = t.x ?? 0, ty = t.y ?? 0;
+
+      const sHw = s._hw ?? 8;
+      const sHh = s._hh ?? 8;
+      const tHw = t._hw ?? 8;
+      const tHh = t._hh ?? 8;
+
+      // Shorten both endpoints to the respective card boundaries
+      const srcPt = getRectEdgeEndpoint(tx, ty, sx, sy, sHw, sHh, gap);
+      const tgtPt = getRectEdgeEndpoint(sx, sy, tx, ty, tHw, tHh, gap);
+
+      d3.select(this)
+        .attr('x1', srcPt.x).attr('y1', srcPt.y)
+        .attr('x2', tgtPt.x).attr('y2', tgtPt.y);
+    });
   }
 
   /** Returns the D3 selection for edge lines, used by plugins and GraphView. */
@@ -68,6 +101,7 @@ export class EdgeRenderer implements IEdgeRenderer
   clear(): void
   {
     this.selection = null;
+    this.config    = null;
   }
 
   // ─── Private ───────────────────────────────────────────────────────────────
@@ -86,9 +120,12 @@ export class EdgeRenderer implements IEdgeRenderer
       .data(edgeTypeNums)
       .enter()
       .append('marker')
-      .attr('id',           (typeNum) => `graph-arrow-${typeNum}`)
-      .attr('viewBox',      '0 -5 10 10')
-      .attr('refX',         18)
+      .attr('id', (typeNum) => `graph-arrow-${typeNum}`)
+      .attr('viewBox', '0 -5 10 10')
+      // refX=10 places the marker tip exactly at the line endpoint.
+      // Since updatePositions() already shortens lines to the card boundary,
+      // the tip lands precisely at the card border.
+      .attr('refX',         10)
       .attr('refY',         0)
       .attr('markerWidth',  6)
       .attr('markerHeight', 6)

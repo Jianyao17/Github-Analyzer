@@ -4,7 +4,7 @@ import type { GraphPlugin, GraphData, GraphView, D3Node } from '@graph.types';
 // ─── Visual constants ─────────────────────────────────────────────────────────
 
 /** Opacity untuk node yang TIDAK cocok dengan query pencarian. */
-const DIM_OPACITY      = 0.12;
+const DIM_OPACITY      = 0.24;
 
 /** Stroke color untuk node yang cocok dengan query pencarian. */
 const HIGHLIGHT_COLOR  = '#FCD34D'; // amber-300
@@ -166,12 +166,12 @@ export class SearchPlugin implements GraphPlugin
           .duration(200)
           .attr('opacity', hasQuery && !matched ? DIM_OPACITY : 1);
 
-        // Highlight circle stroke untuk node yang cocok
-        g.select<SVGCircleElement>('circle')
+        // Highlight rect stroke untuk node yang cocok
+        g.select<SVGRectElement>('rect')
           .transition()
           .duration(200)
-          .attr('stroke',       matched ? HIGHLIGHT_COLOR  : '#fff')
-          .attr('stroke-width', matched ? HIGHLIGHT_STROKE : 1.5);
+          .attr('stroke',       matched ? HIGHLIGHT_COLOR  : 'none')
+          .attr('stroke-width', matched ? HIGHLIGHT_STROKE : 0);
       });
     });
   }

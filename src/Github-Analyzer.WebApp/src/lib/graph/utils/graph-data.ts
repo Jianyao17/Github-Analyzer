@@ -1,16 +1,6 @@
 import type { GraphData, GraphDataIndexes, GraphDataMetadata } from '../types/graph-data';
 import type { GraphNode, GraphEdge } from '../types/node-edge';
-
-// ─── CodeGraph (raw dari backend) ────────────────────────────────────────────
-// Interface minimal yang merefleksikan data dari backend sebelum diproses.
-// Tetap terpisah dari GraphData agar graph lib punya kontrol penuh atas type-nya.
-
-export interface RawCodeGraph
-{
-  nodes:          GraphNode[];
-  sourceRelEdges: GraphEdge[];
-  useRelEdges:    GraphEdge[];
-}
+import type { CodeGraph } from '@/types/analysis/code-graph';
 
 // ─── buildGraphData ───────────────────────────────────────────────────────────
 
@@ -30,7 +20,7 @@ export interface RawCodeGraph
  * });
  */
 export function buildGraphData(
-  raw:   RawCodeGraph,
+  raw:   CodeGraph,
   extra: Partial<GraphDataMetadata> = {},
 ): GraphData
 {

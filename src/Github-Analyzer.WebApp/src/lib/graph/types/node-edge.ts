@@ -35,6 +35,8 @@ export type D3Node = d3.SimulationNodeDatum & GraphNode &
 {
   id:       string;  // Alias untuk pathId, required by forceLink id accessor
   _radius?: number;  // Dianotasi saat render, digunakan oleh collision force
+  _hw?:     number;  // Half-width card, untuk edge positioning
+  _hh?:     number;  // Half-height card, untuk edge positioning
 };
 
 export type D3Edge = d3.SimulationLinkDatum<D3Node> & GraphEdge;

@@ -85,9 +85,34 @@ export class EdgeRenderer implements IEdgeRenderer
       const srcPt = getRectEdgeEndpoint(tx, ty, sx, sy, sHw, sHh, gap);
       const tgtPt = getRectEdgeEndpoint(sx, sy, tx, ty, tHw, tHh, gap);
 
-      d3.select(this)
-        .attr('x1', srcPt.x).attr('y1', srcPt.y)
-        .attr('x2', tgtPt.x).attr('y2', tgtPt.y);
+      // Draw curved line only for 'call' relations
+      if (d.type === 2)
+      {
+        const dx = tgtPt.x - srcPt.x;
+        const dy = tgtPt.y - srcPt.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        if (dist === 0) return; // Prevent division by zero
+
+        const cx = (srcPt.x + tgtPt.x) / 2;
+        const cy = (srcPt.y + tgtPt.y) / 2;
+
+        // Normal vector of the straight line between endpoints
+        const nx = -dy / dist;
+        const ny = dx / dist;
+
+        // Sangat landai (very gentle offset) agar mengambil jarak terpendek
+        const offset = Math.min(dist * 0.1, 15);
+        const cpx = cx + nx * offset;
+        const cpy = cy + ny * offset;
+
+        d3.select(this).attr('d', `M${srcPt.x},${srcPt.y} Q${cpx},${cpy} ${tgtPt.x},${tgtPt.y}`);
+      }
+      else
+      {
+        // Straight line
+        d3.select(this).attr('d', `M${srcPt.x},${srcPt.y} L${tgtPt.x},${tgtPt.y}`);
+      }
     });
   }
 
@@ -150,7 +175,7 @@ export class EdgeRenderer implements IEdgeRenderer
   ): EdgeSelection
   {
     const bound = container
-      .selectAll<SVGLineElement, D3Edge>('line')
+      .selectAll<SVGPathElement, D3Edge>('path')
       .data(edges);
 
     // ── Exit: hapus edge yang tidak ada di set baru ──────────────────────────
@@ -159,7 +184,8 @@ export class EdgeRenderer implements IEdgeRenderer
     // ── Enter: tambah edge baru ──────────────────────────────────────────────
     const entered = bound
       .enter()
-      .append('line')
+      .append('path')
+      .attr('fill', 'none') // Ensure paths don't fill
       .each(function (d)
       {
         const key   = EDGE_TYPE_KEYS[d.type] ?? 'default';

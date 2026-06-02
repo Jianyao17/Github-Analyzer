@@ -46,8 +46,17 @@ export const defaultGraphConfig: GraphConfig =
 
   // ── Simulation ──────────────────────────────────────────────────────────────
   simulation: {
-    linkDistance:   60,
+    layoutType: 'star-balloon',
+    orientation: 'LR', // Top to Bottom
+
+    levelGap: 150,
+    nodeGap: 50,
+
+    arrowSpacingAngle: 45,
+
+    linkDistance:   150,
     chargeStrength: -150,
+
     // Stop when visually stable (D3 default: 0.001 ≈ 300 ticks)
     alphaMin:   0.005,
     // Decay rate — higher = fewer total ticks (D3 default: ~0.0228)

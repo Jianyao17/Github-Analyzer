@@ -103,5 +103,20 @@ export interface GraphConfig
      * Raise to decay faster and settle in fewer ticks.
      */
     alphaDecay?: number;
+
+    /** Graph layout structure. Default: 'star-balloon' */
+    layoutType?: 'star-balloon' | 'hierarchical';
+
+    /** Orientation for hierarchical layout. Default: 'LR' */
+    orientation?: 'LR' | 'RL' | 'TB' | 'BT';
+
+    /** Gap (in pixels) between hierarchy levels. Only used if layoutType is 'hierarchical'. Default: 150 */
+    levelGap?: number;
+
+    /** Gap (in pixels) between sibling nodes in hierarchy. Default: 50 */
+    nodeGap?: number;
+
+    /** Angular spacing offset (in degrees) for multiple edges of different types between the same nodes. Default: 45 */
+    arrowSpacingAngle?: number;
   };
 }

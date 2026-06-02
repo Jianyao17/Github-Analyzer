@@ -6,10 +6,7 @@ import type {
   IGraphRenderer, GraphPlugin,
 } from '@graph.types';
 
-import { 
-  createSimulation, stopSimulation, 
-  restartSimulation, coolSimulation 
-} from './utils/simulation';
+import { LayoutManager } from './layout/layout.manager';
 
 import { defaultGraphConfig } from './graph.config';
 import { D3Renderer } from './renderer/d3.renderer';
@@ -48,8 +45,11 @@ export class GraphD3
   readonly renderer:  IGraphRenderer;
 
   // Graph Simulation
-  simulation: d3.Simulation<D3Node, D3Edge> | null = null;
+  layoutManager: LayoutManager | null = null;
 
+  get simulation(): d3.Simulation<D3Node, D3Edge> | null {
+    return this.layoutManager?.getSimulation() ?? null;
+  }
   private data:    GraphData;
   private config:  GraphConfig;
   private plugins: Map<string, GraphPlugin> = new Map();
@@ -98,9 +98,9 @@ export class GraphD3
     // 2. Built-in zoom behavior — diinisialisasi setelah SVG ada
     this._initZoom();
 
-    // 3. Buat force simulation
-    this.simulation = createSimulation(d3Nodes, d3Edges, width, height, this.config);
-    this.simulation.on('tick', () => this.renderer.onTick());
+    // 3. Buat layout manager dan force simulation
+    this.layoutManager = new LayoutManager(d3Nodes, d3Edges, width, height, this.config);
+    this.layoutManager.getSimulation().on('tick', () => this.renderer.onTick());
 
     // 4. Build GraphView — snapshot semua refs + helper methods
     this.currentView = this._buildView(d3Nodes, d3Edges);
@@ -160,10 +160,10 @@ export class GraphD3
   private _buildView(d3Nodes: D3Node[], d3Edges: D3Edge[]): GraphView
   {
     // Capture references untuk dipakai dalam closures
-    const renderer      = this.renderer;
-    const getSimulation = () => this.simulation;
-    const getZoom       = () => this.zoom;
-    const config        = this.config;
+    const renderer         = this.renderer;
+    const getZoom          = () => this.zoom;
+    const getLayoutManager = () => this.layoutManager;
+    const config           = this.config;
 
     const view: GraphView =
     {
@@ -183,14 +183,14 @@ export class GraphD3
 
       reheat(alpha = 0.3): void
       {
-        const sim = getSimulation();
-        if (sim) restartSimulation(sim, alpha);
+        const manager = getLayoutManager();
+        if (manager) manager.reheat(alpha);
       },
 
       cool(): void
       {
-        const sim = getSimulation();
-        if (sim) coolSimulation(sim);
+        const manager = getLayoutManager();
+        if (manager) manager.cool();
       },
 
       zoomTo(x: number, y: number, scale = 2, duration = 750): void
@@ -235,9 +235,12 @@ export class GraphD3
         d3Nodes.length = 0;
         d3Nodes.push(...nodes);
 
-        // Update simulation nodes
-        const sim = getSimulation();
-        sim?.nodes(d3Nodes);
+        // Update layout manager
+        const manager = getLayoutManager();
+        if (manager) {
+          manager.updateData(d3Nodes, d3Edges);
+          manager.recalculate();
+        }
       },
 
       applyEdges(edges: D3Edge[]): void
@@ -248,10 +251,12 @@ export class GraphD3
         d3Edges.length = 0;
         d3Edges.push(...edges);
 
-        // Update simulation forceLink
-        const sim = getSimulation();
-        const linkForce = sim?.force('link') as d3.ForceLink<D3Node, D3Edge> | null;
-        linkForce?.links(d3Edges);
+        // Update layout manager
+        const manager = getLayoutManager();
+        if (manager) {
+          manager.updateData(d3Nodes, d3Edges);
+          manager.recalculate();
+        }
       },
     };
 
@@ -264,10 +269,10 @@ export class GraphD3
    */
   private _teardown(): void
   {
-    if (this.simulation)
+    if (this.layoutManager)
     {
-      stopSimulation(this.simulation);
-      this.simulation = null;
+      this.layoutManager.destroy();
+      this.layoutManager = null;
     }
 
     for (const plugin of this.plugins.values())

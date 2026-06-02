@@ -37,6 +37,9 @@ export type D3Node = d3.SimulationNodeDatum & GraphNode &
   _radius?: number;  // Dianotasi saat render, digunakan oleh collision force
   _hw?:     number;  // Half-width card, untuk edge positioning
   _hh?:     number;  // Half-height card, untuk edge positioning
+  _level?:  number;  // Kedalaman node dalam hierarki (untuk layout hierarchical)
+  targetX?: number;  // Ideal X coordinate for custom layout
+  targetY?: number;  // Ideal Y coordinate for custom layout
 };
 
 export type D3Edge = d3.SimulationLinkDatum<D3Node> & GraphEdge;

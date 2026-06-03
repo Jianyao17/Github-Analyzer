@@ -1,25 +1,20 @@
 import { 
   watch, onMounted, 
-  onUnmounted, nextTick 
+  onUnmounted, nextTick,
+  inject
 } from 'vue';
 
 import type { Ref } from 'vue';
 import type { CodeGraph }  from '@/types/analysis/code-graph';
-import type { D3Node, GraphPlugin } from '@graph.types';
+import type { UseGraphD3Options } from '@/plugins/graph';
+import type { SearchPlugin } from '@graph.plugins';
+import type { D3Node } from '@graph.types';
 
-import { GraphEngine }     from '@graph/core/GraphEngine';
-import { ZoomPlugin }      from '@graph/plugins/zoom.plugin';
-import { DragPlugin }      from '@graph/plugins/drag.plugin';
-import { HoverPlugin }     from '@graph/plugins/hover.plugin';
-import { SearchPlugin }    from '@graph/plugins/search.plugin';
-import { DebugPlugin }     from '@graph/plugins/debug.plugin';
+import { GraphEngine } from '@graph/core/GraphEngine';
+import { buildGraphData } from '@graph/utils/graph-data';
+import { HierarchicalLayout } from '@graph/layout/hierarchical.layout';
 import { StarBalloonLayout } from '@graph/layout/star-balloon.layout';
-import { buildGraphData }  from '@graph/utils/graph-data';
-
-export interface UseGraphD3Options {
-  plugins?: GraphPlugin[];
-  debug?:   boolean;
-}
+import { GRAPH_ENGINE_INJECTION_KEY } from '@/plugins/graph';
 
 /**
  * Vue composable for integrating the D3 graph engine into a Vue component.
@@ -35,13 +30,13 @@ export function useGraphD3(
   options:      UseGraphD3Options = {},
 ) 
 {
-  let engine: GraphEngine | null = null;
+  const engine = inject<GraphEngine>(GRAPH_ENGINE_INJECTION_KEY);
+  if (!engine) throw new Error('GraphEngine not provided! Make sure app.use(createGraphEngine()) is called.');
 
-  const searchPlugin = new SearchPlugin();
+  const searchPlugin = engine.getPlugin<SearchPlugin>('search');
 
   /**
    * Initializes or updates the graph engine when the container and data are ready.
-   * Instantiates the engine on the first run, registers default plugins, and triggers rendering.
    * On subsequent calls, it performs a lightweight data update.
    */
   function init(raw: CodeGraph): void 
@@ -49,58 +44,59 @@ export function useGraphD3(
     const data = buildGraphData(raw);
     if (!containerRef.value) return;
 
-    if (!engine) 
+    engine!.reset();
+    
+    // Add any component-specific dynamic plugins if requested
+    options.plugins?.forEach(p => engine!.use(p));
+    
+    if (options.layout === 'hierarchical') 
     {
-      engine = new GraphEngine({ container: containerRef.value });
-
-      engine
-        .useLayout(new StarBalloonLayout({
-          minArcSpace: 60,
-          concentricGap: 40,
-          gapMultipliers: {
-            0: 2.5, // Directory
-            1: 2.5, // Namespace
-            2: 1.5, // File
-            3: 1.0, // Class
-            4: 0.8  // Function
-          }
-        }))
-        .use(new ZoomPlugin(),  0)
-        .use(new DragPlugin(),  1)
-        .use(new HoverPlugin(), 2)
-        .use(searchPlugin,      4)
-        .use(new DebugPlugin({
-          enabled:    options.debug ?? import.meta.env.DEV,
-          logMemory:  true,
-        }), 999);
-
-      options.plugins?.forEach(p => engine!.use(p));
-      engine.render(data);
-    }
-    else 
+      engine!.useLayout(new HierarchicalLayout({
+        orientation: 'LR',
+        clusterPadding: 100,
+        levelGap: 250,
+        nodeGap: 50,
+      }));
+    } 
+    else if (options.layout === 'star-balloon') 
     {
-      engine.update(data);
+      engine!.useLayout(new StarBalloonLayout({
+        minArcSpace: 200,   // Sufficient arc length to fit wide node cards
+        concentricGap: 100, // Sufficient radial distance to prevent horizontal overlap
+        clusterPadding: 0.01,
+        gapMultipliers: {
+          0: 1.8, // Directory
+          1: 1.8, // Namespace
+          2: 1.6, // File
+          3: 1.2, // Class
+          4: 1.0  // Function
+        }
+      }));
     }
+
+    engine!.render(data);
   }
 
   watch(dataRef, newData => { if (newData) init(newData); });
 
   onMounted(async () => 
   {
+    if (containerRef.value) {
+      engine.mount(containerRef.value);
+    }
     if (dataRef.value) { await nextTick(); init(dataRef.value); }
   });
 
   onUnmounted(() => 
   {
-    engine?.destroy();
-    engine = null;
+    engine.unmount();
   });
 
   return {
     getEngine:    () => engine,
-    search:       (query: string): D3Node[] => searchPlugin.search(query),
-    focusNode:    (node: D3Node, scale?: number) => searchPlugin.focusNode(node, scale),
-    focusResults: (results: D3Node[], padding?: number) => searchPlugin.focusResults(results, padding),
-    clearSearch:  () => searchPlugin.clearSearch(),
+    search:       (query: string): D3Node[] => searchPlugin?.search(query) ?? [],
+    focusNode:    (node: D3Node, scale?: number) => searchPlugin?.focusNode(node, scale),
+    focusResults: (results: D3Node[], padding?: number) => searchPlugin?.focusResults(results, padding),
+    clearSearch:  () => searchPlugin?.clearSearch(),
   };
 }

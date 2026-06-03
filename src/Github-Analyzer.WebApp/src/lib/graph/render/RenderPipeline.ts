@@ -7,10 +7,10 @@ import type {
   NodeSelection, EdgeSelection 
 } from '@graph/types/graph-view';
 
-import { NodePass }            from './passes/NodePass';
-import { EdgePass }            from './passes/EdgePass';
-import { MarkerPass }          from './passes/MarkerPass';
-import { TextMeasurer }        from './measure/TextMeasurer';
+import { NodePass     } from './passes/NodePass';
+import { EdgePass     } from './passes/EdgePass';
+import { MarkerPass   } from './passes/MarkerPass';
+import { TextMeasurer } from './measure/TextMeasurer';
 
 export interface RenderOutput {
   svg:           SvgSelection;
@@ -30,7 +30,7 @@ export interface RenderOutput {
  */
 export class RenderPipeline 
 {
-  private _container: HTMLElement;
+  private _container: HTMLElement | null = null;
   private _config:    GraphConfig;
   private _bus:       EventBus;
   private _measurer:  TextMeasurer;
@@ -42,15 +42,31 @@ export class RenderPipeline
   readonly edgePass:  EdgePass;
   readonly markerPass: MarkerPass;
 
-  constructor(container: HTMLElement, config: GraphConfig, bus: EventBus) 
+  constructor(config: GraphConfig, bus: EventBus) 
   {
-    this._container  = container;
     this._config     = config;
     this._bus        = bus;
     this._measurer   = new TextMeasurer();
     this.nodePass    = new NodePass(this._measurer);
     this.edgePass    = new EdgePass();
     this.markerPass  = new MarkerPass();
+    
+    this._listenBusEvents();
+  }
+
+  mount(container: HTMLElement): void 
+  {
+    this._container = container;
+    if (this._svg) 
+    {
+      this._container.appendChild(this._svg.node()!);
+    }
+  }
+
+  unmount(): void 
+  {
+    this._svg?.remove();
+    this._container = null;
   }
 
   /**
@@ -62,6 +78,8 @@ export class RenderPipeline
    */
   run(nodes: D3Node[], edges: D3Edge[]): RenderOutput 
   {
+    if (!this._container) throw new Error('RenderPipeline must be mounted before running.');
+
     const width  = this._container.clientWidth  || 800;
     const height = this._container.clientHeight || 600;
 
@@ -79,9 +97,6 @@ export class RenderPipeline
     this.markerPass.run(this._svg, this._config);
     const edgeSel = this.edgePass.run(this._viewport, edges, this._config);
     const nodeSel = this.nodePass.run(this._viewport, nodes, this._config);
-
-    // Listen ke view mutations dari bus
-    this._listenBusEvents();
 
     return {
       svg:           this._svg,
@@ -105,15 +120,16 @@ export class RenderPipeline
   }
 
   /**
-   * Clears the rendered DOM elements and detaches event listeners.
+   * Destroys the pipeline permanently.
    */
   destroy(): void 
   {
-    this._svg?.remove();
+    this.unmount();
     this._svg     = null;
     this._viewport = null;
     this.nodePass.clear();
     this.edgePass.clear();
+    this._measurer.destroy();
   }
 
   private _listenBusEvents(): void 

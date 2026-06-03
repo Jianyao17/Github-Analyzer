@@ -16,7 +16,7 @@ const graphData = computed(() => props.data);
 
 const { 
   search, focusNode, focusResults, clearSearch 
-} = useGraphD3(graphContainer, graphData);
+} = useGraphD3(graphContainer, graphData, { layout: 'star-balloon' });
 
 // ─── Search modal ref ─────────────────────────────────────────────────────────
 const searchModal = ref<{ open: () => void; close: () => void } | null>(null);

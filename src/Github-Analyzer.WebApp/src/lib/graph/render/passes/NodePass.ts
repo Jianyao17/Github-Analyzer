@@ -5,7 +5,7 @@ import type {
   NodeTypeStyle, NodeSelection
 } from '@graph.types';
 
-import { NODE_TYPE_KEYS } from '@/lib/graph/config';
+import { NODE_TYPE_KEYS } from '@graph/config';
 import { getLucideIconBody } from '@graph/utils/icon';
 import { truncateLabel } from '@graph/utils/label';
 

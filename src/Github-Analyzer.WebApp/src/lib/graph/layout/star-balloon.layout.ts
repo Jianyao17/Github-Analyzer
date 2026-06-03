@@ -1,5 +1,5 @@
 import type { D3Node, D3Edge, GraphConfig, Dimensions, IGraphLayout, LayoutResult } from '@graph.types';
-import { sortChildrenByProximity } from '../utils/proximity';
+import { sortChildrenByProximity } from '@graph/utils/proximity';
 
 export interface StarBalloonLayoutOptions 
 {
@@ -7,6 +7,7 @@ export interface StarBalloonLayoutOptions
   minArcSpace?: number;
   concentricGap?: number;
   gapMultipliers?: Record<number, number>;
+  clusterPadding?: number;
 }
 
 export class StarBalloonLayout implements IGraphLayout 
@@ -14,7 +15,8 @@ export class StarBalloonLayout implements IGraphLayout
   readonly name = 'star-balloon';
   private _options: StarBalloonLayoutOptions;
 
-  constructor(options: StarBalloonLayoutOptions = {}) {
+  constructor(options: StarBalloonLayoutOptions = {}) 
+  {
     this._options = options;
   }
 
@@ -34,7 +36,9 @@ export class StarBalloonLayout implements IGraphLayout
     };
   }
 
-  private computeRadialTargets(nodes: D3Node[], edges: D3Edge[], config: GraphConfig, positions: Map<string, { x: number; y: number }>): void 
+  private computeRadialTargets(
+    nodes: D3Node[], edges: D3Edge[], config: GraphConfig, 
+    positions: Map<string, { x: number; y: number }>): void 
   {
     const levelGap = this._options.levelGap ?? config.simulation?.levelGap ?? 150;
     
@@ -105,29 +109,62 @@ export class StarBalloonLayout implements IGraphLayout
       totalLeaves += countLeaves(root);
     }
 
-    const getGapMultiplier = (type: number): number => 
+    const depths = new Map<string, number>();
+    const calcDepth = (id: string, d: number) => 
     {
-      if (this._options.gapMultipliers && 
-          type in this._options.gapMultipliers) 
+      depths.set(id, Math.max(depths.get(id) ?? 0, d));
+      const children = adj.get(id) ?? [];
+      for (const c of children) calcDepth(c, d + 1);
+    };
+    for (const root of roots) calcDepth(root, 0);
+
+    let maxDepth = 1; // Prevent division by zero
+    for (const d of depths.values()) 
+    {
+      if (d > maxDepth) maxDepth = d;
+    }
+
+    // Calculate complexity factor based on graph size.
+    // Small graphs (< 200 nodes) don't need massive spacing. Large graphs (> 1000 nodes) need more core space.
+    // Caps at 1.0 for graphs with 1500+ nodes.
+    const complexityFactor = Math.min(1.0, nodes.length / 1500);
+    
+    // Maximum extra multiplier for the innermost nodes. 
+    // Small graphs will have close to 0 extra expansion. Large graphs get up to 0.5 (1.5x gap).
+    const maxExpansion = 0.5 * complexityFactor;
+
+    const getGapMultiplier = (type: number, depth: number, maxDepth: number): number => 
+    {
+      let baseMultiplier = 1.0;
+      if (this._options.gapMultipliers && type in this._options.gapMultipliers) 
       {
-        return this._options.gapMultipliers[type];
+        baseMultiplier = this._options.gapMultipliers[type];
+      }
+      else
+      {
+        switch(type) 
+        {
+          case 0: baseMultiplier = 2.0; break; // Directory
+          case 1: baseMultiplier = 2.0; break; // Namespace
+          case 2: baseMultiplier = 1.5; break; // File
+          case 3: baseMultiplier = 1.0; break; // Class
+          case 4: baseMultiplier = 0.8; break; // Function
+          default: baseMultiplier = 1.0; break;
+        }
       }
 
-      switch(type) 
-      {
-        case 0: case 1: return 2.5; // Directory / Namespace
-        case 2: return 1.5;         // File
-        case 3: return 1.0;         // Class
-        case 4: return 0.8;         // Function
-        default: return 1.0;
-      }
+      // Flexible scaling: uses the complexity factor so small graphs stay compact.
+      const depthRatio = maxDepth > 0 ? ((maxDepth - depth) / maxDepth) : 0;
+      const depthFactor = 1 + (maxExpansion * depthRatio);
+      return baseMultiplier * depthFactor;
     };
 
     const minArcSpace = this._options.minArcSpace ?? 60;
     const concentricGap = this._options.concentricGap ?? 40;
+    const clusterPadding = this._options.clusterPadding ?? 0.05;
     const visited = new Set<string>();
 
-    const dfsAssign = (id: string, startAngle: number, endAngle: number, currentRadius: number) => 
+    const dfsAssign = (id: string, startAngle: number, endAngle: number, currentRadius: number, depth: number) => 
     {
       if (visited.has(id)) return;
       visited.add(id);
@@ -149,7 +186,7 @@ export class StarBalloonLayout implements IGraphLayout
       const angleRange = endAngle - startAngle;
 
       const parentType = node?.type ?? 99;
-      const gap = levelGap * getGapMultiplier(parentType);
+      const gap = levelGap * getGapMultiplier(parentType, depth, maxDepth);
       const baseChildRadius = currentRadius === 0 ? gap : currentRadius + gap;
 
       const arcLength = baseChildRadius * angleRange;
@@ -166,7 +203,13 @@ export class StarBalloonLayout implements IGraphLayout
         const extraRadius = (i % rings) * concentricGap;
         const finalChildRadius = baseChildRadius + extraRadius;
 
-        dfsAssign(childId, currentAngle, currentAngle + portion, finalChildRadius);
+        // Apply angular padding to prevent sibling clusters from touching.
+        // Cap the padding to 40% of the portion so we don't invert or collapse the wedge.
+        const angularPadding = Math.min(clusterPadding, portion * 0.4);
+        const safeStartAngle = currentAngle + angularPadding;
+        const safeEndAngle = (currentAngle + portion) - angularPadding;
+
+        dfsAssign(childId, safeStartAngle, safeEndAngle, finalChildRadius, depth + 1);
         currentAngle += portion;
       }
     };
@@ -176,7 +219,7 @@ export class StarBalloonLayout implements IGraphLayout
     {
       const rootLeaves = leavesCount.get(root) || 1;
       const portion = totalLeaves > 0 ? (rootLeaves / totalLeaves) * Math.PI * 2 : Math.PI * 2;
-      dfsAssign(root, currentRootAngle, currentRootAngle + portion, 0);
+      dfsAssign(root, currentRootAngle, currentRootAngle + portion, 0, 0);
       currentRootAngle += portion;
     }
 

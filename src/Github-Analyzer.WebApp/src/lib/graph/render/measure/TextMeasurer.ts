@@ -33,4 +33,20 @@ export class TextMeasurer
   {
     this._cache.clear();
   }
+
+  /**
+   * Hancurkan measurer dan pastikan memori video canvas dilepas.
+   */
+  destroy(): void 
+  {
+    this.clearCache();
+    // Memaksa browser melepas buffer memori canvas (hindari memory leak GPU/RAM)
+    if (this._canvas) 
+    {
+      this._canvas.width = 0;
+      this._canvas.height = 0;
+    }
+    this._ctx = null as any;
+    this._canvas = null as any;
+  }
 }

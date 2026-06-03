@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import type { GraphConfig } from '@graph.types';
-import { EDGE_TYPE_KEYS } from '@/lib/graph/config';
+import { EDGE_TYPE_KEYS } from '@graph/config';
 
 export class MarkerPass 
 {

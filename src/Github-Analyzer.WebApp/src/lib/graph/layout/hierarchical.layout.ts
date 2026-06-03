@@ -1,8 +1,9 @@
 import type { D3Node, D3Edge, GraphConfig, Dimensions, IGraphLayout, LayoutResult } from '@graph.types';
-import { sortChildrenByProximity } from '../utils/proximity';
+import { sortChildrenByProximity } from '@graph/utils/proximity';
 
 export interface HierarchicalLayoutOptions {
   orientation?: 'LR' | 'RL' | 'TB' | 'BT';
+  clusterPadding?: number;
   levelGap?: number;
   nodeGap?: number;
 }
@@ -12,7 +13,8 @@ export class HierarchicalLayout implements IGraphLayout
   readonly name = 'hierarchical';
   private _options: HierarchicalLayoutOptions;
 
-  constructor(options: HierarchicalLayoutOptions = {}) {
+  constructor(options: HierarchicalLayoutOptions = {}) 
+  {
     this._options = options;
   }
 
@@ -87,65 +89,132 @@ export class HierarchicalLayout implements IGraphLayout
       roots = [nodes[0].id];
     }
 
+    const clusterPadding = this._options.clusterPadding ?? 40;
     const visited = new Set<string>();
-    let currentRow = 0;
 
-    const dfs = (id: string, currentLevel: number) => 
+    const nodeSizes = new Map<string, number>();
+    const nodeLocalPos = new Map<string, number>();
+
+    const alignTop = orientation === 'LR' || orientation === 'RL';
+
+    // Phase 1: Bottom-up calculate subtree bounding boxes (widths for TB, heights for LR)
+    const calcSize = (id: string) => 
     {
       if (visited.has(id)) return;
       visited.add(id);
 
-      const node = nodeMap.get(id);
-      if (node) 
-      {
-        let x = 0;
-        let y = 0;
-
-        if (orientation === 'LR') 
-        {
-          x = currentLevel * levelGap;
-          y = currentRow * nodeGap;
-        }
-        else if (orientation === 'RL') 
-        {
-          x = -(currentLevel * levelGap);
-          y = currentRow * nodeGap;
-        }
-        else if (orientation === 'TB') 
-        {
-          x = currentRow * nodeGap;
-          y = currentLevel * levelGap;
-        }
-        else if (orientation === 'BT') 
-        {
-          x = currentRow * nodeGap;
-          y = -(currentLevel * levelGap);
-        }
-
-        positions.set(node.id, { x, y });
-        currentRow++;
-      }
-
       const children = adj.get(id) ?? [];
-      for (const childId of children) 
+      for (const c of children) calcSize(c);
+
+      if (children.length === 0) 
       {
-        dfs(childId, currentLevel + 1);
+        nodeSizes.set(id, nodeGap);
+        nodeLocalPos.set(id, nodeGap / 2);
+      } 
+      else 
+      {
+        let totalSize = 0;
+        let sum = 0;
+        let firstChildAbsolute = 0;
+
+        for (let i = 0; i < children.length; i++) 
+        {
+          const c = children[i];
+          const s = nodeSizes.get(c) ?? nodeGap;
+          const ls = nodeLocalPos.get(c) ?? (nodeGap / 2);
+          
+          if (i > 0) totalSize += clusterPadding; // Add padding between subtree clusters
+          
+          const childAbsolute = totalSize + ls;
+          if (i === 0) firstChildAbsolute = childAbsolute;
+
+          sum += childAbsolute;
+          totalSize += s;
+        }
+
+        // For LR/RL, align parent with first child to create a Flat Top.
+        // For TB/BT, place parent at the centroid of all children.
+        const parentPos = alignTop ? firstChildAbsolute : (sum / children.length);
+
+        nodeSizes.set(id, totalSize);
+        nodeLocalPos.set(id, parentPos);
       }
     };
 
-    for (const root of roots) 
-    {
-      dfs(root, 0);
-    }
+    for (const root of roots) calcSize(root);
+    for (const node of nodes) if (!visited.has(node.id)) calcSize(node.id);
 
+    visited.clear();
+
+    // Phase 2: Top-down assign absolute coordinates
+    const assignCoords = (id: string, startPos: number, depth: number) => 
+    {
+      if (visited.has(id)) return;
+      visited.add(id);
+
+      const ls = nodeLocalPos.get(id) ?? (nodeGap / 2);
+      const absolutePos = startPos + ls;
+      
+      let x = 0, y = 0;
+      if (orientation === 'TB') 
+      {
+        x = absolutePos;
+        y = depth * levelGap;
+      } 
+      else if (orientation === 'BT') 
+      {
+        x = absolutePos;
+        y = -(depth * levelGap);
+      } 
+      else if (orientation === 'LR') 
+      {
+        x = depth * levelGap;
+        y = absolutePos;
+      } 
+      else if (orientation === 'RL') 
+      {
+        x = -(depth * levelGap);
+        y = absolutePos;
+      }
+
+      positions.set(id, { x, y });
+
+      const children = adj.get(id) ?? [];
+      let currentChildStartPos = startPos;
+      
+      for (let i = 0; i < children.length; i++) 
+      {
+        const c = children[i];
+        const s = nodeSizes.get(c) ?? nodeGap;
+        
+        assignCoords(c, currentChildStartPos, depth + 1);
+        
+        currentChildStartPos += s;
+        if (i < children.length - 1) currentChildStartPos += clusterPadding;
+      }
+    };
+
+    let currentRootStartPos = 0;
+    for (let i = 0; i < roots.length; i++) 
+    {
+      const root = roots[i];
+      assignCoords(root, currentRootStartPos, 0);
+      currentRootStartPos += nodeSizes.get(root) ?? nodeGap;
+      if (i < roots.length - 1) currentRootStartPos += clusterPadding;
+    }
+    
+    // Assign any disconnected nodes
     for (const node of nodes) 
     {
       if (!visited.has(node.id)) 
       {
-        dfs(node.id, 0);
+        assignCoords(node.id, currentRootStartPos, 0);
+        currentRootStartPos += nodeSizes.get(node.id) ?? nodeGap;
+        currentRootStartPos += clusterPadding;
       }
     }
 
+    // Center the entire graph around (0,0)
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     for (const pos of positions.values()) 
     {

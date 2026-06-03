@@ -25,6 +25,10 @@ export class PluginRegistry
    */
   register(plugin: GraphPlugin, priority = 5): this 
   {
+    if (this._plugins.some(p => p.plugin.name === plugin.name)) 
+    {
+      return this; // Prevent duplicate registration
+    }
     this._plugins.push({ plugin, priority });
     this._plugins.sort((a, b) => a.priority - b.priority);
     return this;
@@ -62,6 +66,11 @@ export class PluginRegistry
         console.warn(`[PluginRegistry] teardown error in '${plugin.name}':`, err);
       }
     }
+  }
+
+  getPlugin<T extends GraphPlugin>(name: string): T | undefined 
+  {
+    return this._plugins.find(p => p.plugin.name === name)?.plugin as T | undefined;
   }
 
   get names(): string[] 

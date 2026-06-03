@@ -21,7 +21,11 @@ export class EdgePass
     let container = viewport.select<SVGGElement>('g.edges');
     if (container.empty()) 
     {
-      container = viewport.append('g').attr('class', 'edges');
+      container = viewport.append('g')
+        .attr('class', 'edges')
+        .attr('pointer-events', 'none')
+        // Disables anti-aliasing to massively improve rendering fps on large graphs
+        .attr('shape-rendering', edges.length > 500 ? 'optimizeSpeed' : 'auto');
     }
 
     this._selection = this._applyUpdatePattern(container, edges, config);
@@ -121,7 +125,8 @@ export class EdgePass
           .attr('stroke',           style.color)
           .attr('stroke-opacity',   0.6)
           .attr('stroke-width',     style.strokeWidth)
-          .attr('stroke-dasharray', style.dashArray === 'none' ? null : style.dashArray)
+          // Disable dashed lines for very large graphs because bezier + dash calculation kills GPU
+          .attr('stroke-dasharray', edges.length > 500 ? null : (style.dashArray === 'none' ? null : style.dashArray))
           .attr('marker-end',       `url(#graph-arrow-${d.type})`);
       });
 

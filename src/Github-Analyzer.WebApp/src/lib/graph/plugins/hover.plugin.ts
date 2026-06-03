@@ -34,13 +34,13 @@ export class HoverPlugin implements GraphPlugin
       .on('mouseleave.hover', ()           => this.hide());
   }
 
-  private createTooltip(container: HTMLElement): void
+  private createTooltip(_container: HTMLElement): void
   {
     this.tooltip = document.createElement('div');
 
     Object.assign(this.tooltip.style,
       {
-        position:       'absolute',
+        position:       'fixed',
         pointerEvents:  'none',
         display:        'none',
         background:     'rgba(15, 15, 15, 0.85)',
@@ -55,8 +55,8 @@ export class HoverPlugin implements GraphPlugin
         zIndex:         '10',
       });
 
-    // Append ke parent agar tooltip tidak terpotong oleh SVG overflow
-    (container.parentElement ?? container).appendChild(this.tooltip);
+    // Append ke body agar tooltip tidak terpotong dan aman dari mount/unmount
+    document.body.appendChild(this.tooltip);
   }
 
   private show(d: D3Node): void
@@ -71,11 +71,10 @@ export class HoverPlugin implements GraphPlugin
 
   private move(event: MouseEvent): void
   {
-    if (!this.tooltip || !this.container) return;
+    if (!this.tooltip) return;
 
-    const rect = this.container.getBoundingClientRect();
-    this.tooltip.style.left = `${event.clientX - rect.left + 14}px`;
-    this.tooltip.style.top  = `${event.clientY - rect.top  - 10}px`;
+    this.tooltip.style.left = `${event.clientX + 14}px`;
+    this.tooltip.style.top  = `${event.clientY - 10}px`;
   }
 
   private hide(): void

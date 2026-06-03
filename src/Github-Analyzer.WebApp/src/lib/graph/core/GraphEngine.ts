@@ -1,6 +1,6 @@
 import type { 
   GraphData, IGraphLayout, D3Node, 
-  GraphConfig, GraphPlugin 
+  GraphConfig, GraphPlugin, LayoutResult 
 } from '@graph.types';
 
 import { EventBus }            from './EventBus';
@@ -15,11 +15,8 @@ import { defaultGraphConfig }  from '@graph/config';
  */
 export interface GraphEngineOptions 
 {
-  /** The DOM element where the graph SVG will be injected. */
-  container: HTMLElement;
-
   /** Optional partial configuration to override default settings. */
-  config?:   Partial<GraphConfig>;
+  config?: Partial<GraphConfig>;
 }
 
 /**
@@ -38,7 +35,7 @@ export class GraphEngine
   private _currentData: GraphData | null = null;
   private _layout:      IGraphLayout | null = null;
 
-  constructor({ container, config }: GraphEngineOptions) 
+  constructor({ config }: GraphEngineOptions = {}) 
   {
     this._config   = { ...defaultGraphConfig, ...(config ?? {}) };
     
@@ -46,8 +43,36 @@ export class GraphEngine
     this._registry = new PluginRegistry();
     
     this._sim      = new SimulationController(this._bus, this._config);
-    this._pipeline = new RenderPipeline(container, this._config, this._bus);
+    this._pipeline = new RenderPipeline(this._config, this._bus);
     this._ctx      = new GraphContext(this._bus, this._sim);
+  }
+
+  /**
+   * Mounts the graph to a DOM container.
+   */
+  mount(container: HTMLElement): void 
+  {
+    this._pipeline.mount(container);
+  }
+
+  /**
+   * Unmounts the graph from the DOM container.
+   */
+  unmount(): void 
+  {
+    this._pipeline.unmount();
+  }
+
+  /**
+   * Resets the engine state, stopping simulations and clearing the active graph.
+   */
+  reset(): void 
+  {
+    this._sim.stop();
+    this._registry.teardownAll();
+    
+    this._currentData = null;
+    this._bus.emit('highlight:clear', undefined as never);
   }
 
   /**
@@ -139,24 +164,23 @@ export class GraphEngine
 
     // Apply initial layout if available before rendering and starting simulation. 
     // This ensures nodes start in a reasonable position.
+    let layoutResult: LayoutResult | null = null;
     if (this._layout) 
     {
-      const result = this._layout.apply(
+      layoutResult = this._layout.apply(
         d3Nodes as any, d3Edges as any, 
         { width: 800, height: 600 }, 
         this._config
       );
-      if (result && result.positions) 
+      if (layoutResult && layoutResult.positions) 
       {
         for (const n of d3Nodes) 
         {
-          const pos = result.positions.get(n.id);
+          const pos = layoutResult.positions.get(n.id);
           if (pos) 
           {
             n.x = pos.x;
             n.y = pos.y;
-            // Optionally set fx/fy if we want rigid snap, but setting x/y 
-            // is enough for simulation initialization without mekar delay.
           }
         }
       }
@@ -176,6 +200,22 @@ export class GraphEngine
     {
       this._pipeline.onTick();
     });
+    
+    // Now that simulation has started (and initialized its default chaotic forces),
+    // we emit the layout positions so SimulationController can inject the magnetic anchors!
+    if (layoutResult && layoutResult.positions) 
+    {
+      if (layoutResult.animationHint === 'instant') 
+      {
+        this._bus.emit('render:snap-positions', 
+          { positions: layoutResult.positions });
+      } 
+      else 
+      {
+        this._bus.emit('render:tween-positions', 
+          { positions: layoutResult.positions });
+      }
+    }
 
     this._registry.setupAll(this._ctx, data);
 
@@ -205,5 +245,10 @@ export class GraphEngine
     this._sim.stop();
     this._pipeline.destroy();
     this._bus.clear();
+  }
+
+  getPlugin<T extends GraphPlugin>(name: string): T | undefined 
+  {
+    return this._registry.getPlugin<T>(name);
   }
 }

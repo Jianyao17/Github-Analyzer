@@ -99,6 +99,37 @@ export class SimulationController
     this._bus.on('render:snap-positions', ({ positions }) => 
     {
       if (!this._sim) return;
+      
+      this._sim.force('layoutX', 
+        d3.forceX<D3Node>().x(d => positions.get(d.id)?.x ?? 0)
+          .strength(0.5));
+
+      this._sim.force('layoutY', 
+        d3.forceY<D3Node>().y(d => positions.get(d.id)?.y ?? 0)
+          .strength(0.5));
+
+      this._sim.force('charge', null);
+      this._sim.force('center', null);
+
+      // Use custom link distance to maintain relative distances between nodes
+      const linkForce = this._sim.force('link') as d3.ForceLink<D3Node, D3Edge> | undefined;
+      if (linkForce) 
+      {
+        linkForce.distance(link => 
+        {
+          const sourceId = String(typeof link.source === 'object' ? link.source.id : link.source);
+          const targetId = String(typeof link.target === 'object' ? link.target.id : link.target);
+          const p1 = positions.get(sourceId);
+          const p2 = positions.get(targetId);
+          if (p1 && p2) 
+          {
+            // Calculate the distance between the source and target nodes
+            return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+          }
+          return 60;
+        });
+      }
+
       const nodes = this._sim.nodes();
       for (const node of nodes) 
       {
@@ -117,8 +148,38 @@ export class SimulationController
     this._bus.on('render:tween-positions', ({ positions }) => 
     {
       if (!this._sim) return;
+
+      this._sim.force('layoutX', 
+        d3.forceX<D3Node>().x(d => positions.get(d.id)?.x ?? 0)
+          .strength(0.5));
+
+      this._sim.force('layoutY', 
+        d3.forceY<D3Node>().y(d => positions.get(d.id)?.y ?? 0)
+          .strength(0.5));
+
+      this._sim.force('charge', null);
+      this._sim.force('center', null);
+
+      // Use custom link distance to maintain relative distances between nodes
+      const linkForce = this._sim.force('link') as d3.ForceLink<D3Node, D3Edge> | undefined;
+      if (linkForce) 
+      {
+        linkForce.distance(link => 
+        {
+          const sourceId = String(typeof link.source === 'object' ? link.source.id : link.source);
+          const targetId = String(typeof link.target === 'object' ? link.target.id : link.target);
+          const p1 = positions.get(sourceId);
+          const p2 = positions.get(targetId);
+          if (p1 && p2) 
+          {
+            // Calculate the distance between the source and target nodes
+            return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+          }
+          return 60;
+        });
+      }
+
       const nodes = this._sim.nodes();
-      
       const interpolators = nodes.map(d => 
       {
         const target = positions.get(d.id);
@@ -130,7 +191,7 @@ export class SimulationController
           iy: d3.interpolateNumber(d.y ?? 0, target.y)
         };
       })
-      .filter(Boolean) as 
+        .filter(Boolean) as 
       { 
         node: D3Node, 
         ix: (t: number) => number, 
@@ -148,14 +209,14 @@ export class SimulationController
           {
             node.x = ix(t);
             node.y = iy(t);
-            // Optional: fix positions during tween so simulation forces don't interfere too much
+            // Fix positions during tween so simulation forces don't interfere
             node.fx = node.x;
             node.fy = node.y;
           }
         })
         .on('end', () => 
         {
-          // Release fixed positions after tween
+          // Release fixed positions after tween. The layoutX and layoutY anchors will hold them elastically!
           for (const { node } of interpolators) 
           {
             node.fx = null;

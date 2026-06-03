@@ -1,4 +1,4 @@
-import type { GraphConfig } from './types/_index';
+import type { GraphConfig } from '@graph.types';
 
 // ─── Default Graph Config ─────────────────────────────────────────────────────
 // Node/edge styles defined as config objects — no switch-case in renderers.
@@ -46,13 +46,8 @@ export const defaultGraphConfig: GraphConfig =
 
   // ── Simulation ──────────────────────────────────────────────────────────────
   simulation: {
-    layoutType: 'star-balloon',
-    orientation: 'LR', // Top to Bottom
-
     levelGap: 150,
     nodeGap: 50,
-
-    arrowSpacingAngle: 45,
 
     linkDistance:   150,
     chargeStrength: -150,

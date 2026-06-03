@@ -1,28 +1,24 @@
-import type { GraphData } from './graph-data';
-import type { GraphView } from './graph-view';
+import type { GraphContext } from '@graph/core/GraphContext';
+import type { GraphData }    from './graph-data';
 
-// ─── GraphPlugin ──────────────────────────────────────────────────────────────
-
-export interface GraphPlugin
+export interface GraphPlugin 
 {
-  /**
-   * Identifier unik — digunakan untuk mencegah duplikasi registrasi plugin.
-   */
   readonly name: string;
 
   /**
-   * Dipanggil setelah render() dan simulation siap.
-   *
-   * @param data  GraphData — referensi read-only ke data CodeGraph + indexes.
-   *              Plugin boleh membaca ini tapi TIDAK boleh mengubahnya.
-   * @param view  GraphView — state view yang mutable.
-   *              Plugin memodifikasi tampilan dan behavior melalui ini.
+   * Priority teardown (opsional, informational).
+   * PluginRegistry menggunakan nilai saat registrasi, bukan dari sini.
    */
-  setup(data: GraphData, view: GraphView): void;
+  readonly priority?: number;
 
   /**
-   * Dipanggil saat destroy() dan sebelum setiap update().
-   * Bersihkan event listeners dan referensi di sini.
+   * Dipanggil setelah render selesai dan simulation berjalan.
+   * @param ctx   GraphContext stabil — aman disimpan sebagai field plugin.
+   * @param data  GraphData read-only — jangan mutasi.
    */
+  setup(ctx: GraphContext, data: GraphData): void;
+
+  /** Bersihkan semua event listener dan referensi eksternal. */
   teardown?(): void;
 }
+

@@ -1,127 +1,106 @@
+import { 
+  watch, onMounted, 
+  onUnmounted, nextTick 
+} from 'vue';
+
 import type { Ref } from 'vue';
-import { watch, onMounted, onUnmounted, nextTick } from 'vue';
-import type { CodeGraph } from '@/types/analysis/code-graph';
-import type { GraphPlugin, D3Node } from '@graph.types';
+import type { CodeGraph }  from '@/types/analysis/code-graph';
+import type { D3Node, GraphPlugin } from '@graph.types';
 
-import { GraphD3 } from '@graph/graph.main';
-import { GraphDebugger } from '@graph/graph.debug';
-import { ZoomDragPlugin } from '@graph/plugins/zoom-drag.plugin';
-import { SearchPlugin } from '@graph/plugins/search.plugin';
-import { HoverPlugin } from '@graph/plugins/hover.plugin';
-import { buildGraphData } from '@graph/utils/graph-data';
+import { GraphEngine }     from '@graph/core/GraphEngine';
+import { ZoomPlugin }      from '@graph/plugins/zoom.plugin';
+import { DragPlugin }      from '@graph/plugins/drag.plugin';
+import { HoverPlugin }     from '@graph/plugins/hover.plugin';
+import { SearchPlugin }    from '@graph/plugins/search.plugin';
+import { DebugPlugin }     from '@graph/plugins/debug.plugin';
+import { StarBalloonLayout } from '@graph/layout/star-balloon.layout';
+import { buildGraphData }  from '@graph/utils/graph-data';
 
-export interface UseGraphD3Options
-{
-  /** Extra plugins untuk didaftarkan di samping plugin default. */
+export interface UseGraphD3Options {
   plugins?: GraphPlugin[];
-
-  /** Aktifkan DEV-only performance profiling. Default: import.meta.env.DEV. */
-  debug?: boolean;
+  debug?:   boolean;
 }
 
 /**
- * useGraphD3 — thin Vue composable wrapper untuk GraphD3 library.
- *
- * Default plugins: ZoomDrag, Hover, Search.
- * DEV performance profiling di-attach otomatis via GraphDebugger.
- *
- * Returns search API untuk dihubungkan ke Vue search UI:
- * ```ts
- * const { search, focusNode, focusResults, clearSearch } =
- *   useGraphD3(containerRef, graphData);
- *
- * const results = search('UserService');
- * if (results[0]) focusNode(results[0]);
- * ```
+ * Vue composable for integrating the D3 graph engine into a Vue component.
+ * Handles mounting, data reactivity, engine initialization, and plugin orchestration.
+ * 
+ * @param containerRef A Vue ref pointing to the HTML container element.
+ * @param dataRef A Vue ref containing the raw backend code graph data.
+ * @param options Additional initialization options (e.g., custom plugins).
  */
 export function useGraphD3(
   containerRef: Ref<HTMLElement | null>,
   dataRef:      Ref<CodeGraph | null>,
   options:      UseGraphD3Options = {},
-)
+) 
 {
-  let graph: GraphD3 | null = null;
+  let engine: GraphEngine | null = null;
 
-  // Plugin instances dibuat sekali dan dipakai ulang lintas update() cycle.
-  // SearchPlugin tidak lagi memerlukan ZoomDragPlugin reference.
   const searchPlugin = new SearchPlugin();
 
-  function initGraph(raw: CodeGraph): void
+  /**
+   * Initializes or updates the graph engine when the container and data are ready.
+   * Instantiates the engine on the first run, registers default plugins, and triggers rendering.
+   * On subsequent calls, it performs a lightweight data update.
+   */
+  function init(raw: CodeGraph): void 
   {
     const data = buildGraphData(raw);
     if (!containerRef.value) return;
 
-    if (!graph)
+    if (!engine) 
     {
-      // ── First render ────────────────────────────────────────────────────────
-      graph = new GraphD3({
-        container: containerRef.value,
-        data,
-      });
+      engine = new GraphEngine({ container: containerRef.value });
 
-      graph
-        .use(new ZoomDragPlugin())
-        .use(searchPlugin)
-        .use(new HoverPlugin());
+      engine
+        .useLayout(new StarBalloonLayout({
+          minArcSpace: 60,
+          concentricGap: 40,
+          gapMultipliers: {
+            0: 2.5, // Directory
+            1: 2.5, // Namespace
+            2: 1.5, // File
+            3: 1.0, // Class
+            4: 0.8  // Function
+          }
+        }))
+        .use(new ZoomPlugin(),  0)
+        .use(new DragPlugin(),  1)
+        .use(new HoverPlugin(), 2)
+        .use(searchPlugin,      4)
+        .use(new DebugPlugin({
+          enabled:    options.debug ?? import.meta.env.DEV,
+          logMemory:  true,
+        }), 999);
 
-      // Daftarkan extra plugins dari caller
-      options.plugins?.forEach((p) => graph!.use(p));
-
-      // DEV performance profiling — zero cost in production
-      new GraphDebugger({
-        enabled:   options.debug ?? import.meta.env.DEV,
-        logMemory: true,
-      }).attachTo(graph);
-
-      graph.render();
+      options.plugins?.forEach(p => engine!.use(p));
+      engine.render(data);
     }
-    else
+    else 
     {
-      // ── Subsequent renders — plugins dipertahankan ──────────────────────────
-      graph.update(data);
+      engine.update(data);
     }
   }
 
-  // Re-render saat data berubah
-  watch(dataRef, (newData) =>
+  watch(dataRef, newData => { if (newData) init(newData); });
+
+  onMounted(async () => 
   {
-    if (newData) initGraph(newData);
+    if (dataRef.value) { await nextTick(); init(dataRef.value); }
   });
 
-  // Render saat mount jika data sudah tersedia
-  // (nextTick memastikan container punya dimensi nyata, bukan 0×0)
-  onMounted(async () =>
+  onUnmounted(() => 
   {
-    if (dataRef.value)
-    {
-      await nextTick();
-      initGraph(dataRef.value);
-    }
-  });
-
-  // Cleanup saat unmount
-  onUnmounted(() =>
-  {
-    graph?.destroy();
-    graph = null;
+    engine?.destroy();
+    engine = null;
   });
 
   return {
-    /** Instance GraphD3 — tersedia setelah render(). */
-    getGraph: () => graph,
-
-    // ── Search API ────────────────────────────────────────────────────────────
-    /** Cari node by label atau pathId. Highlight hasil di graph. */
-    search: (query: string): D3Node[] => searchPlugin.search(query),
-
-    /** Pan & zoom secara smooth ke satu node. */
-    focusNode: (node: D3Node, scale?: number): void => searchPlugin.focusNode(node, scale),
-
-    /** Fit semua result nodes di dalam viewport. */
-    focusResults: (results: D3Node[], padding?: number): void =>
-      searchPlugin.focusResults(results, padding),
-
-    /** Reset semua search highlighting. */
-    clearSearch: (): void => searchPlugin.clearSearch(),
+    getEngine:    () => engine,
+    search:       (query: string): D3Node[] => searchPlugin.search(query),
+    focusNode:    (node: D3Node, scale?: number) => searchPlugin.focusNode(node, scale),
+    focusResults: (results: D3Node[], padding?: number) => searchPlugin.focusResults(results, padding),
+    clearSearch:  () => searchPlugin.clearSearch(),
   };
 }

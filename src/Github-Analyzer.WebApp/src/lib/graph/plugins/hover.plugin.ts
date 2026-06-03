@@ -1,4 +1,5 @@
-import type { GraphPlugin, GraphData, GraphView, D3Node } from '@graph.types';
+import type { GraphPlugin, GraphData, D3Node } from '@graph.types';
+import type { GraphContext } from '@graph/core/GraphContext';
 
 /**
  * HoverPlugin — menampilkan floating tooltip saat hover pada node.
@@ -9,13 +10,14 @@ import type { GraphPlugin, GraphData, GraphView, D3Node } from '@graph.types';
 export class HoverPlugin implements GraphPlugin
 {
   readonly name = 'hover';
+  readonly priority = 2;
 
   private tooltip:   HTMLDivElement | null = null;
   private container: HTMLElement    | null = null;
 
-  setup(_data: GraphData, view: GraphView): void
+  setup(ctx: GraphContext, _data: GraphData): void
   {
-    const svg = view.svg?.node();
+    const svg = ctx.svg?.node();
     if (!svg) return;
 
     // Dapatkan container dari parent SVG element
@@ -24,11 +26,11 @@ export class HoverPlugin implements GraphPlugin
 
     this.createTooltip(this.container);
 
-    if (!view.nodeSelection) return;
+    if (!ctx.nodeSelection) return;
 
-    view.nodeSelection
-      .on('mouseenter.hover', (_event, d) => this.show(d))
-      .on('mousemove.hover',  (event)      => this.move(event))
+    ctx.nodeSelection
+      .on('mouseenter.hover', (_event: any, d: D3Node) => this.show(d))
+      .on('mousemove.hover',  (event: any)      => this.move(event))
       .on('mouseleave.hover', ()           => this.hide());
   }
 

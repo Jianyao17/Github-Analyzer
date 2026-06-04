@@ -245,7 +245,18 @@ public sealed class GithubRepositoryProvider : IRepositoryProvider
 
         File.Delete(zipFilePath);
 
-        return extractPath;
+        var actualRootPath = extractPath;
+        if (Directory.Exists(actualRootPath))
+        {
+            var subDirs = Directory.GetDirectories(actualRootPath);
+            var subFiles = Directory.GetFiles(actualRootPath);
+            if (subDirs.Length == 1 && subFiles.Length == 0)
+            {
+                actualRootPath = subDirs[0];
+            }
+        }
+
+        return actualRootPath;
     }
 
     /// <summary>

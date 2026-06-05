@@ -26,6 +26,13 @@ export class HoverPlugin implements GraphPlugin
 
     this.createTooltip(this.container);
 
+    this._bindEvents(ctx);
+    ctx.bus.on('render:complete', () => this._bindEvents(ctx));
+    ctx.bus.on('view:refresh-requested', () => this.hide());
+  }
+
+  private _bindEvents(ctx: GraphContext): void 
+  {
     if (!ctx.nodeSelection) return;
 
     ctx.nodeSelection

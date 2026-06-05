@@ -9,6 +9,12 @@ export class DragPlugin implements GraphPlugin
 
   setup(ctx: GraphContext, _data: GraphData): void 
   {
+    this._bindEvents(ctx);
+    ctx.bus.on('render:complete', () => this._bindEvents(ctx));
+  }
+
+  private _bindEvents(ctx: GraphContext): void 
+  {
     if (!ctx.nodeSelection) return;
 
     ctx.nodeSelection

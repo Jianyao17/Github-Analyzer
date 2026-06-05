@@ -47,7 +47,7 @@ export class RenderPipeline
     this._config     = config;
     this._bus        = bus;
     this._measurer   = new TextMeasurer();
-    this.nodePass    = new NodePass(this._measurer);
+    this.nodePass    = new NodePass(this._measurer, this._bus);
     this.edgePass    = new EdgePass();
     this.markerPass  = new MarkerPass();
     
@@ -83,24 +83,30 @@ export class RenderPipeline
     const width  = this._container.clientWidth  || 800;
     const height = this._container.clientHeight || 600;
 
-    // Init SVG
-    d3.select(this._container).selectAll('svg').remove();
-    this._svg = d3.select(this._container)
-      .append('svg')
-      .attr('width',   '100%')
-      .attr('height',  '100%')
-      .attr('viewBox', `0 0 ${width} ${height}`);
+    // Init SVG if it doesn't exist
+    if (!this._svg) 
+    {
+      this._svg = d3.select(this._container)
+        .append('svg')
+        .attr('width',   '100%')
+        .attr('height',  '100%')
+        .attr('viewBox', `0 0 ${width} ${height}`);
 
-    this._viewport = this._svg.append('g').attr('class', 'viewport');
+      this._viewport = this._svg.append('g').attr('class', 'viewport');
+      this.markerPass.run(this._svg, this._config);
+    } 
+    else 
+    {
+      this._svg.attr('viewBox', `0 0 ${width} ${height}`);
+    }
 
     // Jalankan passes
-    this.markerPass.run(this._svg, this._config);
-    const edgeSel = this.edgePass.run(this._viewport, edges, this._config);
-    const nodeSel = this.nodePass.run(this._viewport, nodes, this._config);
+    const edgeSel = this.edgePass.run(this._viewport!, edges, this._config);
+    const nodeSel = this.nodePass.run(this._viewport!, nodes, this._config);
 
     return {
       svg:           this._svg,
-      viewport:      this._viewport,
+      viewport:      this._viewport!,
       nodeSelection: nodeSel,
       edgeSelection: edgeSel,
       liveNodes:     nodes,

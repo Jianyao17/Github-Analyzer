@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import type { EventBus } from '@graph/core/EventBus';
 import type { TextMeasurer } from '../measure/TextMeasurer';
 import type { 
   D3Node, GraphConfig, NodeCardConfig, 
@@ -30,10 +31,12 @@ export class NodePass
 {
   private _selection: NodeSelection | null = null;
   private _measurer:  TextMeasurer;
+  private _bus:       EventBus;
 
-  constructor(measurer: TextMeasurer) 
+  constructor(measurer: TextMeasurer, bus: EventBus) 
   {
     this._measurer = measurer;
+    this._bus = bus;
   }
 
   run(
@@ -125,7 +128,8 @@ export class NodePass
       .enter()
       .append('g')
       .attr('class',  'node')
-      .attr('cursor', 'grab');
+      .attr('cursor', 'grab')
+      .on('click', (event, d) => this._bus.emit('node:click', { node: d, event }));
 
     entered.each((d, i, nodes) => 
     {
@@ -135,7 +139,15 @@ export class NodePass
       this._renderNodeCard(g, d, style, card);
     });
 
-    return entered.merge(bound);
+    const merged = entered.merge(bound);
+    
+    merged.each((d, i, nodes) => 
+    {
+      const g = d3.select<SVGGElement, D3Node>(nodes[i]);
+      this._updateCollapseBadge(g, d);
+    });
+
+    return merged;
   }
 
   private _renderNodeCard(
@@ -203,6 +215,48 @@ export class NodePass
         {
           textEl.text(shortLabel);
         });
+    }
+  }
+
+  private _updateCollapseBadge(
+    g: d3.Selection<SVGGElement, D3Node, null, undefined>,
+    d: D3Node & { _hiddenChildCount?: number }
+  ): void 
+  {
+    const count = d._hiddenChildCount || 0;
+    
+    let badge = g.select<SVGGElement>('g.collapse-badge');
+    
+    if (count > 0) 
+    {
+      if (badge.empty()) 
+      {
+        badge = g.append('g')
+          .attr('class', 'collapse-badge')
+          .attr('transform', `translate(${(d._hw ?? 0) - 2}, -${(d._hh ?? 0) - 2})`); // Top-right offset
+          
+        badge.append('circle')
+          .attr('r', 7)
+          .attr('fill', '#3b82f6') // bright blue
+          .attr('cx', 0)
+          .attr('cy', 0);
+
+        badge.append('text')
+          .attr('fill', '#ffffff')
+          .attr('font-size', '8px')
+          .attr('font-family', 'sans-serif')
+          .attr('font-weight', 'bold')
+          .attr('dominant-baseline', 'middle')
+          .attr('text-anchor', 'middle')
+          .attr('y', 0.5); // optical alignment
+      }
+      
+      const badgeText = `${count}`;
+      badge.select('text').text(badgeText);
+    } 
+    else 
+    {
+      badge.remove();
     }
   }
 }

@@ -1,6 +1,6 @@
 import { 
   ZoomPlugin, DragPlugin, HoverPlugin, 
-  SearchPlugin, DebugPlugin } from '@graph.plugins';
+  SearchPlugin, DebugPlugin, CollapsePlugin } from '@graph.plugins';
 import { GraphEngine } from '@graph/core/GraphEngine';
 import type { Plugin } from 'vue';
 
@@ -19,10 +19,11 @@ export function createGraphEngine(debugEnabled: boolean = false): Plugin
     {
       const engine = new GraphEngine();
       engine
-        .use(new ZoomPlugin(),   0)
-        .use(new DragPlugin(),   1)
-        .use(new HoverPlugin(),  2)
-        .use(new SearchPlugin(), 4)
+        .use(new ZoomPlugin(),     0)
+        .use(new DragPlugin(),     1)
+        .use(new CollapsePlugin(), 2)
+        .use(new HoverPlugin(),    3)
+        .use(new SearchPlugin(),   4)
         .use(new DebugPlugin({
           enabled: debugEnabled ?? import.meta.env.DEV,
           logMemory: true,

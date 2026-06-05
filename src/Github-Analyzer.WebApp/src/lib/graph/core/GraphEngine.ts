@@ -48,6 +48,8 @@ export class GraphEngine
     this._sim      = new SimulationController(this._bus, this._config);
     this._pipeline = new RenderPipeline(this._config, this._bus);
     this._ctx      = new GraphContext(this._bus, this._sim);
+
+    this._bus.on('view:refresh-requested', () => this.refreshView());
   }
 
   /**
@@ -119,75 +121,82 @@ export class GraphEngine
   useLayout(layout: IGraphLayout): this 
   {
     this._layout = layout;
-
-    this._bus.on('layout:change', ({ layout: l }) => 
+    if (this._currentData && this._isMounted) 
     {
-      if (!this._currentData) return;
-      this._layout = l;
-      
-      const result = l.apply(
-        this._ctx.nodes,
-        this._currentData
-          .sourceRelEdges
-          .concat(this._currentData.useRelEdges) as any,
-        { width: 800, height: 600 },
-        this._config
-      );
-      
-      if (result && result.positions) 
-      {
-        if (result.animationHint === 'instant') 
-        {
-          this._bus.emit('render:snap-positions', 
-            { positions: result.positions });
-        }
-        else 
-        {
-          this._bus.emit('render:tween-positions', 
-            { positions: result.positions });
-        }
-      }
-    });
+      this.refreshView();
+    }
     return this;
   }
 
   /**
    * Sets a global node filter and re-renders the graph.
-   * If the filter changes, the simulation restarts with the current data.
    */
   setNodeFilter(filter: ((node: any) => boolean) | null): void 
   {
     this._nodeFilter = filter;
     if (this._currentData && this._isMounted) 
     {
-      this._sim.stop();
-      this._registry.teardownAll();
-      this.render(this._currentData);
+      this.refreshView();
     }
   }
 
   /**
-   * The main entry point to render or re-render the graph with new data.
-   * Hydrates string IDs into D3 node objects, applies the current layout synchronously,
-   * runs the render pipeline to draw the SVG elements, and starts the simulation physics.
-   * 
-   * @param data The raw graph data (nodes, source relations, use relations).
+   * Refreshes the active graph view. 
+   * Runs the data through the plugin transformation middleware, applies layout,
+   * updates the DOM via the render pipeline, and restarts the simulation.
    */
-  render(data: GraphData): void 
+  refreshView(isInitialRender = false): void
   {
+    if (!this._currentData) return;
+
     const t0 = performance.now();
 
-    this._currentData = data; // Save reference for potential future updates or layout changes
-
-    // Apply node filter
-    const filteredNodes = this._nodeFilter ? data.nodes.filter(this._nodeFilter) : data.nodes;
-    const d3Nodes: D3Node[] = filteredNodes.map(n => ({ ...n, id: n.pathId })) as D3Node[];
-    const nodeMap = new Map(d3Nodes.map(n => [n.id, n])); // Map for quick lookup when constructing edges 
+    // 1. Re-hydrate base nodes/edges, preserving existing D3 objects to maintain layout/physics stability
+    const oldNodeMap = new Map(this._ctx.nodes.map(n => [n.id, n]));
     
-    // Combine sourceRelEdges and useRelEdges into a single array of D3Edge,
-    // while also replacing 'from' and 'to' with actual node references.
-    // Filter out edges that refer to nodes that were filtered out
-    const d3Edges = [...data.sourceRelEdges, ...data.useRelEdges]
+    // Apply global node filter
+    const baseNodes = this._nodeFilter 
+      ? this._currentData.nodes.filter(this._nodeFilter) 
+      : this._currentData.nodes;
+
+    const d3Nodes: D3Node[] = baseNodes.map(n => 
+    {
+      const existing = oldNodeMap.get(n.pathId);
+      if (existing) 
+      {
+        // Preserve D3 physics state (x, y, vx, vy) but update source data fields
+        return Object.assign(existing, n);
+      }
+      
+      // Inherit parent position for smooth bloom animation: find nearest visible ancestor
+      let parentX: number | undefined;
+      let parentY: number | undefined;
+      
+      let currId = n.pathId;
+      while (true) 
+      {
+        const edges = this._currentData!.indexes.edgesByTarget.get(currId) || [];
+        const parentEdge = edges.find(e => e.type !== 2);
+        if (!parentEdge) break;
+        
+        currId = parentEdge.from;
+        const p = oldNodeMap.get(currId);
+        if (p && typeof p.x === 'number') 
+        {
+          // Add a tiny random jitter to prevent D3 force collision explosions
+          parentX = p.x + (Math.random() - 0.5) * 5;
+          parentY = (p.y || 0) + (Math.random() - 0.5) * 5;
+          break;
+        }
+      }
+      
+      return { ...n, id: n.pathId, x: parentX, y: parentY } as D3Node;
+    });
+
+    const nodeMap = new Map(d3Nodes.map(n => [n.id, n]));
+
+    // Re-hydrate edges based on valid nodes
+    const d3Edges = [...this._currentData.sourceRelEdges, ...this._currentData.useRelEdges]
       .filter(e => nodeMap.has(e.from) && nodeMap.has(e.to))
       .map(e => ({ 
         ...e, 
@@ -195,31 +204,47 @@ export class GraphEngine
         target: nodeMap.get(e.to)! 
       }));
 
-    // Apply initial layout if available before rendering and starting simulation. 
-    // This ensures nodes start in a reasonable position.
+    // 2. Set full active state to Context for middleware to mutate
+    this._ctx.nodes = d3Nodes;
+    this._ctx.edges = d3Edges;
+
+    // 3. Run Data Transformation Middleware Chain
+    this._registry.transformAll(this._ctx, this._currentData);
+
+    const activeNodes = this._ctx.nodes;
+    const activeEdges = this._ctx.edges;
+
+    // 4. Layout
     let layoutResult: LayoutResult | null = null;
     if (this._layout) 
     {
       layoutResult = this._layout.apply(
-        d3Nodes as any, d3Edges as any, 
+        activeNodes as any, activeEdges as any, 
         { width: 800, height: 600 }, 
         this._config
       );
       if (layoutResult && layoutResult.positions) 
       {
-        for (const n of d3Nodes) 
+        for (const n of activeNodes) 
         {
           const pos = layoutResult.positions.get(n.id);
           if (pos) 
           {
-            n.x = pos.x;
-            n.y = pos.y;
+            n.targetX = pos.x;
+            n.targetY = pos.y;
+            
+            if (typeof n.x !== 'number') // Only snap if it doesn't have an existing position
+            {
+              n.x = pos.x;
+              n.y = pos.y;
+            }
           }
         }
       }
     }
 
-    const output = this._pipeline.run(d3Nodes as any, d3Edges as any);
+    // 5. Render
+    const output = this._pipeline.run(activeNodes as any, activeEdges as any);
 
     this._ctx.updateRefs(
       output.svg,
@@ -227,37 +252,64 @@ export class GraphEngine
       output.nodeSelection,
       output.edgeSelection,
       output.liveNodes,
+      output.liveEdges
     );
 
+    // 6. Simulation
     this._sim.start(output.liveNodes, output.liveEdges as any, output.dimensions, () => 
     {
       this._pipeline.onTick();
     });
-    
-    // Now that simulation has started (and initialized its default chaotic forces),
-    // we emit the layout positions so SimulationController can inject the magnetic anchors!
+
+    // Emitting layout positions for magnetic simulation
     if (layoutResult && layoutResult.positions) 
     {
       if (layoutResult.animationHint === 'instant') 
       {
-        this._bus.emit('render:snap-positions', 
-          { positions: layoutResult.positions });
+        this._bus.emit('render:snap-positions', { positions: layoutResult.positions });
       } 
       else 
       {
-        this._bus.emit('render:tween-positions', 
-          { positions: layoutResult.positions });
+        this._bus.emit('render:tween-positions', { positions: layoutResult.positions });
       }
     }
 
-    this._registry.setupAll(this._ctx, data);
+    // 7. Setup Plugins on initial render
+    if (isInitialRender) 
+    {
+      this._registry.setupAll(this._ctx, this._currentData);
+    }
 
     this._bus.emit('render:complete', 
       {
         elapsed:   performance.now() - t0,
-        nodeCount: d3Nodes.length,
-        edgeCount: d3Edges.length,
+        nodeCount: activeNodes.length,
+        edgeCount: activeEdges.length,
       });
+  }
+
+  /**
+   * The main entry point to render the graph from scratch with new data.
+   */
+  render(data: GraphData): void 
+  {
+    this._currentData = data;
+    
+    // Reset ctx nodes/edges to force complete hydration instead of object reuse
+    this._ctx.nodes = [];
+    this._ctx.edges = [];
+    
+    this.refreshView(true);
+  }
+
+  setData(data: GraphData): void 
+  {
+    this._currentData = data;
+    
+    if (this._isMounted) 
+    {
+      this.refreshView();
+    }
   }
 
   update(data: GraphData): void 
@@ -265,7 +317,6 @@ export class GraphEngine
     this._registry.teardownAll();
     this._sim.stop();
     this.render(data);
-    // _ctx tetap instance yang sama — tidak ada stale refs
   }
 
   /**

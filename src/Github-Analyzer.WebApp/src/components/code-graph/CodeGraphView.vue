@@ -16,8 +16,9 @@ const graphContainer = ref<HTMLElement | null>(null);
 const graphData = computed(() => props.data);
 
 const { 
-  search, focusNode, 
-  focusResults, clearSearch, settings
+  search, focusNode, focusHover,
+  focusResults, clearSearch, settings,
+  maxCollapseDepth, expandAll, collapseAll
 } = useGraphD3(graphContainer, graphData, { layout: 'star-balloon' });
 
 // ─── Search modal ref ─────────────────────────────────────────────────────────
@@ -92,6 +93,7 @@ const supportsNamespace = computed(() =>
       ref="searchModal"
       :search="search"
       :focus-node="focusNode"
+      :focus-hover="focusHover"
       :focus-results="focusResults"
       :clear-search="clearSearch"
       :total-nodes="data.nodes?.length"
@@ -123,7 +125,10 @@ const supportsNamespace = computed(() =>
       <!-- Graph Settings Menu -->
       <GraphSettingsMenu 
         :supports-namespace="supportsNamespace"
+        :max-collapse-depth="maxCollapseDepth"
         v-model:settings="settings"
+        @expand-all="expandAll"
+        @collapse-all="collapseAll"
       />
 
       <!-- Legend -->

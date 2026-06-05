@@ -8,3 +8,4 @@ export { ZoomPlugin } from './zoom.plugin';
 export { DragPlugin } from './drag.plugin';
 export { HoverPlugin } from './hover.plugin';
 export { SearchPlugin } from './search.plugin';
+export { CollapsePlugin } from './collapse.plugin';

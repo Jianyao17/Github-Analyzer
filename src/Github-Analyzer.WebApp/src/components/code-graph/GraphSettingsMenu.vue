@@ -3,8 +3,14 @@ import { ref } from 'vue';
 import { onClickOutside } from '@vueuse/core';
 import type { GraphD3Options } from '@/composables/useGraphD3';
 
-defineProps<{
+const props = defineProps<{
   supportsNamespace: boolean;
+  maxCollapseDepth: number;
+}>();
+
+const emit = defineEmits<{
+  (e: 'expand-all'): void;
+  (e: 'collapse-all'): void;
 }>();
 
 // Model for graph settings
@@ -12,6 +18,32 @@ const settings = defineModel<Required<GraphD3Options>>('settings', { required: t
 
 const isSettingsOpen = ref(false);
 const settingsDropdownContainer = ref<HTMLElement | null>(null);
+
+function expandAll() 
+{
+  emit('expand-all');
+}
+
+function collapseAll() 
+{
+  emit('collapse-all');
+}
+
+function decrementDepth() 
+{
+  if (settings.value.collapseDepth > 1) 
+  {
+    settings.value.collapseDepth--;
+  }
+}
+
+function incrementDepth() 
+{
+  if (settings.value.collapseDepth < props.maxCollapseDepth) 
+  {
+    settings.value.collapseDepth++;
+  }
+}
 
 // Close dropdown when clicking outside
 onClickOutside(settingsDropdownContainer, () => 
@@ -160,13 +192,14 @@ onClickOutside(settingsDropdownContainer, () =>
             />
           </div>
           <!-- Orientation Algorithm (Only visible if hierarchical) -->
-          <div v-if="settings.layout === 'hierarchical'" class="
-            rounded-lg border border-gray-200 bg-white transition-all
-            duration-200
-            hover:border-gray-300 hover:bg-gray-50
-            dark:border-gray-700 dark:bg-gray-900
-            dark:hover:border-gray-600 dark:hover:bg-gray-800
-          "
+          <div v-if="settings.layout === 'hierarchical'"
+            class="
+              rounded-lg border border-gray-200 bg-white transition-all
+              duration-200
+              hover:border-gray-300 hover:bg-gray-50
+              dark:border-gray-700 dark:bg-gray-900
+              dark:hover:border-gray-600 dark:hover:bg-gray-800
+            "
           >
             <NSelect
               v-model="settings.orientation"
@@ -188,6 +221,121 @@ onClickOutside(settingsDropdownContainer, () =>
                 trailingIcon: 'text-gray-400 opacity-50 shrink-0'
               }"
             />
+          </div>
+          
+          <!-- Collapse Controls Header -->
+          <div class="
+            mt-1 px-1 text-xs font-bold tracking-wider text-gray-400 uppercase
+            dark:text-gray-500
+          "
+          >
+            Collapse Settings
+          </div>
+
+          <!-- Incremental Depth Stepper -->
+          <div class="
+            flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-3
+            dark:border-gray-700 dark:bg-gray-900
+          "
+          >
+            <div class="
+              flex items-center justify-between text-xs font-semibold
+              text-gray-600
+              dark:text-gray-400
+            "
+            >
+              <span>Depth Level</span>
+              <span class="text-primary">{{ settings.collapseDepth }} / {{ maxCollapseDepth }}</span>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button 
+                class="
+                  flex h-8 w-8 items-center justify-center rounded-md
+                  bg-gray-100 text-gray-600 transition-colors
+                  hover:bg-gray-200
+                  disabled:cursor-not-allowed disabled:opacity-50
+                  dark:bg-gray-800 dark:text-gray-400
+                  dark:hover:bg-gray-700
+                "
+                :disabled="settings.collapseDepth <= 1"
+                @click="decrementDepth"
+              >
+                <NIcon name="i-lucide-chevron-left"
+                  class="h-4 w-4"
+                />
+              </button>
+              
+              <!-- Progress Bar -->
+              <div class="flex h-2 flex-1 gap-1">
+                <div 
+                  v-for="i in maxCollapseDepth"
+                  :key="i"
+                  class="flex-1 rounded-full transition-colors duration-300"
+                  :class="i <= settings.collapseDepth ? 'bg-primary' : `
+                    bg-gray-200
+                    dark:bg-gray-700
+                  `"
+                ></div>
+              </div>
+              
+              <button 
+                class="
+                  flex h-8 w-8 items-center justify-center rounded-md
+                  bg-gray-100 text-gray-600 transition-colors
+                  hover:bg-gray-200
+                  disabled:cursor-not-allowed disabled:opacity-50
+                  dark:bg-gray-800 dark:text-gray-400
+                  dark:hover:bg-gray-700
+                "
+                :disabled="settings.collapseDepth >= maxCollapseDepth"
+                @click="incrementDepth"
+              >
+                <NIcon name="i-lucide-chevron-right"
+                  class="h-4 w-4"
+                />
+              </button>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-2">
+            <button
+              class="
+                flex flex-1 items-center justify-center gap-2 rounded-lg border
+                border-gray-200 bg-white py-2 text-xs font-semibold
+                text-gray-700 transition-all duration-200
+                hover:border-gray-300 hover:bg-gray-50
+                active:bg-gray-100
+                dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300
+                dark:hover:border-gray-600 dark:hover:bg-gray-800
+                dark:active:bg-gray-800
+              "
+              @click="collapseAll"
+            >
+              <NIcon name="i-lucide-shrink"
+                class="h-3.5 w-3.5"
+              />
+              Collapse All
+            </button>
+            <button
+              class="
+                flex flex-1 items-center justify-center gap-2 rounded-lg border
+                border-gray-200 bg-white py-2 text-xs font-semibold
+                text-gray-700 transition-all duration-200
+                hover:border-gray-300 hover:bg-gray-50
+                active:bg-gray-100
+                dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300
+                dark:hover:border-gray-600 dark:hover:bg-gray-800
+                dark:active:bg-gray-800
+              "
+              @click="expandAll"
+            >
+              <NIcon name="i-lucide-expand"
+                class="h-3.5 w-3.5"
+              />
+              Expand All
+            </button>
           </div>
         </div>
         

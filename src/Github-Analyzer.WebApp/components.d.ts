@@ -33,8 +33,6 @@ declare module 'vue' {
     NKbd: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Kbd.vue')['default']
     NPopover: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Popover.vue')['default']
     NSelect: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Select.vue')['default']
-    NSwitch: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Switch.vue')['default']
-    NTooltip: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Tooltip.vue')['default']
     ProjectItemButton: typeof import('./src/components/ProjectItemButton.vue')['default']
     ProjectVersionSelector: typeof import('./src/components/ProjectVersionSelector.vue')['default']
     ProviderAuthButton: typeof import('./src/components/ProviderAuthButton.vue')['default']

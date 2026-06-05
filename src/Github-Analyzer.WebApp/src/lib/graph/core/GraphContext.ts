@@ -1,9 +1,8 @@
-
 import type { 
   NodeSelection, EdgeSelection, 
   SvgSelection, ViewportSelection } from '@graph/types/graph-view';
 import type { SimulationController } from './SimulationController';
-import type { D3Node } from '@graph/types/node-edge';
+import type { D3Node, D3Edge } from '@graph/types/node-edge';
 import type { EventBus } from './EventBus';
 
 /**
@@ -24,6 +23,7 @@ export class GraphContext
 
   // Live data arrays (referensi yang sama dengan yang di-bind ke D3)
   private _nodes: D3Node[] = [];
+  private _edges: D3Edge[] = [];
 
   constructor(bus: EventBus, sim: SimulationController) 
   {
@@ -40,6 +40,7 @@ export class GraphContext
    * @param nodes The live D3 selection of node elements.
    * @param edges The live D3 selection of edge elements.
    * @param liveNodes The live array of node data bound to the DOM.
+   * @param liveEdges The live array of edge data bound to the DOM.
    */
   updateRefs(
     svg:      SvgSelection,
@@ -47,6 +48,7 @@ export class GraphContext
     nodes:    NodeSelection,
     edges:    EdgeSelection,
     liveNodes: D3Node[],
+    liveEdges: D3Edge[],
   ): void 
   {
     this._svg           = svg;
@@ -54,11 +56,17 @@ export class GraphContext
     this._nodeSelection = nodes;
     this._edgeSelection = edges;
     this._nodes         = liveNodes;
+    this._edges         = liveEdges;
   }
 
   get svg():           SvgSelection      | null { return this._svg; }
   get viewport():      ViewportSelection | null { return this._viewport; }
   get nodeSelection(): NodeSelection     | null { return this._nodeSelection; }
   get edgeSelection(): EdgeSelection     | null { return this._edgeSelection; }
+  
   get nodes():         D3Node[]                 { return this._nodes; }
+  set nodes(value:     D3Node[])                { this._nodes = value; }
+
+  get edges():         D3Edge[]                 { return this._edges; }
+  set edges(value:     D3Edge[])                { this._edges = value; }
 }

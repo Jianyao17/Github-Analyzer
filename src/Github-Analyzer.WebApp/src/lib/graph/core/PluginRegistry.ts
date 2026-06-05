@@ -49,6 +49,18 @@ export class PluginRegistry
     }
   }
 
+  /**
+   * Runs the data transformation middleware chain.
+   * Modifies ctx.nodes and ctx.edges in-place sequentially.
+   */
+  transformAll(ctx: GraphContext, data: GraphData): void 
+  {
+    for (const { plugin } of this._plugins) 
+    {
+      plugin.transform?.(ctx, data);
+    }
+  }
+
   /** 
    * Tears down all plugins to prevent memory leaks or dangling event listeners.
    * Executed in reverse order of initialization (highest priority tears down first).

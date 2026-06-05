@@ -27,10 +27,13 @@ export class ZoomPlugin implements GraphPlugin
     this._unsub.push(
       ctx.bus.on('zoom:to', (payload: any) => 
       {
-        const { x, y, scale, duration = 750 } = payload;
+        const { x, y, scale: targetScale, duration = 750 } = payload;
         if (!ctx.svg || !this._zoom) return;
         const svgEl = ctx.svg.node();
         if (!svgEl) return;
+
+        const currentTransform = d3.zoomTransform(svgEl);
+        const scale = targetScale ?? currentTransform.k;
 
         const tx = svgEl.clientWidth  / 2 - x * scale;
         const ty = svgEl.clientHeight / 2 - y * scale;
@@ -47,8 +50,8 @@ export class ZoomPlugin implements GraphPlugin
         const svgEl = ctx.svg.node();
         if (!svgEl) return;
 
-        const xs = ctx.nodes.map((n: D3Node) => n.x ?? 0);
-        const ys = ctx.nodes.map((n: D3Node) => n.y ?? 0);
+        const xs = ctx.nodes.map((n: D3Node) => n.targetX ?? n.x ?? 0);
+        const ys = ctx.nodes.map((n: D3Node) => n.targetY ?? n.y ?? 0);
 
         const minX = Math.min(...xs);
         const maxX = Math.max(...xs);

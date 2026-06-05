@@ -11,6 +11,9 @@ const props = defineProps<{
   /** Smooth zoom to a single node. */
   focusNode:    (node: D3Node, scale?: number) => void;
 
+  /** Show tooltip when hovering or selecting a node. */
+  focusHover:   (node: D3Node | null) => void;
+
   /** Fit the viewport around all results. */
   focusResults: (results: D3Node[], padding?: number) => void;
 
@@ -58,6 +61,18 @@ watch(searchQuery, (newVal) =>
   else
   {
     searchResults.value = props.search(q);
+  }
+});
+
+watch(activeIndex, (idx) => 
+{
+  if (idx >= 0 && searchResults.value[idx]) 
+  {
+    props.focusHover(searchResults.value[idx]);
+  } 
+  else 
+  {
+    props.focusHover(null);
   }
 });
 
@@ -261,6 +276,8 @@ defineExpose({ open, close });
                         `,
                     ]"
                     @click="selectNode(node)"
+                    @mouseenter="activeIndex = i"
+                    @mouseleave="activeIndex = -1"
                   >
                     <span
                       class="h-2.5 w-2.5 shrink-0 rounded-full"

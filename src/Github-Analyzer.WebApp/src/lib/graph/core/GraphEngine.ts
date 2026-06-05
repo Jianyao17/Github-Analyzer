@@ -34,6 +34,9 @@ export class GraphEngine
 
   private _currentData: GraphData | null = null;
   private _layout:      IGraphLayout | null = null;
+  
+  private _nodeFilter:  ((node: any) => boolean) | null = null;
+  private _isMounted = false;
 
   constructor({ config }: GraphEngineOptions = {}) 
   {
@@ -53,6 +56,7 @@ export class GraphEngine
   mount(container: HTMLElement): void 
   {
     this._pipeline.mount(container);
+    this._isMounted = true;
   }
 
   /**
@@ -61,6 +65,15 @@ export class GraphEngine
   unmount(): void 
   {
     this._pipeline.unmount();
+    this._isMounted = false;
+  }
+
+  /**
+   * Returns true if the engine has been successfully mounted to a DOM container.
+   */
+  isMounted(): boolean
+  {
+    return this._isMounted;
   }
 
   /**
@@ -139,6 +152,21 @@ export class GraphEngine
   }
 
   /**
+   * Sets a global node filter and re-renders the graph.
+   * If the filter changes, the simulation restarts with the current data.
+   */
+  setNodeFilter(filter: ((node: any) => boolean) | null): void 
+  {
+    this._nodeFilter = filter;
+    if (this._currentData && this._isMounted) 
+    {
+      this._sim.stop();
+      this._registry.teardownAll();
+      this.render(this._currentData);
+    }
+  }
+
+  /**
    * The main entry point to render or re-render the graph with new data.
    * Hydrates string IDs into D3 node objects, applies the current layout synchronously,
    * runs the render pipeline to draw the SVG elements, and starts the simulation physics.
@@ -150,16 +178,21 @@ export class GraphEngine
     const t0 = performance.now();
 
     this._currentData = data; // Save reference for potential future updates or layout changes
-    const d3Nodes: D3Node[] = data.nodes.map(n => ({ ...n, id: n.pathId })) as D3Node[];
+
+    // Apply node filter
+    const filteredNodes = this._nodeFilter ? data.nodes.filter(this._nodeFilter) : data.nodes;
+    const d3Nodes: D3Node[] = filteredNodes.map(n => ({ ...n, id: n.pathId })) as D3Node[];
     const nodeMap = new Map(d3Nodes.map(n => [n.id, n])); // Map for quick lookup when constructing edges 
     
     // Combine sourceRelEdges and useRelEdges into a single array of D3Edge,
     // while also replacing 'from' and 'to' with actual node references.
+    // Filter out edges that refer to nodes that were filtered out
     const d3Edges = [...data.sourceRelEdges, ...data.useRelEdges]
+      .filter(e => nodeMap.has(e.from) && nodeMap.has(e.to))
       .map(e => ({ 
         ...e, 
-        source: nodeMap.get(e.from) ?? e.from, 
-        target: nodeMap.get(e.to) ?? e.to 
+        source: nodeMap.get(e.from)!, 
+        target: nodeMap.get(e.to)! 
       }));
 
     // Apply initial layout if available before rendering and starting simulation. 

@@ -9,7 +9,7 @@ import App from './App.vue';
 
 const app = createApp(App);
 const pinia = createPinia();
-const graphEngine = createGraphEngine({ enabled: true });
+const graphEngine = createGraphEngine(true);
 
 app.use(pinia);
 app.use(router);

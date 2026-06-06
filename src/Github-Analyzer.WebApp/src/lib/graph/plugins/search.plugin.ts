@@ -72,6 +72,38 @@ export class SearchPlugin implements GraphPlugin
           || n.pathId.toLowerCase().includes(trimmed),
     );
 
+    rawResults.sort((a, b) => 
+    {
+      const aLabelIdx = a.label.toLowerCase().indexOf(trimmed);
+      const bLabelIdx = b.label.toLowerCase().indexOf(trimmed);
+      
+      const aHasLabel = aLabelIdx !== -1;
+      const bHasLabel = bLabelIdx !== -1;
+
+      // 1. Label match > Path match
+      if (aHasLabel && !bHasLabel) return -1;
+      if (!aHasLabel && bHasLabel) return 1;
+
+      // 2. Node type order (0=Dir, 1=Namespace, 2=File, 3=Class, 4=Function)
+      if (a.type !== b.type) return a.type - b.type;
+
+      // 3. Within the same type, prioritize early match
+      if (aHasLabel && bHasLabel) 
+      {
+        if (aLabelIdx !== bLabelIdx) return aLabelIdx - bLabelIdx;
+        if (a.label.length !== b.label.length) return a.label.length - b.label.length;
+      }
+      else if (!aHasLabel && !bHasLabel) 
+      {
+        const aPathIdx = a.pathId.toLowerCase().indexOf(trimmed);
+        const bPathIdx = b.pathId.toLowerCase().indexOf(trimmed);
+        if (aPathIdx !== bPathIdx) return aPathIdx - bPathIdx;
+      }
+
+      // 4. Alphabetical fallback
+      return a.label.localeCompare(b.label);
+    });
+
     const results = rawResults.map(n => 
     {
       const isHidden = !visibleNodeIds.has(n.pathId);

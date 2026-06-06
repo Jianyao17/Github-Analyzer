@@ -34,10 +34,10 @@ export interface GraphEdge
 export type D3Node = d3.SimulationNodeDatum & GraphNode &
 {
   id:       string;  // Alias untuk pathId, required by forceLink id accessor
-  _radius?: number;  // Dianotasi saat render, digunakan oleh collision force
+  _radius?: number;  // Annotated during render, used by collision force
   _hw?:     number;  // Half-width card, untuk edge positioning
   _hh?:     number;  // Half-height card, untuk edge positioning
-  _level?:  number;  // Kedalaman node dalam hierarki (untuk layout hierarchical)
+  _level?:  number;  // Depth of node in hierarchy (for hierarchical layout)
   targetX?: number;  // Ideal X coordinate for custom layout
   targetY?: number;  // Ideal Y coordinate for custom layout
 };

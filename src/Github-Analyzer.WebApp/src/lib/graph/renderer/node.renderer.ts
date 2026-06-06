@@ -227,9 +227,9 @@ function _renderNodeCard(
       // NOTE: Tidak menggunakan appendChild(this) karena akan men-detach elemen
       // dari DOM dan memicu mouseleave pada hover plugin.
     })
-    .on('mouseleave.label', function()
-    {
-      textEl.text(shortLabel);
-    });
+      .on('mouseleave.label', function()
+      {
+        textEl.text(shortLabel);
+      });
   }
 }

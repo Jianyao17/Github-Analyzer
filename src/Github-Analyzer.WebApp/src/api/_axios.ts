@@ -40,6 +40,9 @@ export interface VersionedClient {
   /** PUT request with automatic version prefix */
   put<T = any>(url: string, data?: any, config?: ApiRequestConfig): Promise<AxiosResponse<T>>;
 
+  /** PATCH request with automatic version prefix */
+  patch<T = any>(url: string, data?: any, config?: ApiRequestConfig): Promise<AxiosResponse<T>>;
+
   /** DELETE request with automatic version prefix */
   delete<T = any>(url: string, config?: ApiRequestConfig): Promise<AxiosResponse<T>>;
 }
@@ -237,6 +240,7 @@ class ApiClient
       get: <T>(url: string, config?: AxiosRequestConfig) => this.get<T>(url, { ...config, prefix }),
       post: <T>(url: string, data?: any, config?: AxiosRequestConfig) => this.post<T>(url, data, { ...config, prefix }),
       put: <T>(url: string, data?: any, config?: AxiosRequestConfig) => this.put<T>(url, data, { ...config, prefix }),
+      patch: <T>(url: string, data?: any, config?: AxiosRequestConfig) => this.patch<T>(url, data, { ...config, prefix }),
       delete: <T>(url: string, config?: AxiosRequestConfig) => this.delete<T>(url, { ...config, prefix }),
     };
   }
@@ -310,6 +314,21 @@ class ApiClient
     const { prefix: _, ...cleanConfig } = config || {};
 
     return this.instance.put<T>(prefixedUrl, data, cleanConfig);
+  }
+
+  /**
+   * Generic PATCH request
+   * @param url - API endpoint URL
+   * @param data - Request payload
+   * @param config - Axios config with optional 'prefix' property (default: '/api')
+   */
+  patch<T = any>(url: string, data?: any, config?: ApiRequestConfig): Promise<AxiosResponse<T>> 
+  {
+    const prefix = this.getPrefix(config);
+    const prefixedUrl = this.prependPrefix(url, prefix);
+    const { prefix: _, ...cleanConfig } = config || {};
+
+    return this.instance.patch<T>(prefixedUrl, data, cleanConfig);
   }
 
   /**

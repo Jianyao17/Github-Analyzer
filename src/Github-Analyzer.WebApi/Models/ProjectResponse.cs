@@ -1,7 +1,8 @@
-﻿namespace GithubAnalyzer.WebApi.Models;
+namespace GithubAnalyzer.WebApi.Models;
 
 public sealed record ProjectResponse(
     Guid Id, 
+    string Title,
     string RepositoryName, 
     string RepositoryUrl,
     

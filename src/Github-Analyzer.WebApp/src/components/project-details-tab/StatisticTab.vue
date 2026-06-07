@@ -29,474 +29,475 @@ const commentRatio = computed(() =>
 </script>
 
 <template>
-  <!-- ── Waiting / in-progress state ──────────────────────────────────────── -->
-  <div v-if="!data"
-    class="flex flex-1 flex-col items-center justify-center gap-6 py-16"
-  >
-    <div class="relative flex h-24 w-24 items-center justify-center">
-      <svg class="absolute inset-0 h-full w-full"
-        viewBox="0 0 100 100"
-      >
-        <circle cx="50"
-          cy="50"
-          r="42"
-          stroke="currentColor"
-          stroke-width="8"
-          fill="transparent"
-          class="
-            text-gray-200
-            dark:text-gray-700
+  <div class="flex h-full min-h-0 w-full flex-col">
+    <!-- ── Waiting / in-progress state ──────────────────────────────────────── -->
+    <div v-if="!data"
+      class="flex flex-1 flex-col items-center justify-center gap-6 py-16"
+    >
+      <div class="relative flex h-24 w-24 items-center justify-center">
+        <svg class="absolute inset-0 h-full w-full"
+          viewBox="0 0 100 100"
+        >
+          <circle cx="50"
+            cy="50"
+            r="42"
+            stroke="currentColor"
+            stroke-width="8"
+            fill="transparent"
+            class="
+              text-gray-200
+              dark:text-gray-700
+            "
+          />
+        </svg>
+        <svg class="absolute inset-0 h-full w-full animate-spin"
+          viewBox="0 0 100 100"
+        >
+          <circle cx="50"
+            cy="50"
+            r="42"
+            stroke="currentColor"
+            stroke-width="8"
+            stroke-linecap="round"
+            fill="transparent"
+            stroke-dasharray="264"
+            :stroke-dashoffset="264 - (264 * (progress?.progress || 0)) / 100"
+            class="text-primary-500"
+          />
+        </svg>
+        <span class="
+          text-xl font-bold text-gray-800
+          dark:text-white
+        "
+        >
+          {{ Math.round(progress?.progress || 0) }}<span class="
+            text-xs text-gray-400
           "
-        />
-      </svg>
-      <svg class="absolute inset-0 h-full w-full animate-spin"
-        viewBox="0 0 100 100"
-      >
-        <circle cx="50"
-          cy="50"
-          r="42"
-          stroke="currentColor"
-          stroke-width="8"
-          stroke-linecap="round"
-          fill="transparent"
-          stroke-dasharray="264"
-          :stroke-dashoffset="264 - (264 * (progress?.progress || 0)) / 100"
-          class="text-primary-500"
-        />
-      </svg>
-      <span class="
-        text-xl font-bold text-gray-800
-        dark:text-white
-      "
-      >
-        {{ Math.round(progress?.progress || 0) }}<span class="
-          text-xs text-gray-400
+          >%</span>
+        </span>
+      </div>
+      <div class="text-center">
+        <p class="
+          font-semibold text-gray-700
+          dark:text-gray-300
         "
-        >%</span>
-      </span>
-    </div>
-    <div class="text-center">
-      <p class="
-        font-semibold text-gray-700
-        dark:text-gray-300
-      "
-      >Menyiapkan Analisis Statistik...</p>
-      <p class="
-        mt-1 max-w-sm animate-pulse text-sm text-gray-500
-        dark:text-gray-400
-      "
-      >
-        {{ progress?.message || 'Menunggu proses analisa selesai.' }}
-      </p>
-    </div>
-  </div>
-
-  <!-- ── Data cards ─────────────────────────────────────────────────────────── -->
-  <div v-else
-    class="grid grid-cols-1 gap-4 overflow-y-auto pb-4"
-  >
-
-    <!-- Row 1 — Git Statistics -->
-    <div>
-      <h2
-        class="
-          mb-3 flex items-center gap-2 text-xs font-semibold tracking-wider
-          text-gray-400 uppercase
-          dark:text-gray-500
+        >Menyiapkan Analisis Statistik...</p>
+        <p class="
+          mt-1 max-w-sm animate-pulse text-sm text-gray-500
+          dark:text-gray-400
         "
-      >
-        <NIcon name="i-lucide-git-branch"
-          class="h-3.5 w-3.5"
-        /> Git Statistics
-      </h2>
-      <div class="
-        grid grid-cols-2 gap-3
-        sm:grid-cols-3
-      "
-      >
-
-        <NCard class="
-          border-0 ring-1 ring-gray-200
-          dark:ring-gray-800
-        "
-          :ui="{ body: 'p-4' }"
         >
-          <div class="flex items-center gap-3">
-            <div class="
-              rounded-lg bg-amber-50 p-2
-              dark:bg-amber-900/20
-            "
-            >
-              <NIcon name="i-lucide-git-commit-horizontal"
-                class="
-                  h-5 w-5 text-amber-600
-                  dark:text-amber-400
-                "
-              />
-            </div>
-            <div>
-              <p class="
-                text-2xl font-bold text-gray-900 tabular-nums
-                dark:text-white
-              "
-              >
-                {{ data.totalCommits?.toLocaleString() ?? '—' }}
-              </p>
-              <p class="
-                text-xs text-gray-500
-                dark:text-gray-400
-              "
-              >Total Commits</p>
-            </div>
-          </div>
-        </NCard>
-
-        <NCard class="
-          border-0 ring-1 ring-gray-200
-          dark:ring-gray-800
-        "
-          :ui="{ body: 'p-4' }"
-        >
-          <div class="flex items-center gap-3">
-            <div class="
-              rounded-lg bg-violet-50 p-2
-              dark:bg-violet-900/20
-            "
-            >
-              <NIcon name="i-lucide-users"
-                class="
-                  h-5 w-5 text-violet-600
-                  dark:text-violet-400
-                "
-              />
-            </div>
-            <div>
-              <p class="
-                text-2xl font-bold text-gray-900 tabular-nums
-                dark:text-white
-              "
-              >
-                {{ data.totalContributors?.toLocaleString() ?? '—' }}
-              </p>
-              <p class="
-                text-xs text-gray-500
-                dark:text-gray-400
-              "
-              >Contributors</p>
-            </div>
-          </div>
-        </NCard>
-
-        <NCard class="
-          border-0 ring-1 ring-gray-200
-          dark:ring-gray-800
-        "
-          :ui="{ body: 'p-4' }"
-        >
-          <div class="flex items-center gap-3">
-            <div class="
-              rounded-lg bg-sky-50 p-2
-              dark:bg-sky-900/20
-            "
-            >
-              <NIcon name="i-lucide-git-branch-plus"
-                class="
-                  h-5 w-5 text-sky-600
-                  dark:text-sky-400
-                "
-              />
-            </div>
-            <div>
-              <p class="
-                text-2xl font-bold text-gray-900 tabular-nums
-                dark:text-white
-              "
-              >
-                {{ data.totalBranches?.toLocaleString() ?? '—' }}
-              </p>
-              <p class="
-                text-xs text-gray-500
-                dark:text-gray-400
-              "
-              >Branches</p>
-            </div>
-          </div>
-        </NCard>
-
+          {{ progress?.message || 'Menunggu proses analisa selesai.' }}
+        </p>
       </div>
     </div>
 
-    <!-- Row 2 — Structural Statistics -->
-    <div>
-      <h2
-        class="
-          mb-3 flex items-center gap-2 text-xs font-semibold tracking-wider
-          text-gray-400 uppercase
-          dark:text-gray-500
-        "
-      >
-        <NIcon name="i-lucide-folder-open"
-          class="h-3.5 w-3.5"
-        /> Struktur Repository
-      </h2>
-      <div class="
-        grid grid-cols-2 gap-3
-        sm:grid-cols-3
-      "
-      >
+    <!-- ── Data cards ─────────────────────────────────────────────────────────── -->
+    <div v-else
+      class="grid grid-cols-1 gap-4 overflow-y-auto pb-4"
+    >
 
-        <NCard class="
-          border-0 ring-1 ring-gray-200
-          dark:ring-gray-800
-        "
-          :ui="{ body: 'p-4' }"
+      <!-- Row 1 — Git Statistics -->
+      <div>
+        <h2
+          class="
+            mb-3 flex items-center gap-2 text-xs font-semibold tracking-wider
+            text-gray-400 uppercase
+            dark:text-gray-500
+          "
         >
-          <div class="flex items-center gap-3">
-            <div class="
-              rounded-lg bg-yellow-50 p-2
-              dark:bg-yellow-900/20
-            "
-            >
-              <NIcon name="i-lucide-folder"
-                class="
-                  h-5 w-5 text-yellow-600
-                  dark:text-yellow-400
-                "
-              />
-            </div>
-            <div>
-              <p class="
-                text-2xl font-bold text-gray-900 tabular-nums
-                dark:text-white
-              "
-              >
-                {{ data.totalFolders?.toLocaleString() ?? '—' }}
-              </p>
-              <p class="
-                text-xs text-gray-500
-                dark:text-gray-400
-              "
-              >Folders</p>
-            </div>
-          </div>
-        </NCard>
-
-        <NCard class="
-          border-0 ring-1 ring-gray-200
-          dark:ring-gray-800
-        "
-          :ui="{ body: 'p-4' }"
-        >
-          <div class="flex items-center gap-3">
-            <div class="
-              rounded-lg bg-blue-50 p-2
-              dark:bg-blue-900/20
-            "
-            >
-              <NIcon name="i-lucide-file-code-2"
-                class="
-                  h-5 w-5 text-blue-600
-                  dark:text-blue-400
-                "
-              />
-            </div>
-            <div>
-              <p class="
-                text-2xl font-bold text-gray-900 tabular-nums
-                dark:text-white
-              "
-              >
-                {{ data.totalFiles?.toLocaleString() ?? '—' }}
-              </p>
-              <p class="
-                text-xs text-gray-500
-                dark:text-gray-400
-              "
-              >Files</p>
-            </div>
-          </div>
-        </NCard>
-
-        <NCard class="
-          border-0 ring-1 ring-gray-200
-          dark:ring-gray-800
-        "
-          :ui="{ body: 'p-4' }"
-        >
-          <div class="flex items-center gap-3">
-            <div class="
-              rounded-lg bg-emerald-50 p-2
-              dark:bg-emerald-900/20
-            "
-            >
-              <NIcon name="i-lucide-database"
-                class="
-                  h-5 w-5 text-emerald-600
-                  dark:text-emerald-400
-                "
-              />
-            </div>
-            <div>
-              <p class="
-                text-2xl font-bold text-gray-900 tabular-nums
-                dark:text-white
-              "
-              >
-                {{ formattedSize }}
-              </p>
-              <p class="
-                text-xs text-gray-500
-                dark:text-gray-400
-              "
-              >Total Size</p>
-            </div>
-          </div>
-        </NCard>
-
-      </div>
-    </div>
-
-    <!-- Row 3 — Code Line Statistics -->
-    <div>
-      <h2
-        class="
-          mb-3 flex items-center gap-2 text-xs font-semibold tracking-wider
-          text-gray-400 uppercase
-          dark:text-gray-500
-        "
-      >
-        <NIcon name="i-lucide-code-2"
-          class="h-3.5 w-3.5"
-        /> Analisis Baris Kode
-      </h2>
-      <NCard class="
-        border-0 ring-1 ring-gray-200
-        dark:ring-gray-800
-      "
-        :ui="{ body: 'p-5' }"
-      >
+          <NIcon name="i-lucide-git-branch"
+            class="h-3.5 w-3.5"
+          /> Git Statistics
+        </h2>
         <div class="
-          grid grid-cols-2 gap-6
-          sm:grid-cols-4
+          grid grid-cols-2 gap-3
+          sm:grid-cols-3
         "
         >
-          <div class="flex flex-col gap-1">
-            <span class="
-              text-3xl font-bold text-gray-900 tabular-nums
-              dark:text-white
-            "
-            >
-              {{ data.totalLinesOfCode?.toLocaleString() ?? '—' }}
-            </span>
-            <span class="
-              text-xs text-gray-500
-              dark:text-gray-400
-            "
-            >Total Lines</span>
-          </div>
-          <div class="flex flex-col gap-1">
-            <span class="
-              text-3xl font-bold text-emerald-600 tabular-nums
-              dark:text-emerald-400
-            "
-            >
-              {{ data.codeLines?.toLocaleString() ?? '—' }}
-            </span>
-            <span class="
-              text-xs text-gray-500
-              dark:text-gray-400
-            "
-            >Code Lines</span>
-          </div>
-          <div class="flex flex-col gap-1">
-            <span class="
-              text-3xl font-bold text-sky-600 tabular-nums
-              dark:text-sky-400
-            "
-            >
-              {{ data.commentLines?.toLocaleString() ?? '—' }}
-            </span>
-            <span class="
-              text-xs text-gray-500
-              dark:text-gray-400
-            "
-            >Comments</span>
-          </div>
-          <div class="flex flex-col gap-1">
-            <span class="
-              text-3xl font-bold text-gray-500 tabular-nums
-              dark:text-gray-400
-            "
-            >
-              {{ data.blankLines?.toLocaleString() ?? '—' }}
-            </span>
-            <span class="
-              text-xs text-gray-500
-              dark:text-gray-400
-            "
-            >Blank Lines</span>
-          </div>
-        </div>
 
-        <!-- Proportional breakdown bar -->
-        <div v-if="data.totalLinesOfCode"
-          class="mt-5 space-y-2"
+          <NCard class="
+            border-0 ring-1 ring-gray-200
+            dark:ring-gray-800
+          "
+            :ui="{ body: 'p-4' }"
+          >
+            <div class="flex items-center gap-3">
+              <div class="
+                rounded-lg bg-amber-50 p-2
+                dark:bg-amber-900/20
+              "
+              >
+                <NIcon name="i-lucide-git-commit-horizontal"
+                  class="
+                    h-5 w-5 text-amber-600
+                    dark:text-amber-400
+                  "
+                />
+              </div>
+              <div>
+                <p class="
+                  text-2xl font-bold text-gray-900 tabular-nums
+                  dark:text-white
+                "
+                >
+                  {{ data.totalCommits?.toLocaleString() ?? '—' }}
+                </p>
+                <p class="
+                  text-xs text-gray-500
+                  dark:text-gray-400
+                "
+                >Total Commits</p>
+              </div>
+            </div>
+          </NCard>
+
+          <NCard class="
+            border-0 ring-1 ring-gray-200
+            dark:ring-gray-800
+          "
+            :ui="{ body: 'p-4' }"
+          >
+            <div class="flex items-center gap-3">
+              <div class="
+                rounded-lg bg-violet-50 p-2
+                dark:bg-violet-900/20
+              "
+              >
+                <NIcon name="i-lucide-users"
+                  class="
+                    h-5 w-5 text-violet-600
+                    dark:text-violet-400
+                  "
+                />
+              </div>
+              <div>
+                <p class="
+                  text-2xl font-bold text-gray-900 tabular-nums
+                  dark:text-white
+                "
+                >
+                  {{ data.totalContributors?.toLocaleString() ?? '—' }}
+                </p>
+                <p class="
+                  text-xs text-gray-500
+                  dark:text-gray-400
+                "
+                >Contributors</p>
+              </div>
+            </div>
+          </NCard>
+
+          <NCard class="
+            border-0 ring-1 ring-gray-200
+            dark:ring-gray-800
+          "
+            :ui="{ body: 'p-4' }"
+          >
+            <div class="flex items-center gap-3">
+              <div class="
+                rounded-lg bg-sky-50 p-2
+                dark:bg-sky-900/20
+              "
+              >
+                <NIcon name="i-lucide-git-branch-plus"
+                  class="
+                    h-5 w-5 text-sky-600
+                    dark:text-sky-400
+                  "
+                />
+              </div>
+              <div>
+                <p class="
+                  text-2xl font-bold text-gray-900 tabular-nums
+                  dark:text-white
+                "
+                >
+                  {{ data.totalBranches?.toLocaleString() ?? '—' }}
+                </p>
+                <p class="
+                  text-xs text-gray-500
+                  dark:text-gray-400
+                "
+                >Branches</p>
+              </div>
+            </div>
+          </NCard>
+
+        </div>
+      </div>
+
+      <!-- Row 2 — Structural Statistics -->
+      <div>
+        <h2
+          class="
+            mb-3 flex items-center gap-2 text-xs font-semibold tracking-wider
+            text-gray-400 uppercase
+            dark:text-gray-500
+          "
         >
-          <div class="flex h-3 w-full gap-px overflow-hidden rounded-full">
-            <div class="
-              bg-emerald-500 transition-all duration-700
-              dark:bg-emerald-400
-            "
-              :style="{ width: ((data.codeLines || 0) / data.totalLinesOfCode * 100) + '%' }"
-            />
-            <div class="bg-sky-400 transition-all duration-700"
-              :style="{ width: ((data.commentLines || 0) / data.totalLinesOfCode * 100) + '%' }"
-            />
-            <div class="
-              flex-1 bg-gray-200 transition-all duration-700
-              dark:bg-gray-700
-            "
-            />
-          </div>
+          <NIcon name="i-lucide-folder-open"
+            class="h-3.5 w-3.5"
+          /> Struktur Repository
+        </h2>
+        <div class="
+          grid grid-cols-2 gap-3
+          sm:grid-cols-3
+        "
+        >
+
+          <NCard class="
+            border-0 ring-1 ring-gray-200
+            dark:ring-gray-800
+          "
+            :ui="{ body: 'p-4' }"
+          >
+            <div class="flex items-center gap-3">
+              <div class="
+                rounded-lg bg-yellow-50 p-2
+                dark:bg-yellow-900/20
+              "
+              >
+                <NIcon name="i-lucide-folder"
+                  class="
+                    h-5 w-5 text-yellow-600
+                    dark:text-yellow-400
+                  "
+                />
+              </div>
+              <div>
+                <p class="
+                  text-2xl font-bold text-gray-900 tabular-nums
+                  dark:text-white
+                "
+                >
+                  {{ data.totalFolders?.toLocaleString() ?? '—' }}
+                </p>
+                <p class="
+                  text-xs text-gray-500
+                  dark:text-gray-400
+                "
+                >Folders</p>
+              </div>
+            </div>
+          </NCard>
+
+          <NCard class="
+            border-0 ring-1 ring-gray-200
+            dark:ring-gray-800
+          "
+            :ui="{ body: 'p-4' }"
+          >
+            <div class="flex items-center gap-3">
+              <div class="
+                rounded-lg bg-blue-50 p-2
+                dark:bg-blue-900/20
+              "
+              >
+                <NIcon name="i-lucide-file-code-2"
+                  class="
+                    h-5 w-5 text-blue-600
+                    dark:text-blue-400
+                  "
+                />
+              </div>
+              <div>
+                <p class="
+                  text-2xl font-bold text-gray-900 tabular-nums
+                  dark:text-white
+                "
+                >
+                  {{ data.totalFiles?.toLocaleString() ?? '—' }}
+                </p>
+                <p class="
+                  text-xs text-gray-500
+                  dark:text-gray-400
+                "
+                >Files</p>
+              </div>
+            </div>
+          </NCard>
+
+          <NCard class="
+            border-0 ring-1 ring-gray-200
+            dark:ring-gray-800
+          "
+            :ui="{ body: 'p-4' }"
+          >
+            <div class="flex items-center gap-3">
+              <div class="
+                rounded-lg bg-emerald-50 p-2
+                dark:bg-emerald-900/20
+              "
+              >
+                <NIcon name="i-lucide-database"
+                  class="
+                    h-5 w-5 text-emerald-600
+                    dark:text-emerald-400
+                  "
+                />
+              </div>
+              <div>
+                <p class="
+                  text-2xl font-bold text-gray-900 tabular-nums
+                  dark:text-white
+                "
+                >
+                  {{ formattedSize }}
+                </p>
+                <p class="
+                  text-xs text-gray-500
+                  dark:text-gray-400
+                "
+                >Total Size</p>
+              </div>
+            </div>
+          </NCard>
+
+        </div>
+      </div>
+
+      <!-- Row 3 — Code Line Statistics -->
+      <div>
+        <h2
+          class="
+            mb-3 flex items-center gap-2 text-xs font-semibold tracking-wider
+            text-gray-400 uppercase
+            dark:text-gray-500
+          "
+        >
+          <NIcon name="i-lucide-code-2"
+            class="h-3.5 w-3.5"
+          /> Analisis Baris Kode
+        </h2>
+        <NCard class="
+          border-0 ring-1 ring-gray-200
+          dark:ring-gray-800
+        "
+          :ui="{ body: 'p-5' }"
+        >
           <div class="
-            flex items-center gap-4 text-xs text-gray-500
-            dark:text-gray-400
+            grid grid-cols-2 gap-6
+            sm:grid-cols-4
           "
           >
-            <span class="flex items-center gap-1.5">
+            <div class="flex flex-col gap-1">
               <span class="
-                inline-block h-2.5 w-2.5 rounded-sm bg-emerald-500
+                text-3xl font-bold text-gray-900 tabular-nums
+                dark:text-white
+              "
+              >
+                {{ data.totalLinesOfCode?.toLocaleString() ?? '—' }}
+              </span>
+              <span class="
+                text-xs text-gray-500
+                dark:text-gray-400
+              "
+              >Total Lines</span>
+            </div>
+            <div class="flex flex-col gap-1">
+              <span class="
+                text-3xl font-bold text-emerald-600 tabular-nums
+                dark:text-emerald-400
+              "
+              >
+                {{ data.codeLines?.toLocaleString() ?? '—' }}
+              </span>
+              <span class="
+                text-xs text-gray-500
+                dark:text-gray-400
+              "
+              >Code Lines</span>
+            </div>
+            <div class="flex flex-col gap-1">
+              <span class="
+                text-3xl font-bold text-sky-600 tabular-nums
+                dark:text-sky-400
+              "
+              >
+                {{ data.commentLines?.toLocaleString() ?? '—' }}
+              </span>
+              <span class="
+                text-xs text-gray-500
+                dark:text-gray-400
+              "
+              >Comments</span>
+            </div>
+            <div class="flex flex-col gap-1">
+              <span class="
+                text-3xl font-bold text-gray-500 tabular-nums
+                dark:text-gray-400
+              "
+              >
+                {{ data.blankLines?.toLocaleString() ?? '—' }}
+              </span>
+              <span class="
+                text-xs text-gray-500
+                dark:text-gray-400
+              "
+              >Blank Lines</span>
+            </div>
+          </div>
+
+          <!-- Proportional breakdown bar -->
+          <div v-if="data.totalLinesOfCode"
+            class="mt-5 space-y-2"
+          >
+            <div class="flex h-3 w-full gap-px overflow-hidden rounded-full">
+              <div class="
+                bg-emerald-500 transition-all duration-700
                 dark:bg-emerald-400
               "
-              ></span>
-              Code
-            </span>
-            <span class="flex items-center gap-1.5">
-              <span class="inline-block h-2.5 w-2.5 rounded-sm bg-sky-400"></span>
-              Comments ({{ commentRatio }}%)
-            </span>
-            <span class="flex items-center gap-1.5">
-              <span class="
-                inline-block h-2.5 w-2.5 rounded-sm bg-gray-200
+                :style="{ width: ((data.codeLines || 0) / data.totalLinesOfCode * 100) + '%' }"
+              />
+              <div class="bg-sky-400 transition-all duration-700"
+                :style="{ width: ((data.commentLines || 0) / data.totalLinesOfCode * 100) + '%' }"
+              />
+              <div class="
+                flex-1 bg-gray-200 transition-all duration-700
                 dark:bg-gray-700
               "
-              ></span>
-              Blank
-            </span>
+              />
+            </div>
+            <div class="
+              flex items-center gap-4 text-xs text-gray-500
+              dark:text-gray-400
+            "
+            >
+              <span class="flex items-center gap-1.5">
+                <span class="
+                  inline-block h-2.5 w-2.5 rounded-sm bg-emerald-500
+                  dark:bg-emerald-400
+                "
+                ></span>
+                Code
+              </span>
+              <span class="flex items-center gap-1.5">
+                <span class="inline-block h-2.5 w-2.5 rounded-sm bg-sky-400"></span>
+                Comments ({{ commentRatio }}%)
+              </span>
+              <span class="flex items-center gap-1.5">
+                <span class="
+                  inline-block h-2.5 w-2.5 rounded-sm bg-gray-200
+                  dark:bg-gray-700
+                "
+                ></span>
+                Blank
+              </span>
+            </div>
           </div>
-        </div>
-      </NCard>
+        </NCard>
+      </div>
+
+      <!-- Footer meta -->
+      <p v-if="data.generatedAtUtc"
+        class="
+          pb-1 text-right text-xs text-gray-400
+          dark:text-gray-600
+        "
+      >
+        Generated {{ new Date(data.generatedAtUtc).toLocaleString() }}
+      </p>
     </div>
-
-    <!-- Footer meta -->
-    <p v-if="data.generatedAtUtc"
-      class="
-        pb-1 text-right text-xs text-gray-400
-        dark:text-gray-600
-      "
-    >
-      Generated {{ new Date(data.generatedAtUtc).toLocaleString() }}
-    </p>
-
   </div>
 </template>

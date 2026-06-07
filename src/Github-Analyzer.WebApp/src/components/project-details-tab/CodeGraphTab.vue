@@ -11,12 +11,7 @@ defineProps<{
 </script>
 
 <template>
-  <!--
-    CodeGraphTab — manages the loading/ready state for the graph tab.
-    When data is available it delegates all rendering to CodeGraphView.
-  -->
   <div class="relative h-full w-full">
-
     <!-- ── Waiting / in-progress overlay ──────────────────────────────────── -->
     <div
       v-if="!data"

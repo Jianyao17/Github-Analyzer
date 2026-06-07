@@ -44,7 +44,7 @@ const { isCollapsed, isOpen, isMobile,
 
       <!-- Page Content -->
       <div class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
-        <RouterView :key="$route.fullPath"
+        <RouterView :key="$route.path"
           class="min-h-0 flex-1"
         />
       </div>

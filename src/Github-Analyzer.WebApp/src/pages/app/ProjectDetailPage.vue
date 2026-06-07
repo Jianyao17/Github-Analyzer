@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useProjectApi } from '../../composables/useProjectApi';
 import StatisticTab from '../../components/project-details-tab/StatisticTab.vue';
 import CodeGraphTab from '../../components/project-details-tab/CodeGraphTab.vue';
@@ -11,6 +11,7 @@ import type { StatisticAnalysis } from '../../types/analysis/statistic-analysis.
 import type { CodeGraph } from '../../types/analysis/code-graph.ts';
 
 const route = useRoute();
+const router = useRouter();
 const {
   fetchProject: getProject,
   streamQueueProgress,
@@ -22,7 +23,32 @@ const {
 // ─── Page state ───────────────────────────────────────────────────────────────
 const loading   = ref(true);
 const project   = ref<ProjectResponse | null>(null);
-const activeTab = ref<'statistic' | 'codegraph'>('statistic');
+const activeTab = computed({
+  get() 
+  {
+    const tab = route.query.tab as string;
+    return ['statistic', 'codegraph'].includes(tab) 
+      ? (tab as 'statistic' | 'codegraph') 
+      : 'statistic';
+  },
+  set(newTab: 'statistic' | 'codegraph') 
+  {
+    router.replace({ query: { ...route.query, tab: newTab } });
+  }
+});
+
+const transitionName = ref('slide-left');
+watch(activeTab, (newTab, oldTab) => 
+{
+  if (newTab === 'codegraph' && oldTab === 'statistic') 
+  {
+    transitionName.value = 'slide-left';
+  }
+  else if (newTab === 'statistic' && oldTab === 'codegraph') 
+  {
+    transitionName.value = 'slide-right';
+  }
+});
 
 // ─── Code Graph state ─────────────────────────────────────────────────────────
 const codeGraphProgress = ref<ProgressEvent | null>(null);
@@ -439,33 +465,63 @@ onUnmounted(() =>
 
       <!-- ── Tab Content (fills remaining height, no scroll on page level) ── -->
       <div class="flex min-h-0 flex-1 flex-col">
-
-        <!-- STATISTIC tab — scrolls internally, page does not scroll -->
-        <KeepAlive>
-          <StatisticTab
-            v-if="activeTab === 'statistic'"
-            :data="statisticData"
-            :progress="statisticProgress"
-            class="min-h-0 flex-1 overflow-y-auto"
-          />
-        </KeepAlive>
-
-        <!-- CODE GRAPH tab — fills remaining height, D3 renders inside absolute container -->
-        <KeepAlive>
-          <CodeGraphTab
-            v-if="activeTab === 'codegraph'"
-            :data="graphData"
-            :progress="codeGraphProgress"
-            class="
-              relative min-h-0 flex-1 overflow-hidden rounded-xl border-2
-              border-dashed border-gray-200
-              dark:border-gray-800
-            "
-            style="min-height: 400px"
-          />
-        </KeepAlive>
+        <Transition :name="transitionName"
+          mode="out-in"
+        >
+          <KeepAlive>
+            <StatisticTab
+              v-if="activeTab === 'statistic'"
+              key="statistic"
+              :data="statisticData"
+              :progress="statisticProgress"
+              class="min-h-0 flex-1 overflow-y-auto"
+            />
+            <CodeGraphTab
+              v-else-if="activeTab === 'codegraph'"
+              key="codegraph"
+              :data="graphData"
+              :progress="codeGraphProgress"
+              class="
+                relative min-h-0 flex-1 overflow-hidden rounded-xl border-2
+                border-dashed border-gray-200
+                dark:border-gray-800
+              "
+              style="min-height: 400px"
+            />
+          </KeepAlive>
+        </Transition>
 
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Move forward (statistic -> codegraph) */
+.slide-left-enter-active,
+.slide-left-leave-active {
+  transition: opacity 0.10s ease-out, transform 0.10s ease-out;
+}
+.slide-left-enter-from {
+  opacity: 0;
+  transform: translateX(15px);
+}
+.slide-left-leave-to {
+  opacity: 0;
+  transform: translateX(-15px);
+}
+
+/* Move backward (codegraph -> statistic) */
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: opacity 0.10s ease-out, transform 0.10s ease-out;
+}
+.slide-right-enter-from {
+  opacity: 0;
+  transform: translateX(-15px);
+}
+.slide-right-leave-to {
+  opacity: 0;
+  transform: translateX(15px);
+}
+</style>

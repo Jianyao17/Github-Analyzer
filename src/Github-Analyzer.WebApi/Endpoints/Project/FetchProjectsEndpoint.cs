@@ -30,6 +30,7 @@ public static class FetchProjectsEndpoint
                 .OrderByDescending(p => p.CreatedAtUtc)
                 .Select(p => new ProjectResponse(
                     p.Id,
+                    p.Title,
                     p.RepositoryName,
                     p.RepositoryUrl,
                     p.BranchName,
@@ -65,6 +66,7 @@ public static class FetchProjectsEndpoint
                 .Where(p => p.Id == projectGuid && p.UserId == userId)
                 .Select(p => new ProjectResponse(
                     p.Id,
+                    p.Title,
                     p.RepositoryName,
                     p.RepositoryUrl,
                     p.BranchName,

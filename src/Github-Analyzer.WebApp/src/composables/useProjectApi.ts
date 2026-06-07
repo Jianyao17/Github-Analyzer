@@ -15,6 +15,8 @@ import {
   getStatisticAnalysisApi,
   getProjectQueueEventUrl,
   issueStreamTokenApi,
+  renameProjectApi,
+  deleteProjectApi,
 } from '../api/project.api';
 
 
@@ -68,6 +70,18 @@ export const useProjectApi = (version: ApiVersion = '1') =>
   const fetchProject = async (id: string) => 
   {
     const response = await fetchProjectApi(id, version);
+    return response.data;
+  };
+
+  const renameProject = async (id: string, title: string) => 
+  {
+    const response = await renameProjectApi(id, title, version);
+    return response.data;
+  };
+
+  const deleteProject = async (id: string) => 
+  {
+    const response = await deleteProjectApi(id, version);
     return response.data;
   };
 
@@ -242,6 +256,8 @@ export const useProjectApi = (version: ApiVersion = '1') =>
     getCodeGraphAnalysis,
     getStatisticAnalysis,
     issueStreamToken,
-    streamQueueProgress
+    streamQueueProgress,
+    renameProject,
+    deleteProject
   };
 };

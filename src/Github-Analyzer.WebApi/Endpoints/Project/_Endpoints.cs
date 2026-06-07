@@ -41,6 +41,23 @@ public static class Endpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
+        group.MapRenameProjectEndpoint()
+            .WithName("RenameProject")
+            .RequireRateLimiting(RateLimitPolicies.Write)
+            .Accepts<RenameProjectRequest>("application/json")
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesValidationProblem();
+
+        group.MapDeleteProjectEndpoint()
+            .WithName("DeleteProject")
+            .RequireRateLimiting(RateLimitPolicies.Write)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
+
+
         // Queues and Status
         group.MapIssueStreamTokenEndpoint()
             .WithName("IssueStreamToken")

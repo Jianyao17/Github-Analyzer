@@ -93,6 +93,7 @@ public static class CreateProjectEndpoint
             // Return the created project
             var response = new ProjectResponse(
                 project.Id,
+                project.Title,
                 project.RepositoryName,
                 project.RepositoryUrl,
                 project.BranchName,

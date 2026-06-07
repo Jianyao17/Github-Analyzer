@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { computed, onMounted, ref, watch } from 'vue';
 import type { ProjectResponse } from '../types/_api/project.ts';
 import { useProjectApi } from '../composables/useProjectApi';
@@ -20,10 +20,60 @@ defineEmits<{
 }>();
 
 const route = useRoute();
-const { fetchProjects } = useProjectApi();
+const router = useRouter();
+const { fetchProjects, renameProject, deleteProject } = useProjectApi();
 
 const projects = ref<ProjectResponse[]>([]);
 const isProjectsCollapsed = ref(false);
+
+const isDeleteModalOpen = ref(false);
+const projectToDelete = ref<ProjectResponse | null>(null);
+
+async function handleRename(id: string, newTitle: string) 
+{
+  try 
+  {
+    await renameProject(id, newTitle);
+    await loadProjects();
+  }
+  catch (e) 
+  {
+    console.error('Failed to rename project', e);
+  }
+}
+
+function promptDelete(id: string) 
+{
+  const p = projects.value.find(x => x.id === id);
+  if (p) 
+  {
+    projectToDelete.value = p;
+    isDeleteModalOpen.value = true;
+  }
+}
+
+async function confirmDelete() 
+{
+  if (!projectToDelete.value) return;
+  try 
+  {
+    await deleteProject(projectToDelete.value.id);
+    if (activeProjectId.value === projectToDelete.value.id) 
+    {
+      router.push('/app/analysis/new');
+    }
+    await loadProjects();
+  }
+  catch (e) 
+  {
+    console.error('Failed to delete project', e);
+  }
+  finally 
+  {
+    isDeleteModalOpen.value = false;
+    projectToDelete.value = null;
+  }
+}
 
 const activeProjectId = computed(() => 
   (Array.isArray(route.params.id)
@@ -212,6 +262,8 @@ function toggleProjectsCollapsed()
               :is-active="activeProjectId === project.id"
               :is-collapsed="false"
               :is-mobile="isMobile"
+              @rename="handleRename"
+              @delete="promptDelete"
             />
           </div>
         </template>
@@ -269,6 +321,8 @@ function toggleProjectsCollapsed()
                       :is-active="activeProjectId === project.id"
                       :is-collapsed="false"
                       :is-mobile="isMobile"
+                      @rename="handleRename"
+                      @delete="promptDelete"
                       @click="close"
                     />
                   </div>
@@ -285,6 +339,58 @@ function toggleProjectsCollapsed()
       />
     </aside>
   </Transition>
+
+  <!-- Delete Confirmation Modal -->
+  <NModal 
+    v-model:open="isDeleteModalOpen" 
+    :ui="{ 
+      content: 'sm:max-w-sm', 
+      overlay: 'bg-gray-900/25 dark:bg-gray-900/50 backdrop-blur-xs',
+      footer: 'justify-end gap-1'
+    }"
+  >
+    <template #header>
+      <div class="
+        flex items-center gap-1 text-red-600
+        dark:text-red-400
+      "
+      >
+        <NIcon name="i-lucide-alert-triangle"
+          class="h-5 w-5"
+        />
+        <h3 class="text-base font-semibold">Delete Project</h3>
+      </div>
+    </template>
+    
+    <template #body>
+      <p class="
+        text-sm leading-relaxed text-gray-600
+        dark:text-gray-300
+      "
+      >
+        Are you sure you want to delete <span class="
+          font-semibold text-gray-900
+          dark:text-white
+        "
+        >"{{ projectToDelete?.title }}"</span>? 
+        <br/> This action cannot be undone and will <span class="
+          font-medium underline
+        "
+        >remove all associated analysis data</span>.
+      </p>
+    </template>
+    
+    <template #footer>
+      <NButton label="Cancel"
+        color="default"
+        @click="isDeleteModalOpen = false"
+      />
+      <NButton label="Delete"
+        color="error"
+        @click="confirmDelete"
+      />
+    </template>
+  </NModal>
 </template>
 
 <style scoped>

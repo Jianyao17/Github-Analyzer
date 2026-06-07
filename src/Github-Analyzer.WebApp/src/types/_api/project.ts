@@ -6,6 +6,7 @@ export interface CreateProjectRequest {
 
 export interface ProjectResponse {
   id: string;
+  title: string;
   repositoryName: string;
   repositoryUrl: string;
   branchName: string | null;

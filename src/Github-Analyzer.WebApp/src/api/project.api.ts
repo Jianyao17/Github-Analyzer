@@ -67,3 +67,17 @@ export function getProjectQueueEventUrl(
   return `${baseURL}/api/v${version}/projects/${projectId}/queue/event`
     + `?job_type=${encodeURIComponent(jobType)}&stream_token=${encodeURIComponent(streamToken)}`;
 }
+
+export async function renameProjectApi(id: string, title: string, version: ApiVersion = '1') 
+{
+  return await apiClient.withVersion(version)
+    .patch<ApiResponse<void>>(`/projects/${id}/title`, { title })
+    .then(res => res.data);
+}
+
+export async function deleteProjectApi(id: string, version: ApiVersion = '1') 
+{
+  return await apiClient.withVersion(version)
+    .delete<ApiResponse<void>>(`/projects/${id}`)
+    .then(res => res.data);
+}

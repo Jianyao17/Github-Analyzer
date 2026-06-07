@@ -31,6 +31,7 @@ declare module 'vue' {
     NIcon: typeof import('./node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']
     NInput: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Input.vue')['default']
     NKbd: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Kbd.vue')['default']
+    NModal: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Modal.vue')['default']
     NPopover: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Popover.vue')['default']
     NSelect: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Select.vue')['default']
     ProjectItemButton: typeof import('./src/components/ProjectItemButton.vue')['default']

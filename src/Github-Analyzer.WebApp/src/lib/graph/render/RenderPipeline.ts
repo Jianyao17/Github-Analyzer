@@ -37,6 +37,7 @@ export class RenderPipeline
 
   private _svg:       SvgSelection      | null = null;
   private _viewport:  ViewportSelection | null = null;
+  private _unsubs:    (() => void)[]    = [];
 
   readonly nodePass:  NodePass;
   readonly edgePass:  EdgePass;
@@ -131,6 +132,8 @@ export class RenderPipeline
   destroy(): void 
   {
     this.unmount();
+    this._unsubs.forEach(u => u());
+    this._unsubs = [];
     this._svg     = null;
     this._viewport = null;
     this.nodePass.clear();
@@ -140,20 +143,22 @@ export class RenderPipeline
 
   private _listenBusEvents(): void 
   {
-    this._bus.on('view:nodes-changed', ({ nodes, edges }) => 
-    {
-      this.nodePass.apply(nodes, this._config);
-      this.edgePass.apply(edges, this._config);
-    });
+    this._unsubs.push(
+      this._bus.on('view:nodes-changed', ({ nodes, edges }) => 
+      {
+        this.nodePass.apply(nodes, this._config);
+        this.edgePass.apply(edges, this._config);
+      }),
 
-    this._bus.on('highlight:nodes', ({ ids, dimOpacity }) => 
-    {
-      this.nodePass.applyHighlight(ids, dimOpacity);
-    });
+      this._bus.on('highlight:nodes', ({ ids, dimOpacity }) => 
+      {
+        this.nodePass.applyHighlight(ids, dimOpacity);
+      }),
 
-    this._bus.on('highlight:clear', () => 
-    {
-      this.nodePass.clearHighlight();
-    });
+      this._bus.on('highlight:clear', () => 
+      {
+        this.nodePass.clearHighlight();
+      })
+    );
   }
 }

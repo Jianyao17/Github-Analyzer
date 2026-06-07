@@ -7,10 +7,12 @@ export class DragPlugin implements GraphPlugin
   readonly name = 'drag';
   readonly priority = 1;
 
+  private _unsub?: () => void;
+
   setup(ctx: GraphContext, _data: GraphData): void 
   {
     this._bindEvents(ctx);
-    ctx.bus.on('render:complete', () => this._bindEvents(ctx));
+    this._unsub = ctx.bus.on('render:complete', () => this._bindEvents(ctx));
   }
 
   private _bindEvents(ctx: GraphContext): void 
@@ -41,5 +43,12 @@ export class DragPlugin implements GraphPlugin
       );
   }
 
-  teardown(): void {}
+  teardown(): void 
+  {
+    if (this._unsub) 
+    {
+      this._unsub();
+      this._unsub = undefined;
+    }
+  }
 }

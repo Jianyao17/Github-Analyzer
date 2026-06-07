@@ -127,7 +127,10 @@ export class SearchPlugin implements GraphPlugin
   {
     this.clearTooltip();
 
-    if (node._isHidden) 
+    // Dynamically check if the node is currently hidden in the live context
+    const isCurrentlyHidden = !this._ctx?.nodes.some(n => n.id === node.id);
+
+    if (isCurrentlyHidden) 
     {
       // Ask CollapsePlugin to expand the path
       this._ctx?.bus.emit('collapse:expand-path', { targetId: node.id });
@@ -146,9 +149,14 @@ export class SearchPlugin implements GraphPlugin
     } 
     else 
     {
-      const tx = node.targetX ?? node.x ?? 0;
-      const ty = node.targetY ?? node.y ?? 0;
-      this._ctx?.bus.emit('zoom:to', { x: tx, y: ty, scale });
+      // Find the live node to get the correct coordinates
+      const liveNode = this._ctx?.nodes.find(n => n.id === node.id);
+      if (liveNode) 
+      {
+        const tx = liveNode.targetX ?? liveNode.x ?? 0;
+        const ty = liveNode.targetY ?? liveNode.y ?? 0;
+        this._ctx?.bus.emit('zoom:to', { x: tx, y: ty, scale });
+      }
     }
   }
 
@@ -166,17 +174,20 @@ export class SearchPlugin implements GraphPlugin
       return;
     }
     
-    if (node._isHidden && node._visibleParentId) 
+    // Dynamically check visibility
+    const isCurrentlyHidden = !this._ctx?.nodes.some(n => n.id === node.id);
+
+    if (isCurrentlyHidden) 
     {
-      this._showTooltipForHidden(node);
+      // We might need a fresh visible parent ID if the graph changed
+      const visibleNodeIds = new Set((this._ctx?.nodes ?? []).map(n => n.id));
+      const freshVisibleParentId = this._findNearestVisibleAncestor(node.id, visibleNodeIds);
+      
+      this._showTooltipForHidden({ ...node, _visibleParentId: freshVisibleParentId });
     }
-    else if (!node._isHidden)
+    else
     {
       this._showTooltipForVisible(node);
-    }
-    else 
-    {
-      this.clearTooltip();
     }
   }
 

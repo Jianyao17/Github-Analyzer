@@ -1,19 +1,21 @@
 import { 
   watch, onMounted, 
   onUnmounted, nextTick,
-  inject, reactive, ref
+  reactive, ref
 } from 'vue';
 
 import type { Ref } from 'vue';
 import type { CodeGraph }  from '@/types/analysis/code-graph';
 import type { D3Node } from '@graph.types';
-import type { SearchPlugin } from '@graph.plugins';
 
 import { GraphEngine } from '@graph/core/GraphEngine';
 import { buildGraphData } from '@graph/utils/graph-data';
 import { HierarchicalLayout } from '@graph/layout/hierarchical.layout';
 import { StarBalloonLayout } from '@graph/layout/star-balloon.layout';
-import { GRAPH_ENGINE_INJECTION_KEY } from '@/plugins/graph';
+import { 
+  ZoomPlugin, DragPlugin, HoverPlugin, 
+  SearchPlugin, DebugPlugin, CollapsePlugin 
+} from '@graph.plugins';
 
 // Options for GraphD3 composable
 export interface GraphD3Options 
@@ -37,9 +39,18 @@ export function useGraphD3(
   initialOptions: GraphD3Options = {},
 ) 
 {
-  // Get the engine from the injector
-  const engine = inject<GraphEngine>(GRAPH_ENGINE_INJECTION_KEY);
-  if (!engine) throw new Error('GraphEngine not provided! Make sure app.use(createGraphEngine()) is called.');
+  // Instantiate GraphEngine per-instance
+  const engine = new GraphEngine();
+  engine
+    .use(new ZoomPlugin(),     0)
+    .use(new DragPlugin(),     1)
+    .use(new CollapsePlugin(), 2)
+    .use(new HoverPlugin(),    3)
+    .use(new SearchPlugin(),   4)
+    .use(new DebugPlugin({
+      enabled: import.meta.env.DEV,
+      logMemory: true,
+    }), 999);
 
   // Get the search plugin
   const searchPlugin = engine.getPlugin<SearchPlugin>('search');
@@ -94,6 +105,9 @@ export function useGraphD3(
       engine?.render(d3Data);
     }
     applyLayout();
+
+    // Fit zoom synchronously after initial layout to prevent visual shifting
+    engine?.ctx.bus.emit('zoom:fit', { padding: 60, duration: 0 });
   }
 
   // Watch for layout or orientation changes
@@ -124,12 +138,6 @@ export function useGraphD3(
     else 
     {
       engine?.setNodeFilter(null);
-    }
-
-    // Graph structure radically changed, re-initialize collapse plugin state
-    if (engine?.isMounted()) 
-    {
-      engine?.ctx.bus.emit('collapse:set-depth', { depth: settings.collapseDepth });
     }
   }, { immediate: true });
 

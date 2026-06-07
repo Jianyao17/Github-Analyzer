@@ -136,6 +136,7 @@ export class GraphEngine
     this._nodeFilter = filter;
     if (this._currentData && this._isMounted) 
     {
+      this._bus.emit('view:filter-changed', undefined as never);
       this.refreshView();
     }
   }

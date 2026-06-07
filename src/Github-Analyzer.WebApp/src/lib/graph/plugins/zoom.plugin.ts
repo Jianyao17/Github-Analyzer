@@ -44,7 +44,7 @@ export class ZoomPlugin implements GraphPlugin
           .call(this._zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
       }),
 
-      ctx.bus.on('zoom:fit', ({ padding = 60 }) => 
+      ctx.bus.on('zoom:fit', ({ padding = 60, duration = 750 }) => 
       {
         if (!ctx.svg || !this._zoom || !ctx.nodes.length) return;
         const svgEl = ctx.svg.node();
@@ -71,10 +71,17 @@ export class ZoomPlugin implements GraphPlugin
         const tx = svgW / 2 - cx * scale;
         const ty = svgH / 2 - cy * scale;
 
-        ctx.svg
-          .transition()
-          .duration(750)
-          .call(this._zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+        if (duration > 0) 
+        {
+          ctx.svg
+            .transition()
+            .duration(duration)
+            .call(this._zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+        }
+        else 
+        {
+          ctx.svg.call(this._zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+        }
       })
     );
   }

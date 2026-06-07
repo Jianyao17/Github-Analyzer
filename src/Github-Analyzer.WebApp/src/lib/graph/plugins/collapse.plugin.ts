@@ -61,6 +61,12 @@ export class CollapsePlugin implements GraphPlugin
         this._expandedNodes.clear();
         this._isInitialized = false;
         ctx.bus.emit('view:refresh-requested', undefined as never);
+      }),
+      ctx.bus.on('view:filter-changed', () => 
+      {
+        this._collapsedNodes.clear();
+        this._expandedNodes.clear();
+        this._isInitialized = false;
       })
     );
   }

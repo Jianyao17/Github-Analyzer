@@ -64,6 +64,31 @@ export class EdgePass
       const tHw = t._hw ?? 8;
       const tHh = t._hh ?? 8;
 
+      // Handle self-loop edges
+      if (s.id === t.id)
+      {
+        const loopHeight = 35;
+        const loopWidth = 35;
+        
+        // Start point: slightly left of top-center
+        const startX = sx - 8;
+        const startY = sy - sHh - gap;
+        
+        // End point: slightly right of top-center
+        const endX = sx + 8;
+        const endY = sy - sHh - gap;
+        
+        // Control points for a circular-like loop
+        const cp1x = sx - loopWidth;
+        const cp1y = sy - sHh - loopHeight;
+        
+        const cp2x = sx + loopWidth;
+        const cp2y = sy - sHh - loopHeight;
+        
+        d3.select(this).attr('d', `M${startX},${startY} C${cp1x},${cp1y} ${cp2x},${cp2y} ${endX},${endY}`);
+        return;
+      }
+
       const srcPt = getRectEdgeEndpoint(tx, ty, sx, sy, sHw, sHh, gap);
       const tgtPt = getRectEdgeEndpoint(sx, sy, tx, ty, tHw, tHh, gap);
 

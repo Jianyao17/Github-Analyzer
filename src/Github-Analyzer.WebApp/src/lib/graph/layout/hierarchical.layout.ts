@@ -58,7 +58,7 @@ export class HierarchicalLayout implements IGraphLayout
         const from = typeof e.source === 'object' ? (e.source as D3Node).id : e.source as string;
         const to = typeof e.target === 'object' ? (e.target as D3Node).id : e.target as string;
         
-        if (adj.has(from) && inDegree.has(to)) 
+        if (from !== to && adj.has(from) && inDegree.has(to)) 
         {
           adj.get(from)!.push(to);
           inDegree.set(to, inDegree.get(to)! + 1);

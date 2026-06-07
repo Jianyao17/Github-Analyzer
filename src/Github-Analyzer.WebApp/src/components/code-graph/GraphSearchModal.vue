@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
-import { NODE_TYPE_KEYS, defaultGraphConfig } from '@graph/graph.config';
+import { NODE_TYPE_KEYS, defaultGraphConfig } from '@/lib/graph/config';
 import type { D3Node } from '@graph.types';
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const MAX_RESULTS = 50;
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 const props = defineProps<{
@@ -10,6 +13,9 @@ const props = defineProps<{
 
   /** Smooth zoom to a single node. */
   focusNode:    (node: D3Node, scale?: number) => void;
+
+  /** Show tooltip when hovering or selecting a node. */
+  focusHover:   (node: D3Node | null) => void;
 
   /** Fit the viewport around all results. */
   focusResults: (results: D3Node[], padding?: number) => void;
@@ -61,6 +67,18 @@ watch(searchQuery, (newVal) =>
   }
 });
 
+watch(activeIndex, (idx) => 
+{
+  if (idx >= 0 && searchResults.value[idx]) 
+  {
+    props.focusHover(searchResults.value[idx]);
+  } 
+  else 
+  {
+    props.focusHover(null);
+  }
+});
+
 function selectNode(node: D3Node): void
 {
   props.focusNode(node, 2.5);
@@ -88,7 +106,7 @@ function scrollActiveIntoView(): void
 
 function handleKeydown(e: KeyboardEvent): void
 {
-  const len = Math.min(searchResults.value.length, 30);
+  const len = Math.min(searchResults.value.length, MAX_RESULTS);
 
   if (e.key === 'Escape') { close(); return; }
 
@@ -136,6 +154,12 @@ function getNodeColor(type: number): string
 {
   const key = NODE_TYPE_KEYS[type] ?? 'default';
   return defaultGraphConfig.nodeTypes[key]?.color ?? '#9CA3AF';
+}
+
+function getNodeIcon(type: number): string
+{
+  const key = NODE_TYPE_KEYS[type] ?? 'default';
+  return defaultGraphConfig.nodeTypes[key]?.icon ?? 'circle';
 }
 
 function getNodeTypeLabel(type: number): string
@@ -243,7 +267,7 @@ defineExpose({ open, close });
                   "
                 >
                   <button
-                    v-for="(node, i) in searchResults.slice(0, 30)"
+                    v-for="(node, i) in searchResults.slice(0, MAX_RESULTS)"
                     :key="node.id"
                     :class="[
                       `
@@ -261,25 +285,49 @@ defineExpose({ open, close });
                         `,
                     ]"
                     @click="selectNode(node)"
+                    @mouseenter="activeIndex = i"
+                    @mouseleave="activeIndex = -1"
                   >
-                    <span
-                      class="h-2.5 w-2.5 shrink-0 rounded-full"
-                      :style="{ backgroundColor: getNodeColor(node.type) }"
+                    <!-- LEFT PART: ICON -->
+                    <NIcon
+                      :name="'i-lucide-' + getNodeIcon(node.type)"
+                      class="h-5 w-5 shrink-0"
+                      :style="{ color: getNodeColor(node.type) }"
                     />
-                    <span class="
-                      flex-1 truncate text-sm text-gray-800
-                      dark:text-gray-100
-                    "
-                    >
-                      {{ node.label }}
-                    </span>
-                    <span class="
-                      shrink-0 text-xs text-gray-400
-                      dark:text-gray-500
-                    "
-                    >
-                      {{ getNodeTypeLabel(node.type) }}
-                    </span>
+
+                    <!-- RIGHT PART -->
+                    <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <!-- TOP ROW -->
+                      <div class="flex items-center gap-2">
+                        <span class="
+                          truncate text-sm font-medium text-gray-800
+                          dark:text-gray-100
+                        "
+                        >
+                          {{ node.label }}
+                        </span>
+                        <span class="
+                          shrink-0 rounded-full px-2 py-0.5 text-[10px]
+                          leading-none font-semibold
+                        "
+                          :style="{
+                            backgroundColor: getNodeColor(node.type) + '26',
+                            color: getNodeColor(node.type)
+                          }"
+                        >
+                          {{ getNodeTypeLabel(node.type) }}
+                        </span>
+                      </div>
+
+                      <!-- BOTTOM ROW -->
+                      <span class="
+                        truncate text-xs text-gray-400
+                        dark:text-gray-500
+                      "
+                      >
+                        {{ node.pathId }}
+                      </span>
+                    </div>
                   </button>
                 </div>
 
@@ -333,9 +381,9 @@ defineExpose({ open, close });
                 "
                 >
                   {{ searchResults.length }} result{{ searchResults.length !== 1 ? 's' : '' }}
-                  <span v-if="searchResults.length > 30"
+                  <span v-if="searchResults.length > MAX_RESULTS"
                     class="opacity-60"
-                  >&nbsp;(showing 30)</span>
+                  >&nbsp;(showing {{ MAX_RESULTS }})</span>
                 </span>
 
                 <div class="flex items-center gap-3">

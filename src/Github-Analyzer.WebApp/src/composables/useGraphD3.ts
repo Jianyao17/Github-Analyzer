@@ -1,127 +1,217 @@
+import { 
+  watch, onMounted, 
+  onUnmounted, nextTick,
+  reactive, ref
+} from 'vue';
+
 import type { Ref } from 'vue';
-import { watch, onMounted, onUnmounted, nextTick } from 'vue';
-import type { CodeGraph } from '@/types/analysis/code-graph';
-import type { GraphPlugin, D3Node } from '@graph.types';
+import type { CodeGraph }  from '@/types/analysis/code-graph';
+import type { D3Node } from '@graph.types';
 
-import { GraphD3 } from '@graph/graph.main';
-import { GraphDebugger } from '@graph/graph.debug';
-import { ZoomDragPlugin } from '@graph/plugins/zoom-drag.plugin';
-import { SearchPlugin } from '@graph/plugins/search.plugin';
-import { HoverPlugin } from '@graph/plugins/hover.plugin';
+import { GraphEngine } from '@graph/core/GraphEngine';
 import { buildGraphData } from '@graph/utils/graph-data';
+import { HierarchicalLayout } from '@graph/layout/hierarchical.layout';
+import { StarBalloonLayout } from '@graph/layout/star-balloon.layout';
+import { 
+  ZoomPlugin, DragPlugin, HoverPlugin, 
+  SearchPlugin, DebugPlugin, CollapsePlugin 
+} from '@graph.plugins';
 
-export interface UseGraphD3Options
+// Options for GraphD3 composable
+export interface GraphD3Options 
 {
-  /** Extra plugins untuk didaftarkan di samping plugin default. */
-  plugins?: GraphPlugin[];
-
-  /** Aktifkan DEV-only performance profiling. Default: import.meta.env.DEV. */
-  debug?: boolean;
+  mode?:          'directory'  | 'namespace';
+  layout?:        'hierarchical' | 'star-balloon';
+  orientation?:   'LR' | 'TB' | 'RL' | 'BT';
+  collapseDepth?: number;
 }
 
 /**
- * useGraphD3 — thin Vue composable wrapper untuk GraphD3 library.
- *
- * Default plugins: ZoomDrag, Hover, Search.
- * DEV performance profiling di-attach otomatis via GraphDebugger.
- *
- * Returns search API untuk dihubungkan ke Vue search UI:
- * ```ts
- * const { search, focusNode, focusResults, clearSearch } =
- *   useGraphD3(containerRef, graphData);
- *
- * const results = search('UserService');
- * if (results[0]) focusNode(results[0]);
- * ```
+ * A composable to integrate the backend code graph data with D3.js Graph Engine.
+ * 
+ * @param containerRef A Vue ref pointing to the HTML container element.
+ * @param dataRef A Vue ref containing the raw backend code graph data.
+ * @param options Additional initialization options (e.g., custom plugins).
  */
 export function useGraphD3(
   containerRef: Ref<HTMLElement | null>,
   dataRef:      Ref<CodeGraph | null>,
-  options:      UseGraphD3Options = {},
-)
+  initialOptions: GraphD3Options = {},
+) 
 {
-  let graph: GraphD3 | null = null;
+  // Instantiate GraphEngine per-instance
+  const engine = new GraphEngine();
+  engine
+    .use(new ZoomPlugin(),     0)
+    .use(new DragPlugin(),     1)
+    .use(new CollapsePlugin(), 2)
+    .use(new HoverPlugin(),    3)
+    .use(new SearchPlugin(),   4)
+    .use(new DebugPlugin({
+      enabled: import.meta.env.DEV,
+      logMemory: true,
+    }), 999);
 
-  // Plugin instances dibuat sekali dan dipakai ulang lintas update() cycle.
-  // SearchPlugin tidak lagi memerlukan ZoomDragPlugin reference.
-  const searchPlugin = new SearchPlugin();
+  // Get the search plugin
+  const searchPlugin = engine.getPlugin<SearchPlugin>('search');
 
-  function initGraph(raw: CodeGraph): void
+  // Reactive settings object
+  const settings = reactive<Required<GraphD3Options>>(
+    {
+      mode:          initialOptions.mode          || 'directory',
+      layout:        initialOptions.layout        || 'star-balloon',
+      orientation:   initialOptions.orientation   || 'LR',
+      collapseDepth: initialOptions.collapseDepth || 2
+    });
+
+  /**
+   * Applies the current layout based on `settings.layout`.
+   */
+  function applyLayout() 
   {
-    const data = buildGraphData(raw);
-    if (!containerRef.value) return;
-
-    if (!graph)
+    if (settings.layout === 'hierarchical') 
     {
-      // ── First render ────────────────────────────────────────────────────────
-      graph = new GraphD3({
-        container: containerRef.value,
-        data,
-      });
-
-      graph
-        .use(new ZoomDragPlugin())
-        .use(searchPlugin)
-        .use(new HoverPlugin());
-
-      // Daftarkan extra plugins dari caller
-      options.plugins?.forEach((p) => graph!.use(p));
-
-      // DEV performance profiling — zero cost in production
-      new GraphDebugger({
-        enabled:   options.debug ?? import.meta.env.DEV,
-        logMemory: true,
-      }).attachTo(graph);
-
-      graph.render();
-    }
-    else
+      engine?.useLayout(new HierarchicalLayout({ orientation: settings.orientation }));
+    } 
+    else 
     {
-      // ── Subsequent renders — plugins dipertahankan ──────────────────────────
-      graph.update(data);
+      engine?.useLayout(new StarBalloonLayout());
     }
   }
 
-  // Re-render saat data berubah
-  watch(dataRef, (newData) =>
+  /**
+   * Re-initializes the graph with new data and layout.
+   */
+  function init(data: CodeGraph) 
   {
-    if (newData) initGraph(newData);
-  });
-
-  // Render saat mount jika data sudah tersedia
-  // (nextTick memastikan container punya dimensi nyata, bukan 0×0)
-  onMounted(async () =>
-  {
-    if (dataRef.value)
+    const d3Data = buildGraphData(data);
+    
+    // Use engine configuration logic
+    if (settings.mode === 'directory') 
     {
-      await nextTick();
-      initGraph(dataRef.value);
+      engine?.setNodeFilter(node => node.type !== 1);
+    } 
+    else if (settings.mode === 'namespace') 
+    {
+      engine?.setNodeFilter(node => node.type !== 0 && node.type !== 2);
+    }
+
+    if (engine?.isMounted()) 
+    {
+      engine?.update(d3Data);
+    }
+    else 
+    {
+      engine?.render(d3Data);
+    }
+    applyLayout();
+
+    // Fit zoom synchronously after initial layout to prevent visual shifting
+    engine?.ctx.bus.emit('zoom:fit', { padding: 60, duration: 0 });
+  }
+
+  // Watch for layout or orientation changes
+  watch(
+    () => [settings.layout, settings.orientation],
+    () => 
+    {
+      if (engine?.isMounted()) 
+      {
+        applyLayout();
+        // Force zoom-fit after layout change
+        engine?.ctx.bus.emit('zoom:fit', { padding: 60 });
+      }
+    }
+  );
+
+  // Watch for mode changes to dynamically filter nodes
+  watch(() => settings.mode, (mode) => 
+  {
+    if (mode === 'directory') 
+    {
+      engine?.setNodeFilter(node => node.type !== 1); // 1 is Namespace
+    } 
+    else if (mode === 'namespace') 
+    {
+      engine?.setNodeFilter(node => node.type !== 0 && node.type !== 2); // 0 is Directory, 2 is File
+    } 
+    else 
+    {
+      engine?.setNodeFilter(null);
+    }
+  }, { immediate: true });
+
+  watch(() => settings.collapseDepth, (depth) => 
+  {
+    if (engine?.isMounted()) 
+    {
+      engine?.ctx.bus.emit('collapse:set-depth', { depth });
     }
   });
 
-  // Cleanup saat unmount
-  onUnmounted(() =>
+  const maxCollapseDepth = ref(4);
+
+  engine?.ctx.bus.on('collapse:max-depth', ({ maxDepth }: { maxDepth: number }) => 
   {
-    graph?.destroy();
-    graph = null;
+    maxCollapseDepth.value = maxDepth;
+    // ensure current depth setting does not exceed new max depth
+    if (settings.collapseDepth > maxDepth && maxDepth > 0) 
+    {
+      settings.collapseDepth = maxDepth;
+    }
+  });
+
+  function expandAll() 
+  {
+    if (settings.collapseDepth === maxCollapseDepth.value) 
+    {
+      engine?.ctx.bus.emit('collapse:set-depth', { depth: maxCollapseDepth.value });
+    }
+    else 
+    {
+      settings.collapseDepth = maxCollapseDepth.value;
+    }
+  }
+
+  function collapseAll() 
+  {
+    const defaultDepth = initialOptions.collapseDepth || 2;
+    if (settings.collapseDepth === defaultDepth) 
+    {
+      engine?.ctx.bus.emit('collapse:set-depth', { depth: defaultDepth });
+    }
+    else 
+    {
+      settings.collapseDepth = defaultDepth;
+    }
+  }
+
+  watch(dataRef, newData => { if (newData) init(newData); });
+
+  onMounted(async () => 
+  {
+    if (containerRef.value) 
+    {
+      engine?.mount(containerRef.value);
+    }
+    if (dataRef.value) { await nextTick(); init(dataRef.value); }
+  });
+
+  onUnmounted(() => 
+  {
+    engine?.unmount();
   });
 
   return {
-    /** Instance GraphD3 — tersedia setelah render(). */
-    getGraph: () => graph,
-
-    // ── Search API ────────────────────────────────────────────────────────────
-    /** Cari node by label atau pathId. Highlight hasil di graph. */
-    search: (query: string): D3Node[] => searchPlugin.search(query),
-
-    /** Pan & zoom secara smooth ke satu node. */
-    focusNode: (node: D3Node, scale?: number): void => searchPlugin.focusNode(node, scale),
-
-    /** Fit semua result nodes di dalam viewport. */
-    focusResults: (results: D3Node[], padding?: number): void =>
-      searchPlugin.focusResults(results, padding),
-
-    /** Reset semua search highlighting. */
-    clearSearch: (): void => searchPlugin.clearSearch(),
+    settings,
+    maxCollapseDepth,
+    expandAll,
+    collapseAll,
+    getEngine:    () => engine,
+    search:       (query: string): D3Node[] => searchPlugin?.search(query) ?? [],
+    focusHover:   (node: D3Node | null) => searchPlugin?.focusHover?.(node as any),
+    focusNode:    (node: D3Node, scale?: number) => searchPlugin?.focusNode(node as any, scale),
+    focusResults: (results: D3Node[], padding?: number) => searchPlugin?.focusResults(results as any, padding),
+    clearSearch:  () => searchPlugin?.clearSearch(),
   };
 }

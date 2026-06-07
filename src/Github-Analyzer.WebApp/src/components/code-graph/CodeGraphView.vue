@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import type { CodeGraph } from '@/types/analysis/code-graph';
 import { useGraphD3 } from '@/composables/useGraphD3';
 import GraphSearchModal from './GraphSearchModal.vue';
+import GraphSettingsMenu from './GraphSettingsMenu.vue';
 import GraphLegend from './GraphLegend.vue';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -15,11 +16,18 @@ const graphContainer = ref<HTMLElement | null>(null);
 const graphData = computed(() => props.data);
 
 const { 
-  search, focusNode, focusResults, clearSearch 
-} = useGraphD3(graphContainer, graphData);
+  search, focusNode, focusHover,
+  focusResults, clearSearch, settings,
+  maxCollapseDepth, expandAll, collapseAll
+} = useGraphD3(graphContainer, graphData, { layout: 'star-balloon' });
 
 // ─── Search modal ref ─────────────────────────────────────────────────────────
 const searchModal = ref<{ open: () => void; close: () => void } | null>(null);
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+const supportsNamespace = computed(() => 
+  props.data.nodes.some(n => n.type === 1)
+);
 </script>
 
 <template>
@@ -85,6 +93,7 @@ const searchModal = ref<{ open: () => void; close: () => void } | null>(null);
       ref="searchModal"
       :search="search"
       :focus-node="focusNode"
+      :focus-hover="focusHover"
       :focus-results="focusResults"
       :clear-search="clearSearch"
       :total-nodes="data.nodes?.length"
@@ -107,13 +116,25 @@ const searchModal = ref<{ open: () => void; close: () => void } | null>(null);
       </div>
     </div>
 
-    <!-- ── Legend (bottom-right, z-20) ───────────────────────────────────────── -->
+    <!-- ── Settings & Legend (bottom-right, z-20) ────────────────────────────── -->
     <div class="
-      pointer-events-none absolute right-4 bottom-4 z-20
+      absolute right-4 bottom-4 z-20 flex items-end gap-3
       sm:right-6 sm:bottom-6
     "
     >
-      <GraphLegend :data="data" />
+      <!-- Graph Settings Menu -->
+      <GraphSettingsMenu 
+        :supports-namespace="supportsNamespace"
+        :max-collapse-depth="maxCollapseDepth"
+        v-model:settings="settings"
+        @expand-all="expandAll"
+        @collapse-all="collapseAll"
+      />
+
+      <!-- Legend -->
+      <div class="pointer-events-none">
+        <GraphLegend :data="data" />
+      </div>
     </div>
   </div>
 </template>

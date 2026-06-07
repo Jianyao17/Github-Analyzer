@@ -4,7 +4,8 @@
 
 export type { GraphPlugin } from './plugin';
 export type { GraphNode, GraphEdge, D3Node, D3Edge } from './node-edge';
-export type { INodeRenderer, IEdgeRenderer, IGraphRenderer } from './renderer';
 export type { GraphData, GraphDataIndexes, GraphDataMetadata } from './graph-data';
 export type { GraphConfig, NodeTypeStyle, EdgeTypeStyle, NodeCardConfig } from './config';
-export type { GraphView, SvgSelection, ViewportSelection, NodeSelection, EdgeSelection } from './graph-view';
+export type { SvgSelection, ViewportSelection, NodeSelection, EdgeSelection } from './graph-view';
+export type { GraphEvents, Dimensions } from './events';
+export type { IGraphLayout, LayoutResult } from './layout';

@@ -14,7 +14,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "@graph/*": ["./src/lib/graph/*"],
-      "@graph.types": ["./src/lib/graph/types/_index.ts"]
+      "@graph.types": ["./src/lib/graph/types/_index.ts"],
+      "@graph.plugins": ["./src/lib/graph/plugins/_index.ts"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "auto-imports.d.ts", "components.d.ts"]

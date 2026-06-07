@@ -1,4 +1,4 @@
-import type { GraphConfig } from './types/_index';
+import type { GraphConfig } from '@graph.types';
 
 // ─── Default Graph Config ─────────────────────────────────────────────────────
 // Node/edge styles defined as config objects — no switch-case in renderers.
@@ -46,8 +46,12 @@ export const defaultGraphConfig: GraphConfig =
 
   // ── Simulation ──────────────────────────────────────────────────────────────
   simulation: {
-    linkDistance:   60,
+    levelGap: 150,
+    nodeGap: 50,
+
+    linkDistance:   150,
     chargeStrength: -150,
+
     // Stop when visually stable (D3 default: 0.001 ≈ 300 ticks)
     alphaMin:   0.005,
     // Decay rate — higher = fewer total ticks (D3 default: ~0.0228)

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import type { CodeGraph } from '@/types/analysis/code-graph';
-import { NODE_TYPE_KEYS, defaultGraphConfig } from '@graph/graph.config';
+import { NODE_TYPE_KEYS, defaultGraphConfig } from '@/lib/graph/config';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 const props = defineProps<{

@@ -103,5 +103,11 @@ export interface GraphConfig
      * Raise to decay faster and settle in fewer ticks.
      */
     alphaDecay?: number;
+
+    /** Gap (in pixels) between hierarchy levels. Default: 150 */
+    levelGap?: number;
+
+    /** Gap (in pixels) between sibling nodes in hierarchy. Default: 50 */
+    nodeGap?: number;
   };
 }

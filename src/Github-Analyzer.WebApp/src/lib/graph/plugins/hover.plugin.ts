@@ -1,4 +1,5 @@
-import type { GraphPlugin, GraphData, GraphView, D3Node } from '@graph.types';
+import type { GraphPlugin, GraphData, D3Node } from '@graph.types';
+import type { GraphContext } from '@graph/core/GraphContext';
 
 /**
  * HoverPlugin — menampilkan floating tooltip saat hover pada node.
@@ -9,13 +10,14 @@ import type { GraphPlugin, GraphData, GraphView, D3Node } from '@graph.types';
 export class HoverPlugin implements GraphPlugin
 {
   readonly name = 'hover';
+  readonly priority = 2;
 
   private tooltip:   HTMLDivElement | null = null;
   private container: HTMLElement    | null = null;
 
-  setup(_data: GraphData, view: GraphView): void
+  setup(ctx: GraphContext, _data: GraphData): void
   {
-    const svg = view.svg?.node();
+    const svg = ctx.svg?.node();
     if (!svg) return;
 
     // Dapatkan container dari parent SVG element
@@ -24,21 +26,28 @@ export class HoverPlugin implements GraphPlugin
 
     this.createTooltip(this.container);
 
-    if (!view.nodeSelection) return;
+    this._bindEvents(ctx);
+    ctx.bus.on('render:complete', () => this._bindEvents(ctx));
+    ctx.bus.on('view:refresh-requested', () => this.hide());
+  }
 
-    view.nodeSelection
-      .on('mouseenter.hover', (_event, d) => this.show(d))
-      .on('mousemove.hover',  (event)      => this.move(event))
+  private _bindEvents(ctx: GraphContext): void 
+  {
+    if (!ctx.nodeSelection) return;
+
+    ctx.nodeSelection
+      .on('mouseenter.hover', (_event: any, d: D3Node) => this.show(d))
+      .on('mousemove.hover',  (event: any)      => this.move(event))
       .on('mouseleave.hover', ()           => this.hide());
   }
 
-  private createTooltip(container: HTMLElement): void
+  private createTooltip(_container: HTMLElement): void
   {
     this.tooltip = document.createElement('div');
 
     Object.assign(this.tooltip.style,
       {
-        position:       'absolute',
+        position:       'fixed',
         pointerEvents:  'none',
         display:        'none',
         background:     'rgba(15, 15, 15, 0.85)',
@@ -53,8 +62,8 @@ export class HoverPlugin implements GraphPlugin
         zIndex:         '10',
       });
 
-    // Append ke parent agar tooltip tidak terpotong oleh SVG overflow
-    (container.parentElement ?? container).appendChild(this.tooltip);
+    // Append ke body agar tooltip tidak terpotong dan aman dari mount/unmount
+    document.body.appendChild(this.tooltip);
   }
 
   private show(d: D3Node): void
@@ -69,11 +78,10 @@ export class HoverPlugin implements GraphPlugin
 
   private move(event: MouseEvent): void
   {
-    if (!this.tooltip || !this.container) return;
+    if (!this.tooltip) return;
 
-    const rect = this.container.getBoundingClientRect();
-    this.tooltip.style.left = `${event.clientX - rect.left + 14}px`;
-    this.tooltip.style.top  = `${event.clientY - rect.top  - 10}px`;
+    this.tooltip.style.left = `${event.clientX + 14}px`;
+    this.tooltip.style.top  = `${event.clientY - 10}px`;
   }
 
   private hide(): void

@@ -15,16 +15,17 @@ public static class CacheLookupKey
     private const char Separator = '|';
 
     /// <summary>
-    /// Produces a 43-char Base64Url digest of <c>SHA-256(normalizedUrl | branch | commitHash)</c>.
+    /// Produces a 43-char Base64Url digest of <c>SHA-256(normalizedUrl | branch | commitHash | analysisVersion)</c>.
     /// </summary>
     /// <param name="repoUrl">Full repository URL (trailing slashes are stripped, lowercased).</param>
     /// <param name="branch">Branch name, or <see langword="null"/> for default.</param>
     /// <param name="commitHash">Commit SHA, or <see langword="null"/> if unspecified.</param>
-    public static string Generate(string repoUrl, string? branch, string? commitHash)
+    /// <param name="analysisVersion">Version of the analysis logic (used for invalidation).</param>
+    public static string Generate(string repoUrl, string? branch, string? commitHash, string analysisVersion)
     {
         var normalizedUrl = repoUrl.TrimEnd('/').ToLowerInvariant();
         
-        var input = string.Join(Separator, normalizedUrl, branch ?? string.Empty, commitHash ?? string.Empty);
+        var input = string.Join(Separator, normalizedUrl, branch ?? string.Empty, commitHash ?? string.Empty, analysisVersion);
         var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
         
         return ToBase64Url(hashBytes);

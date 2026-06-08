@@ -1,5 +1,6 @@
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Entities;
+using GithubAnalyzer.WebApi.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace GithubAnalyzer.WebApi.Workers;
@@ -41,9 +42,13 @@ public class QueueCleanupWorker : BackgroundService
                 if (oldJobsCount > 0) {
                     _logger.LogInformation("Cleaned up {Count} old queue records.", oldJobsCount);
                 }
+
+                // Invalidate old analysis caches using the AnalysisCacheService (older than 30 days)
+                var cacheService = scope.ServiceProvider.GetRequiredService<IAnalysisCacheService>();
+                await cacheService.InvalidateOldCachesAsync(TimeSpan.FromDays(30), stoppingToken);
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error occurred while cleaning up old queue records.");
+                _logger.LogError(ex, "Error occurred while cleaning up old records.");
             }
         }
         _logger.LogInformation("QueueCleanupWorker is stopping.");

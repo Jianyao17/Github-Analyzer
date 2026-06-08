@@ -29,4 +29,7 @@ public class CodeGraphAnalysis : BaseEntity
     
     public int NodeCount { get; set; }
     public int EdgeCount { get; set; }
+    
+    [Required, MaxLength(50)]
+    public string AnalysisVersion { get; set; } = default!;
 }

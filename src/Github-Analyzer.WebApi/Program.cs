@@ -71,6 +71,7 @@ builder.Services.AddScoped<IFileStatisticsService, FileStatisticsService>();
 
 // Queue progress notifier for real-time updates to clients
 builder.Services.AddSingleton<IQueueProgressNotifier, QueueProgressNotifier>();
+builder.Services.AddSingleton<IAnalysisCacheService, AnalysisCacheService>();
 
 // Workers for background processing
 builder.Services.AddHostedService<CodeGraphAnalysisWorker>();

@@ -141,9 +141,9 @@ public abstract class BaseQueueWorker : BackgroundService
     private static bool IsRetriable(Exception ex)
     {
         return ex is HttpRequestException
-               || ex is TaskCanceledException
-               || ex is IOException
-               || ex is TimeoutException;
+            || ex is TaskCanceledException
+            || ex is TimeoutException
+            || ex is IOException;
     }
 
     private static TimeSpan CalculateRetryDelay(int attempt)

@@ -39,46 +39,23 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
             throw new InvalidOperationException("Project data is missing from the queue job.");
         }
 
+        var analysisConfig  = scope.ServiceProvider.GetRequiredService<AnalysisConfig>();
+        var cacheService    = scope.ServiceProvider.GetRequiredService<IAnalysisCacheService>();
+
         var repoUrl    = job.Project.RepositoryUrl;
         var branch     = job.Project.BranchName;
         var commitHash = job.Project.LastCommitHash;
-        var lookupKey  = CacheLookupKey.Generate(repoUrl, branch, commitHash);
+        var version    = analysisConfig.CodeGraphVersion;
 
         // ─────────────────────────────────────────────────────────────────────
         // Cache check — copy at DB level if a previous analysis exists
         // ─────────────────────────────────────────────────────────────────────
-        var cacheHit = await dbContext.CodeGraphCaches
-            .AnyAsync(c => c.LookupKey == lookupKey, cancellationToken);
+        var cacheHit = await cacheService.TryCopyCacheToProjectAsync(
+            AnalysisType.CodeGraph, job.ProjectId, job.Project.UserId, 
+            repoUrl, branch, commitHash, version, cancellationToken);
 
         if (cacheHit)
         {
-            _logger.LogInformation(
-                "Cache hit for CodeGraph (LookupKey={LookupKey}), copying to project {ProjectId} via DB-level INSERT.",
-                lookupKey, job.ProjectId);
-
-            // INSERT INTO ... SELECT — copies data entirely inside PostgreSQL,
-            // never materializing the large GraphJson payload in app memory.
-            await dbContext.Database.ExecuteSqlInterpolatedAsync(
-            $"""
-                INSERT INTO "Repo"."CodeGraphAnalyses"
-                    ("Id", "UserId", "ProjectId",
-                     "Branch", "CommitHash", "GeneratedAtUtc",
-                     "GraphJson", "NodeCount", "EdgeCount",
-                     "CreatedAtUtc", "IsDeleted")
-                SELECT
-                    gen_random_uuid(),
-                    {job.Project.UserId},
-                    {job.ProjectId},
-                    "Branch", "CommitHash", "GeneratedAtUtc",
-                    "GraphJson", "NodeCount", "EdgeCount",
-                    now() AT TIME ZONE 'utc',
-                    false
-                FROM "Cache"."CodeGraphCaches"
-                WHERE "LookupKey" = {lookupKey}
-                LIMIT 1
-            """, cancellationToken);
-
-            _logger.LogInformation("CodeGraphAnalysis copied from cache for project {ProjectId}", job.ProjectId);
             return;
         }
 
@@ -89,7 +66,6 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
         var reader          = scope.ServiceProvider.GetRequiredService<ICodebaseReader>();
         var repoFetcher     = scope.ServiceProvider.GetRequiredService<IRepositoryFetcher>();
         var downloadGate    = scope.ServiceProvider.GetRequiredService<RepoDownloadGate>();
-        var analysisConfig  = scope.ServiceProvider.GetRequiredService<AnalysisConfig>();
 
         var localPath = job.Project.LocalPath;
         if (!Directory.Exists(localPath)) 
@@ -171,35 +147,29 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
 
             GraphJson = graphDocument,
             NodeCount = nodeCount,
-            EdgeCount = edgeCount
+            EdgeCount = edgeCount,
+            
+            AnalysisVersion = version
         };
 
         dbContext.CodeGraphAnalyses.Add(analysis);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        // 6. Simpan ke cache — jika sudah ada (race condition), abaikan
-        try
+        // 6. Simpan ke cache — delegasikan ke service
+        var cache = new CodeGraphCache
         {
-            var cache = new CodeGraphCache
-            {
-                LookupKey      = lookupKey,
-                RepoUrl        = repoUrl,
-                Branch         = branch,
-                CommitHash     = commitHash,
-                GeneratedAtUtc = generatedAt,
-                GraphJson      = graphDocument,
-                NodeCount      = nodeCount,
-                EdgeCount      = edgeCount
-            };
+            LookupKey      = CacheLookupKey.Generate(repoUrl, branch, commitHash, version),
+            RepoUrl        = repoUrl,
+            Branch         = branch,
+            CommitHash     = commitHash,
+            GeneratedAtUtc = generatedAt,
+            GraphJson      = graphDocument,
+            NodeCount      = nodeCount,
+            EdgeCount      = edgeCount,
+            AnalysisVersion = version
+        };
 
-            dbContext.CodeGraphCaches.Add(cache);
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateException)
-        {
-            _logger.LogInformation(
-                "Cache already populated by another worker for LookupKey={LookupKey}", lookupKey);
-        }
+        await cacheService.SetCacheAsync(cache, cancellationToken);
         
         _logger.LogInformation(
             "CodeGraphAnalysis saved (+ cached) for project {ProjectId}", job.ProjectId);

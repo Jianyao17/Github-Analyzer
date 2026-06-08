@@ -5,7 +5,8 @@ var builder = DistributedApplication.CreateBuilder(args);
 const string postgresDbConnectionName = "postgresdb";
 
 var postgres = builder.AddPostgres("postgres")
-    .WithDataVolume("github-analyzer-data");
+    .WithDataVolume("github-analyzer-data")
+    .WithLifetime(ContainerLifetime.Persistent);
 
 var postgresDb = postgres.AddDatabase(postgresDbConnectionName, "github_analyzer");
 if (builder.Environment.IsDevelopment())
@@ -14,7 +15,8 @@ if (builder.Environment.IsDevelopment())
 }
 
 // Mailpit for local email testing (SMTP on 1025, Web UI on 8025)
-var mailpit = builder.AddMailPit("mailpit");
+var mailpit = builder.AddMailPit("mailpit")
+    .WithLifetime(ContainerLifetime.Persistent);
 
 const int webappPort = 5017;
 

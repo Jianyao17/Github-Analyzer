@@ -32,4 +32,7 @@ public class StatisticCache : BaseEntity
     public int? TotalCommits { get; set; }
     public int? TotalContributors { get; set; }
     public int? TotalBranches { get; set; }
+    
+    [Required, MaxLength(50)]
+    public string AnalysisVersion { get; set; } = default!;
 }

@@ -32,49 +32,23 @@ public sealed class StatisticAnalysisWorker : BaseQueueWorker
         if (job.Project is null)
             throw new InvalidOperationException("Project data is missing from the queue job.");
 
+        var analysisConfig  = scope.ServiceProvider.GetRequiredService<AnalysisConfig>();
+        var cacheService    = scope.ServiceProvider.GetRequiredService<IAnalysisCacheService>();
+
         var repoUrl    = job.Project.RepositoryUrl;
         var branch     = job.Project.BranchName;
         var commitHash = job.Project.LastCommitHash;
-        var lookupKey  = CacheLookupKey.Generate(repoUrl, branch, commitHash);
+        var version    = analysisConfig.StatisticVersion;
 
         // ─────────────────────────────────────────────────────────────────────
         // Cache check — copy at DB level if a previous analysis exists
         // ─────────────────────────────────────────────────────────────────────
-        var cacheHit = await dbContext.StatisticCaches
-            .AnyAsync(c => c.LookupKey == lookupKey, cancellationToken);
+        var cacheHit = await cacheService.TryCopyCacheToProjectAsync(
+            AnalysisType.Statistic, job.ProjectId, job.Project.UserId,
+            repoUrl, branch, commitHash, version, cancellationToken);
 
         if (cacheHit)
         {
-            _logger.LogInformation(
-                "Cache hit for Statistic (LookupKey={LookupKey}), copying to project {ProjectId} via DB-level INSERT.",
-                lookupKey, job.ProjectId);
-
-            // INSERT INTO ... SELECT — copies all statistic columns directly inside PostgreSQL
-            await dbContext.Database.ExecuteSqlInterpolatedAsync(
-            $"""
-                INSERT INTO "Repo"."StatisticAnalyses"
-                    ("Id", "UserId", "ProjectId",
-                     "Branch", "CommitHash", "GeneratedAtUtc",
-                     "TotalFolders", "TotalFiles", "SizeInBytes",
-                     "TotalLinesOfCode", "CodeLines", "CommentLines", "BlankLines",
-                     "TotalCommits", "TotalContributors", "TotalBranches",
-                     "CreatedAtUtc", "IsDeleted")
-                SELECT
-                    gen_random_uuid(),
-                    {job.Project.UserId},
-                    {job.ProjectId},
-                    "Branch", "CommitHash", "GeneratedAtUtc",
-                    "TotalFolders", "TotalFiles", "SizeInBytes",
-                    "TotalLinesOfCode", "CodeLines", "CommentLines", "BlankLines",
-                    "TotalCommits", "TotalContributors", "TotalBranches",
-                    now() AT TIME ZONE 'utc',
-                    false
-                FROM "Cache"."StatisticCaches"
-                WHERE "LookupKey" = {lookupKey}
-                LIMIT 1
-            """, cancellationToken);
-
-            _logger.LogInformation("StatisticAnalysis copied from cache for project {ProjectId}", job.ProjectId);
             return;
         }
 
@@ -84,7 +58,6 @@ public sealed class StatisticAnalysisWorker : BaseQueueWorker
         var fileSvc         = scope.ServiceProvider.GetRequiredService<IFileStatisticsService>();
         var repoProvider    = scope.ServiceProvider.GetRequiredService<IRepositoryFetcher>();
         var downloadGate    = scope.ServiceProvider.GetRequiredService<RepoDownloadGate>();
-        var analysisConfig  = scope.ServiceProvider.GetRequiredService<AnalysisConfig>();
 
         var localPath = job.Project.LocalPath;
         if (!Directory.Exists(localPath))
@@ -184,44 +157,39 @@ public sealed class StatisticAnalysisWorker : BaseQueueWorker
             TotalBranches     = totalBranches,
             TotalCommits      = totalCommits,
             TotalContributors = totalContributors,
+            
+            AnalysisVersion   = version
         };
 
         dbContext.StatisticAnalyses.Add(analysis);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        // Save to cache — jika sudah ada (race condition), abaikan
-        try
+        // Save to cache — delegasikan ke service
+        var cache = new StatisticCache
         {
-            var cache = new StatisticCache
-            {
-                LookupKey      = lookupKey,
-                RepoUrl        = repoUrl,
-                Branch         = branch,
-                CommitHash     = commitHash,
-                GeneratedAtUtc = generatedAt,
+            LookupKey      = CacheLookupKey.Generate(repoUrl, branch, commitHash, version),
+            RepoUrl        = repoUrl,
+            Branch         = branch,
+            CommitHash     = commitHash,
+            GeneratedAtUtc = generatedAt,
 
-                TotalFolders    = fsStats.TotalFolders,
-                TotalFiles      = fsStats.TotalFiles,
-                SizeInBytes     = (int?)fsStats.SizeInBytes,
+            TotalFolders    = fsStats.TotalFolders,
+            TotalFiles      = fsStats.TotalFiles,
+            SizeInBytes     = (int?)fsStats.SizeInBytes,
 
-                TotalLinesOfCode = fsStats.TotalLinesOfCode,
-                CodeLines        = fsStats.CodeLines,
-                CommentLines     = fsStats.CommentLines,
-                BlankLines       = fsStats.BlankLines,
+            TotalLinesOfCode = fsStats.TotalLinesOfCode,
+            CodeLines        = fsStats.CodeLines,
+            CommentLines     = fsStats.CommentLines,
+            BlankLines       = fsStats.BlankLines,
 
-                TotalBranches     = totalBranches,
-                TotalCommits      = totalCommits,
-                TotalContributors = totalContributors,
-            };
+            TotalBranches     = totalBranches,
+            TotalCommits      = totalCommits,
+            TotalContributors = totalContributors,
+            
+            AnalysisVersion   = version
+        };
 
-            dbContext.StatisticCaches.Add(cache);
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateException)
-        {
-            _logger.LogInformation(
-                "Cache already populated by another worker for LookupKey={LookupKey}", lookupKey);
-        }
+        await cacheService.SetCacheAsync(cache, cancellationToken);
 
         _logger.LogInformation(
             "StatisticAnalysis saved (+ cached) for project {ProjectId}", job.ProjectId);

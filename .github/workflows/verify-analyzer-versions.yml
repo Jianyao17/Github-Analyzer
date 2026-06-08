@@ -1,8 +1,11 @@
 name: Verify Analyzer Versions
 
 on:
-  pull_request:
-    branches: [ "main" ]
+  push:
+    branches: [main, master, develop, 'feature/**']
+    paths:
+      - 'src/Github-Analyzer.Analysis/**'
+      - 'src/Github-Analyzer.WebApi/**'
 
 jobs:
   verify:

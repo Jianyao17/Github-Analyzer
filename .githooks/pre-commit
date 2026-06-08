@@ -1,0 +1,12 @@
+#!/bin/sh
+# Pre-commit hook to automatically update analyzer_versions.json
+
+# Ensure node is installed
+if ! command -v node >/dev/null 2>&1; then
+    echo "[Pre-commit] Warning: 'node' is not installed. Skipping auto-version bump."
+    exit 0
+fi
+
+# Run the node script directly (it handles git diff and git add internally)
+node scripts/bump_versions.js
+exit 0

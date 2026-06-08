@@ -1,0 +1,37 @@
+{
+  "CodeGraph": {
+    "CurrentVersion": "20260608_225000-Initial",
+    "WatchPaths": [
+      "src/Github-Analyzer.Analysis/Domain",
+      "src/Github-Analyzer.Analysis/Interface",
+      "src/Github-Analyzer.Analysis/Reader",
+      "src/Github-Analyzer.Analysis/TreeSitter",
+      "src/Github-Analyzer.WebApi/Workers/CodeGraphAnalysisWorker.cs",
+      "src/Github-Analyzer.WebApi/Entities/Analysis/CodeGraphAnalysis.cs",
+      "src/Github-Analyzer.WebApi/Entities/Cache/CodeGraphCache.cs"
+    ],
+    "History": [
+      {
+        "Version": "20260608_225000-Initial",
+        "Timestamp": "2026-06-08T15:50:00.000Z",
+        "ChangedFiles": []
+      }
+    ]
+  },
+  "Statistic": {
+    "CurrentVersion": "20260608_225000-Initial",
+    "WatchPaths": [
+      "src/Github-Analyzer.WebApi/Services/FileStatisticsService.cs",
+      "src/Github-Analyzer.WebApi/Workers/StatisticAnalysisWorker.cs",
+      "src/Github-Analyzer.WebApi/Entities/Analysis/StatisticAnalysis.cs",
+      "src/Github-Analyzer.WebApi/Entities/Cache/StatisticCache.cs"
+    ],
+    "History": [
+      {
+        "Version": "20260608_225000-Initial",
+        "Timestamp": "2026-06-08T15:50:00.000Z",
+        "ChangedFiles": []
+      }
+    ]
+  }
+}

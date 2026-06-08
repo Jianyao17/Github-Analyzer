@@ -1,4 +1,5 @@
 using GithubAnalyzer.WebApi.Config;
+using System.Text.Json;
 
 namespace GithubAnalyzer.WebApi.Extensions;
 
@@ -10,53 +11,33 @@ public static class AnalysisConfigExtensions
             .GetSection("AnalysisConfig")
             .Get<AnalysisConfig>() ?? new AnalysisConfig();
 
-        // If the user provided the version in appsettings.json, use it. Otherwise compute from git.
-        if (string.IsNullOrWhiteSpace(repoConfig.CodeGraphVersion) || repoConfig.CodeGraphVersion == "dev")
-            repoConfig.CodeGraphVersion = GetVersion("codegraph_version.txt", repoConfig.CodeGraphAnalyzerPaths);
+        // Read versions from analyzer_versions.json
+        var contentRoot = builder.Environment.ContentRootPath;
+        var jsonPath = Path.Combine(contentRoot, "analyzer_versions.json");
 
-        if (string.IsNullOrWhiteSpace(repoConfig.StatisticVersion) || repoConfig.StatisticVersion == "dev")
-            repoConfig.StatisticVersion = GetVersion("statistic_version.txt", repoConfig.StatisticAnalyzerPaths);
-        
-        builder.Services.AddSingleton(repoConfig);
-    }
-
-    private static string GetVersion(string versionFile, string[]? paths)
-    {
-        var filePath = Path.Combine(AppContext.BaseDirectory, versionFile);
-        if (File.Exists(filePath))
-        {
-            return File.ReadAllText(filePath).Trim();
-        }
-
-        // Fallback to dynamic git log if file not found (e.g., local development / Aspire)
-        if (paths != null && paths.Length > 0)
+        if (File.Exists(jsonPath))
         {
             try
             {
-                var pathsArgs = string.Join(" ", paths.Select(p => $"\"{p}\""));
-                var psi = new System.Diagnostics.ProcessStartInfo
+                var jsonContent = File.ReadAllText(jsonPath);
+                var manifest = JsonSerializer.Deserialize<AnalyzerVersionsManifest>(jsonContent);
+                if (manifest != null)
                 {
-                    FileName = "git",
-                    Arguments = $"log -1 --format=\"%H\" -- {pathsArgs}",
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    WorkingDirectory = Environment.CurrentDirectory 
-                };
-                
-                using var process = System.Diagnostics.Process.Start(psi);
-                if (process != null)
-                {
-                    process.WaitForExit(2000);
-                    var output = process.StandardOutput.ReadToEnd().Trim();
-
-                    Console.WriteLine($"Git Commit Hash: {output} path: {pathsArgs}");
-                    if (!string.IsNullOrEmpty(output)) return output;
+                    // Update the versions in AnalysisConfig based on the manifest
+                    repoConfig.CodeGraphVersion = manifest.CodeGraph.CurrentVersion;
+                    repoConfig.StatisticVersion = manifest.Statistic.CurrentVersion;
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[AnalysisConfig] Failed to parse analyzer_versions.json: {ex.Message}");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"[AnalysisConfig] Warning: analyzer_versions.json not found at {jsonPath}");
         }
 
-        return "dev";
+        builder.Services.AddSingleton(repoConfig);
     }
 }

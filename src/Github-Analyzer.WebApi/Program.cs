@@ -64,6 +64,10 @@ builder.Services.AddTransient<IRepositoryFetcher, RepositoryFetcher>();
 builder.Services.AddHttpClient<IRepositoryProvider, GithubRepositoryProvider>(
     client => client.DefaultRequestHeaders.Add("User-Agent", "Github-Analyzer"));
 
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient<ISourceCodeProvider, GithubSourceCodeProvider>(
+    client => client.DefaultRequestHeaders.Add("User-Agent", "Github-Analyzer"));
+
 // Services for analysis
 builder.Services.AddScoped<ICodebaseReader, CodebaseReader>();
 builder.Services.AddScoped<ICodeAnalyzer, TreeSitterAnalyzer>();

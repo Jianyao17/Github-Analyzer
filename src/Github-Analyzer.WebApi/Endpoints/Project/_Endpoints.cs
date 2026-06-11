@@ -79,6 +79,13 @@ public static class Endpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
+        group.MapGetSourceContentEndpoint()
+            .WithName("GetSourceContent")
+            .Produces(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
+
         // External Repositories (Github)
         group.MapFetchRepoInfoEndpoint()
             .WithName("FetchRepoInfo")

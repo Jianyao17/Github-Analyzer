@@ -3,6 +3,8 @@ export interface GraphNode {
   pathId: string;
   label: string;
   type: number; // 0=Directory, 1=Namespace, 2=File, 3=Class, 4=Function
+  startLine?: number;
+  endLine?: number;
 }
 
 export interface GraphEdge {

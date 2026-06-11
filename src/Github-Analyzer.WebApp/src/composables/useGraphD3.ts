@@ -1,3 +1,4 @@
+import { shallowRef } from 'vue';
 import { 
   watch, onMounted, 
   onUnmounted, nextTick,
@@ -5,17 +6,50 @@ import {
 } from 'vue';
 
 import type { Ref } from 'vue';
-import type { CodeGraph }  from '@/types/analysis/code-graph';
 import type { D3Node } from '@graph.types';
+import type { CodeGraph }  from '@/types/analysis/code-graph';
+import type { GraphEngine as GraphEngineType } from '@graph/core/GraphEngine';
+import type { SearchPlugin as SearchPluginType } from '@graph.plugins';
 
-import { GraphEngine } from '@graph/core/GraphEngine';
-import { buildGraphData } from '@graph/utils/graph-data';
-import { HierarchicalLayout } from '@graph/layout/hierarchical.layout';
-import { StarBalloonLayout } from '@graph/layout/star-balloon.layout';
-import { 
-  ZoomPlugin, DragPlugin, HoverPlugin, 
-  SearchPlugin, DebugPlugin, CollapsePlugin 
-} from '@graph.plugins';
+// Global cache for dynamically imported D3/Graph modules
+let GraphEngineClass        : typeof import('@graph/core/GraphEngine').GraphEngine | null = null;
+let graphDataModule         : typeof import('@graph/utils/graph-data') | null = null;
+let layoutHierarchicalModule: typeof import('@graph/layout/hierarchical.layout') | null = null;
+let layoutStarBalloonModule : typeof import('@graph/layout/star-balloon.layout') | null = null;
+let graphPluginsModule      : typeof import('@graph.plugins') | null = null;
+
+let d3LoadPromise: Promise<void> | null = null;
+
+const loadGraphModules = async () => 
+{
+  if (GraphEngineClass) return;
+  if (d3LoadPromise) return d3LoadPromise;
+  
+  d3LoadPromise = (async () => 
+  {
+    const [
+      { GraphEngine },
+      dataUtils,
+      hierarchical,
+      starBalloon,
+      plugins
+    ] = await Promise.all([
+      import('@graph/core/GraphEngine'),
+      import('@graph/utils/graph-data'),
+      import('@graph/layout/hierarchical.layout'),
+      import('@graph/layout/star-balloon.layout'),
+      import('@graph.plugins')
+    ]);
+
+    GraphEngineClass = GraphEngine;
+    graphDataModule = dataUtils;
+    layoutHierarchicalModule = hierarchical;
+    layoutStarBalloonModule = starBalloon;
+    graphPluginsModule = plugins;
+  })();
+  
+  await d3LoadPromise;
+};
 
 // Options for GraphD3 composable
 export interface GraphD3Options 
@@ -24,6 +58,7 @@ export interface GraphD3Options
   layout?:        'hierarchical' | 'star-balloon';
   orientation?:   'LR' | 'TB' | 'RL' | 'BT';
   collapseDepth?: number;
+  onShowSourceCode?: (node: D3Node) => void;
 }
 
 /**
@@ -39,21 +74,54 @@ export function useGraphD3(
   initialOptions: GraphD3Options = {},
 ) 
 {
-  // Instantiate GraphEngine per-instance
-  const engine = new GraphEngine();
-  engine
-    .use(new ZoomPlugin(),     0)
-    .use(new DragPlugin(),     1)
-    .use(new CollapsePlugin(), 2)
-    .use(new HoverPlugin(),    3)
-    .use(new SearchPlugin(),   4)
-    .use(new DebugPlugin({
-      enabled: import.meta.env.DEV,
-      logMemory: true,
-    }), 999);
+  const engine = shallowRef<GraphEngineType | null>(null);
+  const searchPlugin = shallowRef<SearchPluginType | null>(null);
+  const isGraphLoading = ref(false);
 
-  // Get the search plugin
-  const searchPlugin = engine.getPlugin<SearchPlugin>('search');
+  async function initEngine() 
+  {
+    isGraphLoading.value = true;
+    try 
+    {
+      await loadGraphModules();
+
+      // Modules are guaranteed to be loaded here
+      const _engine = new GraphEngineClass!();
+      _engine
+        .use(new graphPluginsModule!.ZoomPlugin(),     0)
+        .use(new graphPluginsModule!.DragPlugin(),     1)
+        .use(new graphPluginsModule!.CollapsePlugin(), 2)
+        .use(new graphPluginsModule!.HoverPlugin(),    3)
+        .use(new graphPluginsModule!.SearchPlugin(),   4)
+        .use(new graphPluginsModule!.DebugPlugin({
+          enabled: import.meta.env.DEV,
+          logMemory: true,
+        }), 999);
+
+      if (initialOptions.onShowSourceCode) 
+      {
+        _engine.use(new graphPluginsModule!.ContextMenuPlugin({
+          onShowSourceCode: initialOptions.onShowSourceCode
+        }), 5);
+      }
+
+      engine.value = _engine;
+      searchPlugin.value = _engine.getPlugin<SearchPluginType>('search') ?? null;
+
+      _engine.ctx.bus.on('collapse:max-depth', ({ maxDepth }: { maxDepth: number }) => 
+      {
+        maxCollapseDepth.value = maxDepth;
+        if (settings.collapseDepth > maxDepth && maxDepth > 0) 
+        {
+          settings.collapseDepth = maxDepth;
+        }
+      });
+    }
+    finally 
+    {
+      isGraphLoading.value = false;
+    }
+  }
 
   // Reactive settings object
   const settings = reactive<Required<GraphD3Options>>(
@@ -61,7 +129,8 @@ export function useGraphD3(
       mode:          initialOptions.mode          || 'directory',
       layout:        initialOptions.layout        || 'star-balloon',
       orientation:   initialOptions.orientation   || 'LR',
-      collapseDepth: initialOptions.collapseDepth || 2
+      collapseDepth: initialOptions.collapseDepth || 2,
+      onShowSourceCode: initialOptions.onShowSourceCode || (() => {})
     });
 
   /**
@@ -69,13 +138,15 @@ export function useGraphD3(
    */
   function applyLayout() 
   {
-    if (settings.layout === 'hierarchical') 
+    if (!engine.value) return;
+    if (settings.layout === 'hierarchical' && layoutHierarchicalModule) 
     {
-      engine?.useLayout(new HierarchicalLayout({ orientation: settings.orientation }));
+      engine.value.useLayout(new layoutHierarchicalModule.HierarchicalLayout(
+        { orientation: settings.orientation }));
     } 
-    else 
+    else if (layoutStarBalloonModule)
     {
-      engine?.useLayout(new StarBalloonLayout());
+      engine.value.useLayout(new layoutStarBalloonModule.StarBalloonLayout());
     }
   }
 
@@ -84,30 +155,32 @@ export function useGraphD3(
    */
   function init(data: CodeGraph) 
   {
-    const d3Data = buildGraphData(data);
+    if (!engine.value || !graphDataModule) return;
+    
+    const d3Data = graphDataModule.buildGraphData(data);
     
     // Use engine configuration logic
     if (settings.mode === 'directory') 
     {
-      engine?.setNodeFilter(node => node.type !== 1);
+      engine.value.setNodeFilter(node => node.type !== 1);
     } 
     else if (settings.mode === 'namespace') 
     {
-      engine?.setNodeFilter(node => node.type !== 0 && node.type !== 2);
+      engine.value.setNodeFilter(node => node.type !== 0 && node.type !== 2);
     }
 
-    if (engine?.isMounted()) 
+    if (engine.value.isMounted()) 
     {
-      engine?.update(d3Data);
+      engine.value.update(d3Data);
     }
     else 
     {
-      engine?.render(d3Data);
+      engine.value.render(d3Data);
     }
     applyLayout();
 
     // Fit zoom synchronously after initial layout to prevent visual shifting
-    engine?.ctx.bus.emit('zoom:fit', { padding: 60, duration: 0 });
+    engine.value.ctx.bus.emit('zoom:fit', { padding: 60, duration: 0 });
   }
 
   // Watch for layout or orientation changes
@@ -115,11 +188,11 @@ export function useGraphD3(
     () => [settings.layout, settings.orientation],
     () => 
     {
-      if (engine?.isMounted()) 
+      if (engine.value?.isMounted()) 
       {
         applyLayout();
         // Force zoom-fit after layout change
-        engine?.ctx.bus.emit('zoom:fit', { padding: 60 });
+        engine.value.ctx.bus.emit('zoom:fit', { padding: 60 });
       }
     }
   );
@@ -129,43 +202,33 @@ export function useGraphD3(
   {
     if (mode === 'directory') 
     {
-      engine?.setNodeFilter(node => node.type !== 1); // 1 is Namespace
+      engine.value?.setNodeFilter(node => node.type !== 1); // 1 is Namespace
     } 
     else if (mode === 'namespace') 
     {
-      engine?.setNodeFilter(node => node.type !== 0 && node.type !== 2); // 0 is Directory, 2 is File
+      engine.value?.setNodeFilter(node => node.type !== 0 && node.type !== 2); // 0 is Directory, 2 is File
     } 
     else 
     {
-      engine?.setNodeFilter(null);
+      engine.value?.setNodeFilter(null);
     }
   }, { immediate: true });
 
   watch(() => settings.collapseDepth, (depth) => 
   {
-    if (engine?.isMounted()) 
+    if (engine.value?.isMounted()) 
     {
-      engine?.ctx.bus.emit('collapse:set-depth', { depth });
+      engine.value.ctx.bus.emit('collapse:set-depth', { depth });
     }
   });
 
   const maxCollapseDepth = ref(4);
 
-  engine?.ctx.bus.on('collapse:max-depth', ({ maxDepth }: { maxDepth: number }) => 
-  {
-    maxCollapseDepth.value = maxDepth;
-    // ensure current depth setting does not exceed new max depth
-    if (settings.collapseDepth > maxDepth && maxDepth > 0) 
-    {
-      settings.collapseDepth = maxDepth;
-    }
-  });
-
   function expandAll() 
   {
     if (settings.collapseDepth === maxCollapseDepth.value) 
     {
-      engine?.ctx.bus.emit('collapse:set-depth', { depth: maxCollapseDepth.value });
+      engine.value?.ctx.bus.emit('collapse:set-depth', { depth: maxCollapseDepth.value });
     }
     else 
     {
@@ -178,7 +241,7 @@ export function useGraphD3(
     const defaultDepth = initialOptions.collapseDepth || 2;
     if (settings.collapseDepth === defaultDepth) 
     {
-      engine?.ctx.bus.emit('collapse:set-depth', { depth: defaultDepth });
+      engine.value?.ctx.bus.emit('collapse:set-depth', { depth: defaultDepth });
     }
     else 
     {
@@ -190,28 +253,32 @@ export function useGraphD3(
 
   onMounted(async () => 
   {
-    if (containerRef.value) 
+    await initEngine();
+    
+    if (containerRef.value && engine.value) 
     {
-      engine?.mount(containerRef.value);
+      engine.value.mount(containerRef.value);
     }
     if (dataRef.value) { await nextTick(); init(dataRef.value); }
   });
 
   onUnmounted(() => 
   {
-    engine?.unmount();
+    engine.value?.unmount();
   });
 
   return {
     settings,
     maxCollapseDepth,
+    isGraphLoading,
     expandAll,
     collapseAll,
-    getEngine:    () => engine,
-    search:       (query: string): D3Node[] => searchPlugin?.search(query) ?? [],
-    focusHover:   (node: D3Node | null) => searchPlugin?.focusHover?.(node as any),
-    focusNode:    (node: D3Node, scale?: number) => searchPlugin?.focusNode(node as any, scale),
-    focusResults: (results: D3Node[], padding?: number) => searchPlugin?.focusResults(results as any, padding),
-    clearSearch:  () => searchPlugin?.clearSearch(),
+    getEngine:    () => engine.value,
+    highlightNode:(nodeId: string | null) => engine.value?.highlightNode(nodeId),
+    search:       (query: string): D3Node[] => searchPlugin.value?.search(query) ?? [],
+    focusHover:   (node: D3Node | null) => searchPlugin.value?.focusHover?.(node as any),
+    focusNode:    (node: D3Node, scale?: number) => searchPlugin.value?.focusNode(node as any, scale),
+    focusResults: (results: D3Node[], padding?: number) => searchPlugin.value?.focusResults(results as any, padding),
+    clearSearch:  () => searchPlugin.value?.clearSearch(),
   };
 }

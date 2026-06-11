@@ -57,6 +57,16 @@ export default defineConfig({
           if (id.includes('/d3')) 
             return 'vendor-d3';
 
+          // CodeViewer libraries
+          if (id.includes('/codemirror') || 
+              id.includes('/@codemirror') || 
+              id.includes('/crelt'))
+            return 'vendor-codemirror';
+          
+          // SplitPanes
+          if (id.includes('/splitpanes'))
+            return 'vendor-splitpanes';
+
           // Data + state
           if (id.includes('/axios') || id.includes('/pinia')) 
             return 'vendor-axios-pinia';

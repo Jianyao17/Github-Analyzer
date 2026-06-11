@@ -1,0 +1,164 @@
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue';
+import { useCodeViewer } from '@/composables/useCodeViewer';
+import CodeViewerSettings from './CodeViewerSettings.vue';
+import CodeViewerSearch from './CodeViewerSearch.vue';
+import CodeViewerTabs from './CodeViewerTabs.vue';
+
+const props = defineProps<{
+  projectId: string;
+}>();
+
+defineEmits<{
+  (e: 'close-viewer'): void;
+  (e: 'focus-node', path: string): void;
+}>();
+
+const editorContainer = ref<HTMLElement | null>(null);
+
+const {
+  viewerTheme,
+  tabs,
+  activeTabId,
+  editorView,
+  isLoading,
+  isSearchOpen,
+  openFile,
+  closeTab,
+  initEditor,
+  highlightLines,
+  clearHighlightLines,
+} = useCodeViewer(props.projectId);
+
+onMounted(() => 
+{
+  if (editorContainer.value) 
+  {
+    initEditor(editorContainer.value);
+  }
+});
+
+defineExpose({
+  openFile,
+  highlightLines,
+  clearHighlightLines
+});
+
+const activeTabPathParts = computed(() => 
+{
+  if (!activeTabId.value) return [];
+  return activeTabId.value.split('/');
+});
+</script>
+
+<template>
+  <div class="
+    flex h-full w-full flex-col bg-white
+    dark:bg-gray-950
+  "
+  >
+    <div class="
+      relative z-40 flex items-end justify-between bg-gray-50 pr-2
+      dark:bg-gray-900
+    "
+    >
+      <!-- Seamless Bottom Border -->
+      <div class="
+        pointer-events-none absolute right-0 bottom-0 left-0 z-0 h-[1px] w-full
+        bg-gray-200
+        dark:bg-gray-800
+      "
+      ></div>
+
+      <CodeViewerTabs
+        :tabs="tabs"
+        :active-tab-id="activeTabId"
+        @select="(id) => openFile(id)"
+        @close="(id) => closeTab(id)"
+        class="relative z-10 flex-1"
+      />
+      <div class="relative z-10 flex items-center gap-2 pb-1.5 pl-2">
+        <CodeViewerSettings v-model:theme="viewerTheme" />
+        <button
+          class="
+            flex items-center justify-center rounded p-1.5 text-gray-500
+            transition-colors
+            hover:bg-gray-200
+            dark:text-gray-400
+            dark:hover:bg-gray-800
+          "
+          title="Close Viewer"
+          @click="$emit('close-viewer')"
+        >
+          <NIcon name="i-heroicons-x-mark-20-solid"
+            class="h-5 w-5"
+          />
+        </button>
+      </div>
+    </div>
+    
+    <!-- Breadcrumbs -->
+    <div v-if="activeTabPathParts.length > 0"
+      class="
+        flex items-center border-b border-gray-200 bg-white px-4 py-1.5 text-xs
+        text-gray-500
+        dark:border-gray-800 dark:bg-[#1f1f1f] dark:text-gray-400
+      "
+    >
+      <template v-for="(part, index) in activeTabPathParts"
+        :key="index"
+      >
+        <span class="
+          cursor-pointer transition-colors
+          hover:text-gray-700
+          dark:hover:text-gray-200
+        "
+          @click="$emit('focus-node', activeTabPathParts.slice(0, index + 1).join('/'))"
+        >{{ part }}</span>
+        <NIcon v-if="index < activeTabPathParts.length - 1"
+          name="i-lucide-chevron-right"
+          class="mx-1 h-3 w-3 opacity-50"
+        />
+      </template>
+    </div>
+
+    <div class="relative flex-1 overflow-hidden">
+      <!-- Search Component (Top-Left to avoid settings menu) -->
+      <CodeViewerSearch 
+        v-model="isSearchOpen"
+        :view="editorView"
+      />
+
+      <!-- Loading Overlay -->
+      <div
+        v-if="isLoading"
+        class="
+          absolute inset-0 z-10 flex items-center justify-center bg-white/50
+          backdrop-blur-sm
+          dark:bg-gray-950/50
+        "
+      >
+        <span class="text-sm font-medium text-gray-500">Loading code...</span>
+      </div>
+
+      <!-- Empty State -->
+      <div
+        v-if="tabs.length === 0"
+        class="
+          absolute inset-0 flex items-center justify-center text-sm
+          text-gray-400
+          dark:text-gray-600
+        "
+      >
+        Select a node to view source code
+      </div>
+
+      <!-- Editor Container -->
+      <div
+        ref="editorContainer"
+        class="h-full w-full outline-none"
+        :class="{ 'opacity-0': tabs.length === 0 }"
+      ></div>
+    </div>
+  </div>
+</template>

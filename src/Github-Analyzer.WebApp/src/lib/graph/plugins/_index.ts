@@ -9,3 +9,4 @@ export { DragPlugin } from './drag.plugin';
 export { HoverPlugin } from './hover.plugin';
 export { SearchPlugin } from './search.plugin';
 export { CollapsePlugin } from './collapse.plugin';
+export { ContextMenuPlugin } from './context-menu.plugin';

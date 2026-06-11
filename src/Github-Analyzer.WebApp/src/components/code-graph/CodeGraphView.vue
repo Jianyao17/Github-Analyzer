@@ -1,14 +1,20 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import type { CodeGraph } from '@/types/analysis/code-graph';
 import { useGraphD3 } from '@/composables/useGraphD3';
+import type { CodeGraph } from '@/types/analysis/code-graph';
 import GraphSearchModal from './GraphSearchModal.vue';
 import GraphSettingsMenu from './GraphSettingsMenu.vue';
 import GraphLegend from './GraphLegend.vue';
 
-// ─── Props ────────────────────────────────────────────────────────────────────
+// ─── Props & Emits ────────────────────────────────────────────────────────────
 const props = defineProps<{
   data: CodeGraph;
+}>();
+
+import type { GraphNode } from '@/types/analysis/code-graph';
+
+const emit = defineEmits<{
+  (e: 'show-source-code', payload: GraphNode): void;
 }>();
 
 // ─── Graph ────────────────────────────────────────────────────────────────────
@@ -16,10 +22,32 @@ const graphContainer = ref<HTMLElement | null>(null);
 const graphData = computed(() => props.data);
 
 const { 
+  settings, maxCollapseDepth,
   search, focusNode, focusHover,
-  focusResults, clearSearch, settings,
-  maxCollapseDepth, expandAll, collapseAll
-} = useGraphD3(graphContainer, graphData, { layout: 'star-balloon' });
+  focusResults, clearSearch, expandAll, 
+  collapseAll, highlightNode, getEngine
+} = useGraphD3(graphContainer, graphData, 
+  {
+  // Layout
+    layout: 'star-balloon',
+  
+    // Collapse depth
+    collapseDepth: 2,
+
+    // Show source code when node is clicked
+    onShowSourceCode: (node) => 
+    {
+      emit('show-source-code', 
+        {
+          pathId: node.id,
+          label: node.label,
+          type: node.type,
+          startLine: node.startLine,
+          endLine: node.endLine
+        });
+    }
+  }
+);
 
 // ─── Search modal ref ─────────────────────────────────────────────────────────
 const searchModal = ref<{ open: () => void; close: () => void } | null>(null);
@@ -28,6 +56,12 @@ const searchModal = ref<{ open: () => void; close: () => void } | null>(null);
 const supportsNamespace = computed(() => 
   props.data.nodes.some(n => n.type === 1)
 );
+
+defineExpose({
+  focusNode,
+  highlightNode,
+  getEngine
+});
 </script>
 
 <template>

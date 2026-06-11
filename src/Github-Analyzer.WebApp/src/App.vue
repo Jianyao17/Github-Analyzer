@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useToast } from '@nuxt/ui/composables';
 import { setToastApi, toaster } from './lib/toast';
 
 const toast = useToast();

@@ -91,6 +91,15 @@ export class GraphEngine
   }
 
   /**
+   * Highlights a single node by its ID (blue stroke focus).
+   */
+  highlightNode(nodeId: string | null): void 
+  {
+    this._ctx.focusedNodeId = nodeId;
+    this._bus.emit('highlight:focus', { nodeId });
+  }
+
+  /**
    * Expose context for consumers (e.g. LayoutManager or Plugins).
    * Context holds live references to nodes, edges, and active selections.
    */

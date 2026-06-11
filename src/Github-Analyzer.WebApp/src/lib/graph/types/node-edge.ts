@@ -10,6 +10,8 @@ export interface GraphNode
   pathId: string;
   label:  string;
   type:   number; // 0=Directory, 1=Namespace, 2=File, 3=Class, 4=Function
+  startLine?: number;
+  endLine?: number;
 
   // ── Opsional / extensible ──────────────────────────────────────────────────
   // Tambahkan field baru di sini. Kode yang tidak memakai field baru

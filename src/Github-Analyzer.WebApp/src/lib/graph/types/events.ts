@@ -11,6 +11,7 @@ export interface GraphEvents
 
   // Highlight (dari SearchPlugin / CollapsePlugin → NodePass)
   'highlight:nodes':     { ids: Set<string>; dimOpacity: number };
+  'highlight:focus':     { nodeId: string | null };
   'highlight:clear':      void;
 
   // Collapse (dari SearchPlugin -> CollapsePlugin)
@@ -25,8 +26,8 @@ export interface GraphEvents
   'node:hover': { node: D3Node | null };
 
   // Zoom (dari SearchPlugin → ZoomPlugin)
-  'zoom:to':  { x: number; y: number; scale?: number; duration?: number };
-  'zoom:fit': { padding?: number; duration?: number };
+  'zoom:to'  : { x: number; y: number; scale?: number; duration?: number };
+  'zoom:fit' : { padding?: number; duration?: number };
 
   // Simulation (dari CollapsePlugin / LayoutManager → SimulationController)
   'simulation:reheat':   { alpha?: number };

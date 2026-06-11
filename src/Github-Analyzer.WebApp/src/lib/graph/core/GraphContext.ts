@@ -24,6 +24,7 @@ export class GraphContext
   // Live data arrays (referensi yang sama dengan yang di-bind ke D3)
   private _nodes: D3Node[] = [];
   private _edges: D3Edge[] = [];
+  private _focusedNodeId: string | null = null;
 
   constructor(bus: EventBus, sim: SimulationController) 
   {
@@ -69,4 +70,7 @@ export class GraphContext
 
   get edges():         D3Edge[]                 { return this._edges; }
   set edges(value:     D3Edge[])                { this._edges = value; }
+
+  get focusedNodeId(): string | null            { return this._focusedNodeId; }
+  set focusedNodeId(value: string | null)       { this._focusedNodeId = value; }
 }

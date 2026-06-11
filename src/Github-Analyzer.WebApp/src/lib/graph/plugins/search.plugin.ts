@@ -127,6 +127,12 @@ export class SearchPlugin implements GraphPlugin
   {
     this.clearTooltip();
 
+    if (this._ctx && node.id) 
+    {
+      this._ctx.focusedNodeId = node.id;
+      this._ctx.bus.emit('highlight:focus', { nodeId: node.id });
+    }
+
     // Dynamically check if the node is currently hidden in the live context
     const isCurrentlyHidden = !this._ctx?.nodes.some(n => n.id === node.id);
 

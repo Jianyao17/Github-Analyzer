@@ -158,6 +158,11 @@ export class RenderPipeline
       this._bus.on('highlight:clear', () => 
       {
         this.nodePass.clearHighlight();
+      }),
+
+      this._bus.on('highlight:focus', ({ nodeId }) => 
+      {
+        this.nodePass.applyFocus(nodeId);
       })
     );
   }

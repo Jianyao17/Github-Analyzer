@@ -114,22 +114,28 @@ export const useProjectApi = (version: ApiVersion = '1') =>
         const rawSourceEdges = parsed.sourceRelEdges || parsed.SourceRelEdges || [];
         const rawUseEdges = parsed.useRelEdges || parsed.UseRelEdges || [];
 
-        (payload as any).graphData = {
-          nodes: rawNodes.map((n: any) => ({
-            pathId: n.pathId || n.PathId,
-            label: n.label || n.Label,
-            type: n.type !== undefined ? n.type : n.Type
-          })),
-          sourceRelEdges: rawSourceEdges.map((e: any) => ({
-            from: e.from || e.From,
-            to: e.to || e.To,
-            type: e.type !== undefined ? e.type : e.Type
-          })),
-          useRelEdges: rawUseEdges.map((e: any) => ({
-            from: e.from || e.From,
-            to: e.to || e.To,
-            type: e.type !== undefined ? e.type : e.Type
-          }))
+        (payload as any).graphData = 
+        {
+          nodes: rawNodes.map((n: any) => 
+            ({
+              pathId: n.pathId || n.PathId,
+              label: n.label || n.Label,
+              type: n.type !== undefined ? n.type : n.Type,
+              startLine: n.startLine ?? n.StartLine,
+              endLine: n.endLine ?? n.EndLine
+            })),
+          sourceRelEdges: rawSourceEdges.map((e: any) => 
+            ({
+              from: e.from || e.From,
+              to: e.to || e.To,
+              type: e.type !== undefined ? e.type : e.Type
+            })),
+          useRelEdges: rawUseEdges.map((e: any) => 
+            ({
+              from: e.from || e.From,
+              to: e.to || e.To,
+              type: e.type !== undefined ? e.type : e.Type
+            }))
         } as CodeGraph;
       }
       catch (e) 

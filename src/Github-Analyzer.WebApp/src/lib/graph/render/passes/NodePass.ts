@@ -27,11 +27,19 @@ const DEFAULT_CARD: NodeCardConfig = {
   arrowGap:         4,
 };
 
+const FOCUS_STROKE_COLOR = 'rgba(59, 130, 246, 0.5)';
+const HIGHLIGHT_STROKE_COLOR = '#FCD34D';
+const STROKE_WIDTH_ACTIVE = 3;
+
 export class NodePass 
 {
   private _selection: NodeSelection | null = null;
   private _measurer:  TextMeasurer;
   private _bus:       EventBus;
+
+  private _focusedNodeId: string | null = null;
+  private _highlightedNodeIds: Set<string> = new Set();
+  private _dimOpacity: number = 0.24;
 
   constructor(measurer: TextMeasurer, bus: EventBus) 
   {
@@ -75,34 +83,49 @@ export class NodePass
 
   applyHighlight(ids: Set<string>, dimOpacity: number): void 
   {
-    if (!this._selection) return;
-    const hasQuery = ids.size > 0;
-    this._selection.each(function (d) 
-    {
-      const g       = d3.select<SVGGElement, D3Node>(this);
-      const matched = ids.has(d.id);
-
-      g.transition()
-        .duration(200)
-        .attr('opacity', hasQuery && !matched ? dimOpacity : 1);
-
-      g.select<SVGRectElement>('rect')
-        .transition()
-        .duration(200)
-        .attr('stroke',       matched ? '#FCD34D' : 'none')
-        .attr('stroke-width', matched ? 3 : 0);
-    });
+    this._highlightedNodeIds = ids;
+    this._dimOpacity = dimOpacity;
+    this._syncState();
   }
 
   clearHighlight(): void 
   {
+    this._highlightedNodeIds.clear();
+    this._syncState();
+  }
+
+  applyFocus(nodeId: string | null): void 
+  {
+    this._focusedNodeId = nodeId;
+    this._syncState();
+  }
+
+  private _syncState(): void
+  {
     if (!this._selection) return;
-    this._selection.each(function () 
+    const hasQuery = this._highlightedNodeIds.size > 0;
+    const focused = this._focusedNodeId;
+    const highlighted = this._highlightedNodeIds;
+    const dim = this._dimOpacity;
+
+    this._selection.each(function (d) 
     {
       const g = d3.select<SVGGElement, D3Node>(this);
-      g.transition().duration(200).attr('opacity', 1);
-      g.select<SVGRectElement>('rect')
-        .transition().duration(200).attr('stroke', 'none').attr('stroke-width', 0);
+      const isMatched = highlighted.has(d.id);
+      const isFocused = d.id === focused;
+
+      g.transition()
+        .duration(200)
+        .attr('opacity', hasQuery && !isMatched ? dim : 1);
+
+      const stroke = isFocused ? FOCUS_STROKE_COLOR : (isMatched ? HIGHLIGHT_STROKE_COLOR : 'none');
+      const strokeWidth = (isFocused || isMatched) ? STROKE_WIDTH_ACTIVE : 0;
+
+      g.select<SVGRectElement>('rect.focus-ring')
+        .transition()
+        .duration(200)
+        .attr('stroke', stroke)
+        .attr('stroke-width', strokeWidth);
     });
   }
 
@@ -145,6 +168,20 @@ export class NodePass
     {
       const g = d3.select<SVGGElement, D3Node>(nodes[i]);
       this._updateCollapseBadge(g, d);
+
+      // Sync state for new and existing nodes immediately without transition
+      const isMatched = this._highlightedNodeIds.has(d.id);
+      const isFocused = d.id === this._focusedNodeId;
+      const hasQuery = this._highlightedNodeIds.size > 0;
+
+      g.attr('opacity', hasQuery && !isMatched ? this._dimOpacity : 1);
+
+      const stroke = isFocused ? FOCUS_STROKE_COLOR : (isMatched ? HIGHLIGHT_STROKE_COLOR : 'none');
+      const strokeWidth = (isFocused || isMatched) ? STROKE_WIDTH_ACTIVE : 0;
+
+      g.select<SVGRectElement>('rect.focus-ring')
+        .attr('stroke', stroke)
+        .attr('stroke-width', strokeWidth);
     });
 
     return merged;
@@ -187,6 +224,7 @@ export class NodePass
       .attr('y', 0);
 
     g.insert('rect', 'text')
+      .attr('class', 'base-bg')
       .attr('x', -hw)
       .attr('y', -hh)
       .attr('width',  cardWidth)
@@ -195,6 +233,18 @@ export class NodePass
       .attr('fill',   style.color)
       .attr('fill-opacity', 0.2)
       .attr('stroke', 'none');
+
+    // Add focus ring (outer stroke)
+    g.insert('rect', 'text')
+      .attr('class', 'focus-ring')
+      .attr('x', -hw - 4)
+      .attr('y', -hh - 4)
+      .attr('width',  cardWidth + 8)
+      .attr('height', card.height + 8)
+      .attr('rx',     card.cornerRadius + 2)
+      .attr('fill',   'none')
+      .attr('stroke', 'none')
+      .attr('stroke-width', 0);
 
     g.insert('svg', 'text')
       .attr('x', iconLeft)

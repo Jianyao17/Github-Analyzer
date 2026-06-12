@@ -43,9 +43,9 @@ public class QueueCleanupWorker : BackgroundService
                     _logger.LogInformation("Cleaned up {Count} old queue records.", oldJobsCount);
                 }
 
-                // Invalidate old analysis caches using the AnalysisCacheService (older than 30 days)
+                // Invalidate old analysis caches using the AnalysisCacheService (older than 7 days)
                 var cacheService = scope.ServiceProvider.GetRequiredService<IAnalysisCacheService>();
-                await cacheService.InvalidateOldCachesAsync(TimeSpan.FromDays(30), stoppingToken);
+                await cacheService.InvalidateOldCachesAsync(TimeSpan.FromDays(7), stoppingToken);
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Error occurred while cleaning up old records.");

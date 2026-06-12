@@ -11,7 +11,9 @@ var postgres = builder.AddPostgres("postgres")
 var postgresDb = postgres.AddDatabase(postgresDbConnectionName, "github_analyzer");
 if (builder.Environment.IsDevelopment())
 {
-    postgres.WithPgAdmin();
+    postgres.WithPgAdmin(c => c
+        .WithLifetime(ContainerLifetime.Persistent)
+        .WithHostPort(5050));
 }
 
 // Mailpit for local email testing (SMTP on 1025, Web UI on 8025)

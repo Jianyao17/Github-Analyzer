@@ -1,6 +1,6 @@
 {
   "CodeGraph": {
-    "CurrentVersion": "20260611_001639-ef1503e",
+    "CurrentVersion": "20260612_173859-04f97c3",
     "WatchPaths": [
       "src/Github-Analyzer.Analysis/Domain",
       "src/Github-Analyzer.Analysis/Interface",
@@ -11,6 +11,16 @@
       "src/Github-Analyzer.WebApi/Entities/Cache/CodeGraphCache.cs"
     ],
     "History": [
+      {
+        "Version": "20260612_173859-04f97c3",
+        "Timestamp": "2026-06-12T17:38:59.712Z",
+        "ChangedFiles": [
+          "src/Github-Analyzer.Analysis/Domain/Reader/CodebaseSnapshot.cs",
+          "src/Github-Analyzer.Analysis/Reader/CodebaseReader.cs",
+          "src/Github-Analyzer.Analysis/TreeSitter/TreeSitterAnalyzer.cs",
+          "src/Github-Analyzer.WebApi/Workers/CodeGraphAnalysisWorker.cs"
+        ]
+      },
       {
         "Version": "20260611_001639-ef1503e",
         "Timestamp": "2026-06-11T00:16:39.037Z",

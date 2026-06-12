@@ -100,6 +100,8 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
         };
 
         var snapshot = await reader.ReadAsync(localPath, options, cancellationToken);
+        snapshot.RepositoryName = job.Project.RepositoryName;
+        
         if (snapshot.Files.Count == 0)
         {
             // Check if snapshot files count is zero

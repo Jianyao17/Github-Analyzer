@@ -1,5 +1,4 @@
 using GithubAnalyzer.Analysis.Interface;
-using GithubAnalyzer.Analysis.Pipeline.Reader;
 using GithubAnalyzer.Analysis.TreeSitter;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Extensions;
@@ -14,6 +13,7 @@ using GithubAnalyzer.WebApi.Workers;
 using Microsoft.AspNetCore.HttpOverrides;
 using Scalar.AspNetCore;
 using Asp.Versioning;
+using GithubAnalyzer.Analysis.Reader;
 
 var builder = WebApplication.CreateBuilder(args);
 

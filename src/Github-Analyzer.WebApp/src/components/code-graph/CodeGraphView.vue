@@ -22,6 +22,7 @@ const graphContainer = ref<HTMLElement | null>(null);
 const graphData = computed(() => props.data);
 
 const { 
+  isGraphLoading,
   settings, maxCollapseDepth,
   search, focusNode, focusHover,
   focusResults, clearSearch, expandAll, 
@@ -147,6 +148,32 @@ defineExpose({
       >
         [ Tampilan Graph Node Codebase ]<br />
         Tidak ada node yang dapat dirender.
+      </div>
+    </div>
+
+    <!-- ── Loading Overlay ──────────────────────────────────────────────────── -->
+    <div
+      v-if="isGraphLoading"
+      class="
+        absolute inset-0 z-10 flex items-center justify-center bg-white/50
+        backdrop-blur-sm
+        dark:bg-gray-900/50
+      "
+    >
+      <div class="
+        flex items-center gap-3 rounded-full bg-white px-5 py-3 shadow-sm ring-1
+        ring-gray-200
+        dark:bg-gray-800 dark:ring-gray-700
+      "
+      >
+        <NIcon name="i-lucide-loader-2"
+          class="h-5 w-5 animate-spin text-green-500"
+        />
+        <span class="
+          text-sm font-medium text-gray-700
+          dark:text-gray-300
+        "
+        >Preparing Graph...</span>
       </div>
     </div>
 

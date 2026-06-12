@@ -43,6 +43,7 @@ export const getBaseExtensions = (isDark: boolean) =>
   
     // 2. State & Data
     EditorState.readOnly.of(true), // Content is readonly
+    EditorView.editable.of(false), // Prevent virtual keyboard on mobile
 
     // 3. Selection & Search
     drawSelection(),

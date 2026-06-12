@@ -78,6 +78,21 @@ const activeTabPathParts = computed(() =>
         class="relative z-10 flex-1"
       />
       <div class="relative z-10 flex items-center gap-2 pb-1.5 pl-2">
+        <button
+          class="
+            flex items-center justify-center rounded p-1.5 text-gray-500
+            transition-colors
+            hover:bg-gray-200
+            dark:text-gray-400
+            dark:hover:bg-gray-800
+          "
+          title="Search in File"
+          @click="isSearchOpen = !isSearchOpen"
+        >
+          <NIcon name="i-lucide-search"
+            class="h-4 w-4"
+          />
+        </button>
         <CodeViewerSettings v-model:theme="viewerTheme" />
         <button
           class="
@@ -138,7 +153,7 @@ const activeTabPathParts = computed(() =>
           dark:bg-gray-950/50
         "
       >
-        <span class="text-sm font-medium text-gray-500">Loading code...</span>
+        <span class="loading-dots text-sm font-medium text-gray-500">Loading code</span>
       </div>
 
       <!-- Empty State -->
@@ -162,3 +177,19 @@ const activeTabPathParts = computed(() =>
     </div>
   </div>
 </template>
+
+<style scoped>
+.loading-dots::after {
+  content: '';
+  animation: ellipsis 1.5s infinite;
+  display: inline-block;
+  text-align: left;
+  width: 1em;
+}
+@keyframes ellipsis {
+  0% { content: ''; }
+  25% { content: '.'; }
+  50% { content: '..'; }
+  75% { content: '...'; }
+}
+</style>

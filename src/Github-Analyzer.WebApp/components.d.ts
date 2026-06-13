@@ -19,6 +19,7 @@ declare module 'vue' {
     CodeViewerSettings: typeof import('./src/components/code-viewer/CodeViewerSettings.vue')['default']
     CodeViewerTabs: typeof import('./src/components/code-viewer/CodeViewerTabs.vue')['default']
     Dashboard: typeof import('./src/components/_layouts/Dashboard.vue')['default']
+    GraphContextMenu: typeof import('./src/components/code-graph/GraphContextMenu.vue')['default']
     GraphLegend: typeof import('./src/components/code-graph/GraphLegend.vue')['default']
     GraphSearchModal: typeof import('./src/components/code-graph/GraphSearchModal.vue')['default']
     GraphSettingsMenu: typeof import('./src/components/code-graph/GraphSettingsMenu.vue')['default']

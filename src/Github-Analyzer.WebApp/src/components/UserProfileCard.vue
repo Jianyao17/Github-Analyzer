@@ -89,11 +89,7 @@ watch([displayName, username, email, isDark], () =>
 
 <template>
   <!-- User Profile & Settings -->
-  <div class="
-    border-t border-gray-100 bg-gray-50/50 p-2
-    dark:border-gray-800 dark:bg-gray-900/50
-  "
-  >
+  <div class="border-t border-[var(--ui-border)] bg-[var(--ui-bg-muted)]/50 p-2">
     <NDropdownMenu
       :items="menuItems"
       :content="{ side: 'top', align: 'start', sideOffset: 8 }"
@@ -128,15 +124,14 @@ watch([displayName, username, email, isDark], () =>
             class="min-w-0 flex-1"
           >
             <p class="
-              truncate text-start text-sm font-semibold text-gray-900
-              dark:text-white
+              truncate text-start text-sm font-semibold
+              text-[var(--ui-text-highlighted)]
             "
             >
               {{ auth.user?.displayName || auth.user?.username || 'Guest' }}
             </p>
             <p class="
-              truncate text-start text-[11px] text-gray-500
-              dark:text-gray-400
+              truncate text-start text-[11px] text-[var(--ui-text-muted)]
             "
             >
               {{ auth.user?.email || 'Not logged in' }}
@@ -145,7 +140,7 @@ watch([displayName, username, email, isDark], () =>
           <NIcon
             v-if="!isCollapsed || isMobile"
             name="i-lucide-chevrons-up-down"
-            class="ml-auto h-4 w-4 text-gray-400"
+            class="ml-auto h-4 w-4 text-[var(--ui-text-muted)]"
           />
         </div>
       </NButton>

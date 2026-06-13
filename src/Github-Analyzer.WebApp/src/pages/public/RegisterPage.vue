@@ -139,17 +139,12 @@ async function onSubmit()
 
       <ProviderAuthSection />
 
-      <p class="
-        mt-6 text-center text-sm text-gray-500
-        dark:text-gray-400
-      "
-      >
+      <p class="mt-6 text-center text-sm text-[var(--ui-text-muted)]">
         Sudah punya akun?
         <RouterLink :to="{ name: 'public.login' }"
           class="
-            ml-1 font-medium text-primary-600 transition-colors
-            hover:text-primary-500 hover:underline
-            dark:text-primary-400
+            ml-1 font-medium text-[var(--ui-primary)] transition-colors
+            hover:underline hover:opacity-80
           "
         >
           Sign in

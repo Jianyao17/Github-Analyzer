@@ -50,15 +50,13 @@ const handleWheel = (e: WheelEvent) =>
       :class="[
         activeTabId === tab.id
           ? `
-            border-gray-200 border-b-transparent bg-white text-gray-900
-            dark:border-gray-800 dark:border-b-transparent dark:bg-[#1f1f1f]
-            dark:text-gray-100
+            border-[var(--ui-border)] border-b-transparent bg-[var(--ui-bg)]
+            text-[var(--ui-text)]
           `
           : `
-            border-transparent border-b-gray-200 text-gray-500
-            hover:bg-gray-100
-            dark:border-b-gray-800 dark:text-gray-400
-            dark:hover:bg-gray-800
+            border-transparent border-b-[var(--ui-border)]
+            text-[var(--ui-text-muted)]
+            hover:bg-[var(--ui-bg-elevated)]
           `
       ]"
       @click="emit('select', tab.id)"
@@ -69,8 +67,7 @@ const handleWheel = (e: WheelEvent) =>
         class="
           rounded p-0.5 opacity-0
           group-hover:opacity-100
-          hover:bg-gray-200
-          dark:hover:bg-gray-700
+          hover:bg-[var(--ui-bg-elevated)]
         "
         :class="{ 'opacity-100': activeTabId === tab.id }"
         @click.stop="emit('close', tab.id)"

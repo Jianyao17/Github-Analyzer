@@ -21,6 +21,11 @@ export default defineConfig({
           size: 'lg',
         },
       },
+      ui: {
+        colors: {
+          neutral: 'neutral'
+        }
+      },
     }),
     visualizer({
       filename: 'bundle-analysis.html',

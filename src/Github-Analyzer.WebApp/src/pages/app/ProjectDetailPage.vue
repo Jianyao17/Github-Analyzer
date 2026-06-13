@@ -279,12 +279,9 @@ onUnmounted(() =>
       class="flex flex-1 flex-col items-center justify-center gap-4"
     >
       <NIcon name="i-lucide-loader-2"
-        class="
-          h-8 w-8 animate-spin text-gray-400
-          dark:text-gray-500
-        "
+        class="h-8 w-8 animate-spin text-[var(--ui-text-muted)]"
       />
-      <p class="text-gray-500">Loading analysis details...</p>
+      <p class="text-[var(--ui-text-muted)]">Loading analysis details...</p>
     </div>
 
     <div v-else-if="project"
@@ -297,12 +294,10 @@ onUnmounted(() =>
         lg:flex-row
       "
       >
-        <!-- Left: Repo Info Card -->
         <NCard
           class="
-            min-w-0 flex-1 border-0 bg-white/70 ring-1 ring-gray-200
-            backdrop-blur-md
-            dark:bg-gray-900/70 dark:ring-gray-800
+            min-w-0 flex-1 border-0 bg-[var(--ui-bg)]/70 ring-1
+            ring-[var(--ui-border)] backdrop-blur-md
           "
           :ui="{ body: 'p-4 md:p-5 h-full flex flex-col justify-center' }"
         >
@@ -310,8 +305,8 @@ onUnmounted(() =>
             <!-- Left: GitHub Icon Container (No Shadow) -->
             <div class="
               flex shrink-0 items-center justify-center rounded-xl
-              bg-[#181717]/8 p-2.5 text-gray-900 ring-1 ring-gray-900/10
-              dark:bg-white/8 dark:text-white dark:ring-white/10
+              bg-[var(--ui-bg-highlighted)]/10 p-2.5
+              text-[var(--ui-text-highlighted)] ring-1 ring-[var(--ui-border)]
             "
             >
               <NIcon name="i-lucide-github"
@@ -323,8 +318,7 @@ onUnmounted(() =>
             <div class="flex min-w-0 flex-col justify-center gap-2">
               <h1 class="
                 flex flex-wrap items-center gap-2 text-lg leading-none
-                font-semibold text-gray-900
-                dark:text-white
+                font-semibold text-[var(--ui-text-highlighted)]
               "
               >
                 <template v-if="githubRepoInfo">
@@ -334,25 +328,19 @@ onUnmounted(() =>
                     rel="noreferrer noopener"
                     class="
                       truncate text-base font-semibold transition-colors
-                      hover:text-primary-600 hover:underline
-                      dark:hover:text-primary-400
+                      hover:text-[var(--ui-primary)] hover:underline
                     "
                   >
                     {{ githubRepoInfo.owner }}
                   </a>
-                  <span class="
-                    text-base font-semibold text-gray-300
-                    dark:text-gray-600
-                  "
-                  >/</span>
+                  <span class="text-base font-semibold text-[var(--ui-border)]">/</span>
                   <a
                     :href="githubRepoInfo.repositoryUrl"
                     target="_blank"
                     rel="noreferrer noopener"
                     class="
                       truncate text-base font-semibold transition-colors
-                      hover:text-primary-600 hover:underline
-                      dark:hover:text-primary-400
+                      hover:text-[var(--ui-primary)] hover:underline
                     "
                   >
                     {{ githubRepoInfo.repository }}
@@ -381,9 +369,9 @@ onUnmounted(() =>
                 </span>
                 <span v-if="project.lastCommitHash"
                   class="
-                    inline-flex items-center gap-1 rounded-full bg-gray-100 px-2
-                    py-0.5 text-xs font-medium text-gray-600
-                    dark:bg-gray-800 dark:text-gray-400
+                    inline-flex items-center gap-1 rounded-full
+                    bg-[var(--ui-bg-elevated)] px-2 py-0.5 text-xs font-medium
+                    text-[var(--ui-text-muted)]
                   "
                 >
                   <NIcon name="i-lucide-git-commit-horizontal"
@@ -393,9 +381,9 @@ onUnmounted(() =>
                 </span>
                 <span v-if="formattedCreatedAt"
                   class="
-                    inline-flex items-center gap-1 rounded-full bg-gray-100 px-2
-                    py-0.5 text-xs font-medium text-gray-600
-                    dark:bg-gray-800 dark:text-gray-400
+                    inline-flex items-center gap-1 rounded-full
+                    bg-[var(--ui-bg-elevated)] px-2 py-0.5 text-xs font-medium
+                    text-[var(--ui-text-muted)]
                   "
                 >
                   <NIcon name="i-lucide-calendar"
@@ -411,8 +399,7 @@ onUnmounted(() =>
 
       <!-- ── Tab Navigation ───────────────────────────────────────────────── -->
       <div class="
-        flex shrink-0 items-center gap-1 border-b border-gray-200
-        dark:border-gray-800
+        flex shrink-0 items-center gap-1 border-b border-[var(--ui-border)]
       "
       >
         <button id="tab-statistic"
@@ -422,15 +409,10 @@ onUnmounted(() =>
             transition-colors duration-150
           "
           :class="activeTab === 'statistic'
-            ? `
-              border-primary-500 text-primary-600
-              dark:text-primary-400
-            `
+            ? `border-[var(--ui-primary)] text-[var(--ui-primary)]`
             : `
-              border-transparent text-gray-500
-              hover:text-gray-700
-              dark:text-gray-400
-              dark:hover:text-gray-200
+              border-transparent text-[var(--ui-text-muted)]
+              hover:text-[var(--ui-text)]
             `"
         >
           <NIcon name="i-lucide-bar-chart-2"
@@ -445,15 +427,10 @@ onUnmounted(() =>
             transition-colors duration-150
           "
           :class="activeTab === 'codegraph'
-            ? `
-              border-primary-500 text-primary-600
-              dark:text-primary-400
-            `
+            ? `border-[var(--ui-primary)] text-[var(--ui-primary)]`
             : `
-              border-transparent text-gray-500
-              hover:text-gray-700
-              dark:text-gray-400
-              dark:hover:text-gray-200
+              border-transparent text-[var(--ui-text-muted)]
+              hover:text-[var(--ui-text)]
             `"
         >
           <NIcon name="i-lucide-network"
@@ -482,9 +459,8 @@ onUnmounted(() =>
               :data="graphData"
               :progress="codeGraphProgress"
               class="
-                relative min-h-0 flex-1 overflow-hidden rounded-xl border-2
-                border-dashed border-gray-200
-                dark:border-gray-800
+                relative min-h-0 flex-1 overflow-hidden rounded-xl border-1
+                border-[var(--ui-border)]
               "
               style="min-height: 400px"
             />

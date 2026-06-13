@@ -68,19 +68,11 @@ function handleProviderClick(provider: AuthProviderItem)
       >
         <div class="relative">
           <div class="absolute inset-0 flex items-center">
-            <div class="
-              w-full border-t border-gray-200
-              dark:border-gray-800
-            "
-            ></div>
+            <div class="w-full border-t border-[var(--ui-border)]"></div>
           </div>
 
           <div class="relative flex justify-center text-sm">
-            <span class="
-              bg-white px-2 text-gray-500
-              dark:bg-gray-900
-            "
-            >
+            <span class="bg-[var(--ui-bg)] px-2 text-[var(--ui-text-muted)]">
               Atau
             </span>
           </div>
@@ -103,7 +95,7 @@ function handleProviderClick(provider: AuthProviderItem)
         class="absolute inset-0 flex items-center justify-center"
       >
         <NIcon name="i-lucide-loader-2"
-          class="h-5 w-5 animate-spin text-gray-400"
+          class="h-5 w-5 animate-spin text-[var(--ui-text-muted)]"
         />
       </div>
     </div>

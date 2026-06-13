@@ -31,8 +31,7 @@ onMounted(async () =>
 <template>
   <div class="
     relative flex min-h-screen items-center justify-center overflow-hidden
-    bg-linear-to-br from-emerald-50 via-white to-sky-100 p-6
-    dark:from-gray-950 dark:via-gray-900 dark:to-gray-800
+    bg-[var(--ui-bg-muted)] p-6
   "
   >
     <div class="
@@ -47,9 +46,8 @@ onMounted(async () =>
     />
 
     <NCard class="
-      relative z-10 w-full max-w-md border border-white/40 bg-white/80
-      shadow-2xl backdrop-blur-xl
-      dark:border-gray-800 dark:bg-gray-900/80
+      relative z-10 w-full max-w-md border border-[var(--ui-border)]
+      bg-[var(--ui-bg)]/80 shadow-2xl backdrop-blur-xl
     "
     >
       <template #header>
@@ -60,18 +58,10 @@ onMounted(async () =>
               dark:text-emerald-400
             "
           />
-          <h1 class="
-            text-2xl font-bold text-gray-900
-            dark:text-white
-          "
-          >
+          <h1 class="text-2xl font-bold text-[var(--ui-text-highlighted)]">
             Signing you in
           </h1>
-          <p class="
-            text-sm text-gray-600
-            dark:text-gray-400
-          "
-          >
+          <p class="text-sm text-[var(--ui-text-muted)]">
             Completing authentication
           </p>
         </div>
@@ -84,11 +74,7 @@ onMounted(async () =>
             dark:text-primary-400
           "
         />
-        <p class="
-          text-sm text-gray-600
-          dark:text-gray-400
-        "
-        >
+        <p class="text-sm text-[var(--ui-text-muted)]">
           Please wait, we are preparing your workspace.
         </p>
       </div>

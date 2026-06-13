@@ -93,12 +93,10 @@ const formattedDate = computed(() =>
           : 'justify-start ' + (!isEditing ? 'pr-8' : 'pr-2'),
           
         isActive ? `
-          bg-primary-50 font-bold text-primary-600
-          dark:bg-primary-950 dark:text-primary-400
+          bg-[var(--ui-primary)]/10 font-medium text-[var(--ui-primary)]
         ` : `
-          transition-colors duration-150
-          hover:!bg-gray-100
-          dark:hover:!bg-gray-800/60
+          text-[var(--ui-text)] transition-colors duration-150
+          hover:!bg-[var(--ui-bg-elevated)]
         `
       ]"
     >
@@ -124,7 +122,7 @@ const formattedDate = computed(() =>
               size="sm"
               class="flex-1"
               placeholder="Project Name"
-              @keyup.enter="saveEdit"
+              @keydown.enter="saveEdit"
               @keyup.esc="cancelEdit"
             />
             <NButton icon="i-lucide-check"
@@ -155,15 +153,11 @@ const formattedDate = computed(() =>
               duration-150
             "
               :class="isActive ? `
-                text-primary-500/80
-                group-hover:text-primary-600
-                dark:text-primary-400/80
-                dark:group-hover:text-primary-300
+                text-[var(--ui-primary)]/80
+                group-hover:text-[var(--ui-primary)]
               ` : `
-                text-gray-400
-                group-hover:text-gray-600
-                dark:text-gray-500
-                dark:group-hover:text-gray-300
+                text-[var(--ui-text-muted)]
+                group-hover:text-[var(--ui-text)]
               `"
             >{{ formattedDate }}</span>
           </template>
@@ -190,8 +184,7 @@ const formattedDate = computed(() =>
           size="sm"
           class="
             px-1.5 transition-colors duration-150
-            hover:bg-gray-200
-            dark:hover:bg-gray-800
+            hover:bg-[var(--ui-bg-elevated)]
           "
           @click.stop.prevent
         />

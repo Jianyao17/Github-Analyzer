@@ -46,40 +46,34 @@ const isExpanded = ref(false);
   -->
   <div
     class="
-      pointer-events-auto w-48 rounded-lg border border-gray-200 bg-white
-      text-sm
+      pointer-events-auto w-48 rounded-lg border border-[var(--ui-border)]
+      bg-[var(--ui-bg)] text-sm
       sm:w-52
-      dark:border-gray-700 dark:bg-gray-900
     "
   >
     <!-- ── Header ────────────────────────────────────────────────────────────── -->
     <button
       class="
         flex w-full items-center justify-between px-3 py-2.5 text-left
-        font-semibold text-gray-700
-        dark:text-gray-300
+        font-semibold text-[var(--ui-text-highlighted)]
       "
       @click="isExpanded = !isExpanded"
     >
       <span class="flex items-center gap-1.5">
         Nodes Legend
-        <span class="text-xs font-normal text-gray-400">({{ totalNodes }})</span>
+        <span class="text-xs font-normal text-[var(--ui-text-muted)]">({{ totalNodes }})</span>
       </span>
 
       <!-- Chevron — only visible on mobile -->
       <NIcon
         :name="isExpanded ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-        class="h-4 w-4 text-gray-400 transition-transform"
+        class="h-4 w-4 text-[var(--ui-text-muted)] transition-transform"
       />
     </button>
 
     <!-- ── Body ─────────────────────────────────────────────────────────────── -->
     <div v-show="isExpanded">
-      <div class="
-        border-t border-gray-100 px-3 pt-2 pb-3
-        dark:border-gray-800
-      "
-      >
+      <div class="border-t border-[var(--ui-border)] px-3 pt-2 pb-3">
 
         <!-- Node types with counts -->
         <div class="space-y-1.5">
@@ -93,15 +87,10 @@ const isExpanded = ref(false);
                 class="h-2.5 w-2.5 shrink-0 rounded-full"
                 :style="{ backgroundColor: getColor(item.key) }"
               />
-              <span class="
-                truncate text-gray-600
-                dark:text-gray-400
-              "
-              >{{ item.label }}</span>
+              <span class="truncate text-[var(--ui-text-muted)]">{{ item.label }}</span>
             </div>
             <span class="
-              shrink-0 text-xs text-gray-400 tabular-nums
-              dark:text-gray-500
+              shrink-0 text-xs text-[var(--ui-text-muted)] tabular-nums
             "
             >
               {{ nodeCountByType[item.key] ?? 0 }}
@@ -110,14 +99,10 @@ const isExpanded = ref(false);
         </div>
 
         <!-- Relations section -->
-        <div class="
-          mt-3 border-t border-gray-100 pt-3
-          dark:border-gray-800
-        "
-        >
+        <div class="mt-3 border-t border-[var(--ui-border)] pt-3">
           <p class="
-            mb-1.5 text-xs font-medium tracking-wide text-gray-400 uppercase
-            dark:text-gray-500
+            mb-1.5 text-xs font-medium tracking-wide text-[var(--ui-text-muted)]
+            uppercase
           "
           >
             Relations
@@ -130,17 +115,9 @@ const isExpanded = ref(false);
                   dark:bg-gray-500
                 "
                 />
-                <span class="
-                  text-gray-600
-                  dark:text-gray-400
-                "
-                >Source</span>
+                <span class="text-[var(--ui-text-muted)]">Source</span>
               </div>
-              <span class="
-                text-xs text-gray-400 tabular-nums
-                dark:text-gray-500
-              "
-              >{{ sourceCount }}</span>
+              <span class="text-xs text-[var(--ui-text-muted)] tabular-nums">{{ sourceCount }}</span>
             </div>
             <div class="flex items-center justify-between gap-2">
               <div class="flex items-center gap-2">
@@ -149,17 +126,9 @@ const isExpanded = ref(false);
                   dark:bg-red-700
                 "
                 />
-                <span class="
-                  text-gray-600
-                  dark:text-gray-400
-                "
-                >Use</span>
+                <span class="text-[var(--ui-text-muted)]">Use</span>
               </div>
-              <span class="
-                text-xs text-gray-400 tabular-nums
-                dark:text-gray-500
-              "
-              >{{ useCount }}</span>
+              <span class="text-xs text-[var(--ui-text-muted)] tabular-nums">{{ useCount }}</span>
             </div>
           </div>
         </div>

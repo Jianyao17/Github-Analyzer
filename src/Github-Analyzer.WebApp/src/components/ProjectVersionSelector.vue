@@ -116,8 +116,8 @@ const selectedCommitId = computed({
 <template>
   <NCard
     class="
-      shrink-0 border-0 bg-white/70 ring-1 ring-gray-200 backdrop-blur-md
-      dark:bg-gray-900/70 dark:ring-gray-800
+      shrink-0 border-0 bg-[var(--ui-bg)]/70 ring-1 ring-[var(--ui-border)]
+      backdrop-blur-md
     "
     :ui="{ body: 'p-4 md:p-5 h-full flex flex-col justify-center' }"
   >
@@ -129,8 +129,8 @@ const selectedCommitId = computed({
       <!-- Branch Dropdown -->
       <div class="flex min-w-0 flex-col gap-1.5">
         <label class="
-          text-xs font-semibold tracking-wider text-gray-500 uppercase
-          dark:text-gray-400
+          text-xs font-semibold tracking-wider text-[var(--ui-text-muted)]
+          uppercase
         "
         >
           Branch
@@ -150,8 +150,8 @@ const selectedCommitId = computed({
       <!-- Commit Dropdown -->
       <div class="flex min-w-0 flex-col gap-1.5">
         <label class="
-          text-xs font-semibold tracking-wider text-gray-500 uppercase
-          dark:text-gray-400
+          text-xs font-semibold tracking-wider text-[var(--ui-text-muted)]
+          uppercase
         "
         >
           Analisis Commit

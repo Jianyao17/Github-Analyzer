@@ -24,13 +24,11 @@ onClickOutside(dropdownRef, () =>
     ref="dropdownRef"
   >
     <button class="
-      flex items-center justify-center rounded p-1.5 text-gray-500
+      flex items-center justify-center rounded p-1.5 text-[var(--ui-text-muted)]
       transition-colors
-      hover:bg-gray-200 hover:text-gray-900
-      dark:text-gray-400
-      dark:hover:bg-gray-800 dark:hover:text-gray-100
+      hover:bg-[var(--ui-bg-elevated)] hover:text-[var(--ui-text)]
     "
-      :class="{ 'bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-gray-100': isOpen }"
+      :class="{ 'bg-[var(--ui-bg-elevated)] text-[var(--ui-text)]': isOpen }"
       title="Editor Settings"
       @click="isOpen = !isOpen"
     >
@@ -50,13 +48,12 @@ onClickOutside(dropdownRef, () =>
       <div v-if="isOpen"
         class="
           absolute top-full right-0 z-50 mt-2 w-64 rounded-xl border
-          border-gray-200 bg-white p-3 shadow-xl
-          dark:border-gray-700 dark:bg-gray-900
+          border-[var(--ui-border)] bg-[var(--ui-bg)] p-3 shadow-xl
         "
       >
         <div class="
-          mb-3 px-1 text-xs font-bold tracking-wider text-gray-400 uppercase
-          dark:text-gray-500
+          mb-3 px-1 text-xs font-bold tracking-wider text-[var(--ui-text-muted)]
+          uppercase
         "
         >
           Editor Settings
@@ -76,10 +73,9 @@ onClickOutside(dropdownRef, () =>
                     dark:text-primary-400
                   `
                   : `
-                    border-gray-200 bg-white text-gray-700
-                    hover:border-gray-300 hover:bg-gray-50
-                    dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300
-                    dark:hover:border-gray-600 dark:hover:bg-gray-800
+                    border-[var(--ui-border)] bg-[var(--ui-bg)]
+                    text-[var(--ui-text-highlighted)]
+                    hover:bg-[var(--ui-bg-elevated)]
                   `
               ]"
               title="Light Mode"
@@ -102,10 +98,9 @@ onClickOutside(dropdownRef, () =>
                     dark:text-primary-400
                   `
                   : `
-                    border-gray-200 bg-white text-gray-700
-                    hover:border-gray-300 hover:bg-gray-50
-                    dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300
-                    dark:hover:border-gray-600 dark:hover:bg-gray-800
+                    border-[var(--ui-border)] bg-[var(--ui-bg)]
+                    text-[var(--ui-text-highlighted)]
+                    hover:bg-[var(--ui-bg-elevated)]
                   `
               ]"
               title="Dark Mode"

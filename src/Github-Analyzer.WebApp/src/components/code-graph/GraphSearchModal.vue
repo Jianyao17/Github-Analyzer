@@ -211,9 +211,9 @@ defineExpose({ open, close });
           >
             <div
               class="
-                overflow-hidden rounded-xl border border-gray-200 bg-white
-                shadow-2xl shadow-gray-400/20
-                dark:border-gray-700 dark:bg-gray-900 dark:shadow-black/40
+                overflow-hidden rounded-xl border border-[var(--ui-border)]
+                bg-[var(--ui-bg)] shadow-2xl shadow-gray-400/20
+                dark:shadow-black/40
               "
             >
               <!-- ── Input row ─────────────────────────────────────────────── -->
@@ -261,9 +261,9 @@ defineExpose({ open, close });
                   v-if="searchResults.length > 0"
                   ref="resultsRef"
                   class="
-                    max-h-[45vh] overflow-y-auto border-t border-gray-100
+                    max-h-[45vh] overflow-y-auto border-t
+                    border-[var(--ui-border)]
                     sm:max-h-64
-                    dark:border-gray-800
                   "
                 >
                   <button
@@ -275,14 +275,8 @@ defineExpose({ open, close });
                         transition-colors
                       `,
                       i === activeIndex
-                        ? `
-                          bg-blue-50
-                          dark:bg-blue-900/30
-                        `
-                        : `
-                          hover:bg-gray-50
-                          dark:hover:bg-gray-800
-                        `,
+                        ? `bg-[var(--ui-bg-elevated)]`
+                        : `hover:bg-[var(--ui-bg-muted)]`,
                     ]"
                     @click="selectNode(node)"
                     @mouseenter="activeIndex = i"
@@ -300,8 +294,7 @@ defineExpose({ open, close });
                       <!-- TOP ROW -->
                       <div class="flex items-center gap-2">
                         <span class="
-                          truncate text-sm font-medium text-gray-800
-                          dark:text-gray-100
+                          truncate text-sm font-medium text-[var(--ui-text)]
                         "
                         >
                           {{ node.label }}
@@ -320,11 +313,7 @@ defineExpose({ open, close });
                       </div>
 
                       <!-- BOTTOM ROW -->
-                      <span class="
-                        truncate text-xs text-gray-400
-                        dark:text-gray-500
-                      "
-                      >
+                      <span class="truncate text-xs text-[var(--ui-text-muted)]">
                         {{ node.pathId }}
                       </span>
                     </div>
@@ -335,17 +324,12 @@ defineExpose({ open, close });
                 <div
                   v-else
                   class="
-                    border-t border-gray-100 py-8 text-center text-sm
-                    text-gray-400
-                    dark:border-gray-800 dark:text-gray-500
+                    border-t border-[var(--ui-border)] py-8 text-center text-sm
+                    text-[var(--ui-text-muted)]
                   "
                 >
                   No nodes found for
-                  <span class="
-                    font-medium text-gray-600
-                    dark:text-gray-300
-                  "
-                  >"{{ searchQuery }}"</span>
+                  <span class="font-medium text-[var(--ui-text-highlighted)]">"{{ searchQuery }}"</span>
                 </div>
               </template>
 
@@ -353,9 +337,8 @@ defineExpose({ open, close });
               <div
                 v-else
                 class="
-                  border-t border-gray-100 py-8 text-center text-sm
-                  text-gray-400
-                  dark:border-gray-800 dark:text-gray-500
+                  border-t border-[var(--ui-border)] py-8 text-center text-sm
+                  text-[var(--ui-text-muted)]
                 "
               >
                 <template v-if="totalNodes">
@@ -370,16 +353,11 @@ defineExpose({ open, close });
               <div
                 v-if="searchResults.length > 0"
                 class="
-                  flex items-center justify-between border-t border-gray-100
-                  px-4 py-2
-                  dark:border-gray-800
+                  flex items-center justify-between border-t
+                  border-[var(--ui-border)] px-4 py-2
                 "
               >
-                <span class="
-                  text-xs text-gray-400
-                  dark:text-gray-500
-                "
-                >
+                <span class="text-xs text-[var(--ui-text-muted)]">
                   {{ searchResults.length }} result{{ searchResults.length !== 1 ? 's' : '' }}
                   <span v-if="searchResults.length > MAX_RESULTS"
                     class="opacity-60"
@@ -388,9 +366,8 @@ defineExpose({ open, close });
 
                 <div class="flex items-center gap-3">
                   <span class="
-                    hidden text-xs text-gray-300
+                    hidden text-xs text-[var(--ui-text-dimmed)]
                     sm:block
-                    dark:text-gray-600
                   "
                   >
                     ↑↓ navigate · Enter select · Esc close

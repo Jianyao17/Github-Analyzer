@@ -176,8 +176,7 @@ onUnmounted(() =>
   <div v-if="modelValue" 
     class="
       absolute top-2 right-6 z-30 flex items-center gap-2 rounded border
-      border-gray-300 bg-white p-1 shadow-sm
-      dark:border-gray-700 dark:bg-[#252526]
+      border-[var(--ui-border)] bg-[var(--ui-bg)] p-1 shadow-sm
     "
   >
     <div class="relative flex items-center">
@@ -187,11 +186,10 @@ onUnmounted(() =>
         type="text"
         placeholder="Find"
         class="
-          w-72 rounded border border-transparent bg-gray-100 px-2 py-1
-          pr-[130px] text-[13px] transition-colors outline-none
-          focus:border-blue-500
-          dark:bg-[#3c3c3c] dark:text-gray-200
-          dark:focus:border-blue-500
+          w-72 rounded border border-transparent bg-[var(--ui-bg-elevated)] px-2
+          py-1 pr-[130px] text-[13px] text-[var(--ui-text)] transition-colors
+          outline-none
+          focus:border-primary-500
         "
         @keydown.enter.exact.prevent="onNext"
         @keydown.shift.enter.prevent="onPrev"
@@ -200,8 +198,7 @@ onUnmounted(() =>
       <div v-if="query"
         class="
           pointer-events-none absolute right-[78px] flex items-center pr-1
-          text-[11px] text-gray-500
-          dark:text-gray-400
+          text-[11px] text-[var(--ui-text-muted)]
         "
       >
         <span v-if="matchCount > 0">{{ currentMatchIndex }} of {{ matchCount }}</span>
@@ -211,13 +208,11 @@ onUnmounted(() =>
       <div class="absolute right-1 flex items-center gap-0.5">
         <button
           class="
-            flex h-6 w-6 items-center justify-center rounded-sm text-gray-500
-            transition-colors
-            hover:bg-gray-300 hover:text-gray-900
-            dark:text-gray-400
-            dark:hover:bg-gray-600 dark:hover:text-gray-100
+            flex h-6 w-6 items-center justify-center rounded-sm
+            text-[var(--ui-text-muted)] transition-colors
+            hover:bg-[var(--ui-bg-muted)] hover:text-[var(--ui-text)]
           "
-          :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200': matchCase }"
+          :class="{ 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200': matchCase }"
           title="Match Case"
           @click="matchCase = !matchCase"
         >
@@ -225,13 +220,11 @@ onUnmounted(() =>
         </button>
         <button
           class="
-            flex h-6 w-6 items-center justify-center rounded-sm text-gray-500
-            transition-colors
-            hover:bg-gray-300 hover:text-gray-900
-            dark:text-gray-400
-            dark:hover:bg-gray-600 dark:hover:text-gray-100
+            flex h-6 w-6 items-center justify-center rounded-sm
+            text-[var(--ui-text-muted)] transition-colors
+            hover:bg-[var(--ui-bg-muted)] hover:text-[var(--ui-text)]
           "
-          :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200': wholeWord }"
+          :class="{ 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200': wholeWord }"
           title="Match Whole Word"
           @click="wholeWord = !wholeWord"
         >
@@ -239,13 +232,11 @@ onUnmounted(() =>
         </button>
         <button
           class="
-            flex h-6 w-6 items-center justify-center rounded-sm text-gray-500
-            transition-colors
-            hover:bg-gray-300 hover:text-gray-900
-            dark:text-gray-400
-            dark:hover:bg-gray-600 dark:hover:text-gray-100
+            flex h-6 w-6 items-center justify-center rounded-sm
+            text-[var(--ui-text-muted)] transition-colors
+            hover:bg-[var(--ui-bg-muted)] hover:text-[var(--ui-text)]
           "
-          :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200': useRegex }"
+          :class="{ 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200': useRegex }"
           title="Use Regular Expression"
           @click="useRegex = !useRegex"
         >
@@ -258,11 +249,9 @@ onUnmounted(() =>
     <div class="flex items-center gap-1 pl-1">
       <button
         class="
-          flex h-7 w-7 items-center justify-center rounded-sm text-gray-500
-          transition-colors
-          hover:bg-gray-200 hover:text-gray-900
-          dark:text-gray-400
-          dark:hover:bg-gray-700 dark:hover:text-gray-100
+          flex h-7 w-7 items-center justify-center rounded-sm
+          text-[var(--ui-text-muted)] transition-colors
+          hover:bg-[var(--ui-bg-elevated)] hover:text-[var(--ui-text)]
         "
         title="Previous Match (Shift+Enter)"
         @click="onPrev"
@@ -273,11 +262,9 @@ onUnmounted(() =>
       </button>
       <button
         class="
-          flex h-7 w-7 items-center justify-center rounded-sm text-gray-500
-          transition-colors
-          hover:bg-gray-200 hover:text-gray-900
-          dark:text-gray-400
-          dark:hover:bg-gray-700 dark:hover:text-gray-100
+          flex h-7 w-7 items-center justify-center rounded-sm
+          text-[var(--ui-text-muted)] transition-colors
+          hover:bg-[var(--ui-bg-elevated)] hover:text-[var(--ui-text)]
         "
         title="Next Match (Enter)"
         @click="onNext"
@@ -288,11 +275,9 @@ onUnmounted(() =>
       </button>
       <button
         class="
-          ml-1 flex h-7 w-7 items-center justify-center rounded-sm text-gray-500
-          transition-colors
-          hover:bg-gray-200 hover:text-gray-900
-          dark:text-gray-400
-          dark:hover:bg-gray-700 dark:hover:text-gray-100
+          ml-1 flex h-7 w-7 items-center justify-center rounded-sm
+          text-[var(--ui-text-muted)] transition-colors
+          hover:bg-[var(--ui-bg-elevated)] hover:text-[var(--ui-text)]
         "
         title="Close (Escape)"
         @click="closeSearch"

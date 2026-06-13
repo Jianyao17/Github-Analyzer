@@ -60,19 +60,14 @@ onClickOutside(settingsDropdownContainer, () =>
     <button
       class="
         relative z-20 flex h-[42px] items-center justify-between gap-2
-        rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm
-        font-semibold text-gray-700 transition-all duration-200
-        hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm
-        active:bg-gray-100
+        rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg)] px-3
+        py-2.5 text-sm font-semibold text-[var(--ui-text-highlighted)]
+        transition-all duration-200
+        hover:bg-[var(--ui-bg-elevated)] hover:shadow-sm
+        active:bg-[var(--ui-bg-elevated)]
         sm:h-auto
-        dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300
-        dark:hover:border-gray-600 dark:hover:bg-gray-800
-        dark:active:bg-gray-800
       "
-      :class="isSettingsOpen ? `
-        border-gray-300 bg-gray-50 shadow-sm
-        dark:border-gray-600 dark:bg-gray-800
-      ` : ''"
+      :class="isSettingsOpen ? `bg-[var(--ui-bg-elevated)] shadow-sm` : ''"
       @click="isSettingsOpen = !isSettingsOpen"
     >
       <span class="
@@ -82,11 +77,10 @@ onClickOutside(settingsDropdownContainer, () =>
       >Graph Settings</span>
       <NIcon 
         name="i-lucide-settings" 
-        class="h-4 w-4 text-gray-400 transition-transform duration-300"
-        :class="isSettingsOpen ? `
-          rotate-90 text-gray-600
-          dark:text-gray-200
-        ` : ''"
+        class="
+          h-4 w-4 text-[var(--ui-text-muted)] transition-transform duration-300
+        "
+        :class="isSettingsOpen ? `rotate-90 text-[var(--ui-text)]` : ''"
       />
     </button>
 
@@ -103,16 +97,16 @@ onClickOutside(settingsDropdownContainer, () =>
         v-if="isSettingsOpen"
         class="
           fixed bottom-20 left-1/2 z-30 w-[90vw] max-w-[320px] -translate-x-1/2
-          rounded-xl border border-gray-200 bg-white p-3 shadow-2xl
+          rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg)] p-3
+          shadow-2xl
           sm:absolute sm:right-0 sm:bottom-full sm:left-auto sm:mb-3 sm:w-64
           sm:translate-x-0 sm:shadow-md
-          dark:border-gray-700 dark:bg-gray-900
         "
       >
         <!-- Graph Settings Header -->
         <div class="
-          mb-3 px-1 text-xs font-bold tracking-wider text-gray-400 uppercase
-          dark:text-gray-500
+          mb-3 px-1 text-xs font-bold tracking-wider text-[var(--ui-text-muted)]
+          uppercase
         "
         >
           Graph Settings
@@ -124,18 +118,16 @@ onClickOutside(settingsDropdownContainer, () =>
             <button
               class="
                 flex w-full items-center justify-between gap-2 rounded-lg border
-                border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold
-                text-gray-700 transition-all duration-200
-                hover:border-gray-300 hover:bg-gray-50
-                active:bg-gray-100
-                dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300
-                dark:hover:border-gray-600 dark:hover:bg-gray-800
-                dark:active:bg-gray-800
+                border-[var(--ui-border)] bg-[var(--ui-bg)] px-3 py-2.5 text-sm
+                font-semibold text-[var(--ui-text-highlighted)] transition-all
+                duration-200
+                hover:bg-[var(--ui-bg-elevated)]
+                active:bg-[var(--ui-bg-elevated)]
               "
               :disabled="!supportsNamespace"
               :class="!supportsNamespace ? `
                 cursor-not-allowed opacity-50
-                hover:border-gray-200 hover:bg-white
+                hover:border-[var(--ui-border)] hover:bg-[var(--ui-bg)]
               ` : ''"
               @click="settings.mode = settings.mode === 'directory' ? 'namespace' : 'directory'"
             >
@@ -150,13 +142,16 @@ onClickOutside(settingsDropdownContainer, () =>
 
               <NIcon 
                 name="i-lucide-arrow-right-left" 
-                class="h-3.5 w-3.5 shrink-0 text-gray-400 opacity-50" 
+                class="
+                  h-3.5 w-3.5 shrink-0 text-[var(--ui-text-muted)] opacity-50
+                " 
               />
             </button>
 
             <div v-if="!supportsNamespace"
               class="
-                mt-2 px-1 text-left text-[10px] leading-tight text-gray-400
+                mt-2 px-1 text-left text-[10px] leading-tight
+                text-[var(--ui-text-muted)]
               "
             >
               This repository's language does not support Namespaces.
@@ -165,11 +160,9 @@ onClickOutside(settingsDropdownContainer, () =>
 
           <!-- Layout Algorithm -->
           <div class="
-            rounded-lg border border-gray-200 bg-white transition-all
-            duration-200
-            hover:border-gray-300 hover:bg-gray-50
-            dark:border-gray-700 dark:bg-gray-900
-            dark:hover:border-gray-600 dark:hover:bg-gray-800
+            rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg)]
+            transition-all duration-200
+            hover:bg-[var(--ui-bg-elevated)]
           "
           >
             <NSelect
@@ -185,20 +178,18 @@ onClickOutside(settingsDropdownContainer, () =>
               :content="{ position: 'popper', side: 'top', align: 'center', sideOffset: 8 }"
               :ui="{
                 content: 'z-[100]',
-                base: 'font-semibold text-gray-700 dark:text-gray-300 cursor-pointer',
-                leadingIcon: 'text-gray-400 shrink-0',
-                trailingIcon: 'text-gray-400 opacity-50 shrink-0'
+                base: 'font-semibold text-[var(--ui-text-highlighted)] cursor-pointer',
+                leadingIcon: 'text-[var(--ui-text-muted)] shrink-0',
+                trailingIcon: 'text-[var(--ui-text-muted)] opacity-50 shrink-0'
               }"
             />
           </div>
           <!-- Orientation Algorithm (Only visible if hierarchical) -->
           <div v-if="settings.layout === 'hierarchical'"
             class="
-              rounded-lg border border-gray-200 bg-white transition-all
-              duration-200
-              hover:border-gray-300 hover:bg-gray-50
-              dark:border-gray-700 dark:bg-gray-900
-              dark:hover:border-gray-600 dark:hover:bg-gray-800
+              rounded-lg border border-[var(--ui-border)] bg-[var(--ui-bg)]
+              transition-all duration-200
+              hover:bg-[var(--ui-bg-elevated)]
             "
           >
             <NSelect
@@ -225,8 +216,8 @@ onClickOutside(settingsDropdownContainer, () =>
           
           <!-- Collapse Controls Header -->
           <div class="
-            mt-1 px-1 text-xs font-bold tracking-wider text-gray-400 uppercase
-            dark:text-gray-500
+            mt-1 px-1 text-xs font-bold tracking-wider
+            text-[var(--ui-text-muted)] uppercase
           "
           >
             Collapse Settings
@@ -234,14 +225,13 @@ onClickOutside(settingsDropdownContainer, () =>
 
           <!-- Incremental Depth Stepper -->
           <div class="
-            flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-3
-            dark:border-gray-700 dark:bg-gray-900
+            flex flex-col gap-2 rounded-lg border border-[var(--ui-border)]
+            bg-[var(--ui-bg)] p-3
           "
           >
             <div class="
               flex items-center justify-between text-xs font-semibold
-              text-gray-600
-              dark:text-gray-400
+              text-[var(--ui-text-muted)]
             "
             >
               <span>Depth Level</span>
@@ -252,11 +242,10 @@ onClickOutside(settingsDropdownContainer, () =>
               <button 
                 class="
                   flex h-8 w-8 items-center justify-center rounded-md
-                  bg-gray-100 text-gray-600 transition-colors
-                  hover:bg-gray-200
+                  bg-[var(--ui-bg-elevated)] text-[var(--ui-text-muted)]
+                  transition-colors
+                  hover:bg-[var(--ui-bg-muted)] hover:text-[var(--ui-text)]
                   disabled:cursor-not-allowed disabled:opacity-50
-                  dark:bg-gray-800 dark:text-gray-400
-                  dark:hover:bg-gray-700
                 "
                 :disabled="settings.collapseDepth <= 1"
                 @click="decrementDepth"
@@ -273,8 +262,7 @@ onClickOutside(settingsDropdownContainer, () =>
                   :key="i"
                   class="flex-1 rounded-full transition-colors duration-300"
                   :class="i <= settings.collapseDepth ? 'bg-primary' : `
-                    bg-gray-200
-                    dark:bg-gray-700
+                    bg-[var(--ui-border)]
                   `"
                 ></div>
               </div>
@@ -282,11 +270,10 @@ onClickOutside(settingsDropdownContainer, () =>
               <button 
                 class="
                   flex h-8 w-8 items-center justify-center rounded-md
-                  bg-gray-100 text-gray-600 transition-colors
-                  hover:bg-gray-200
+                  bg-[var(--ui-bg-elevated)] text-[var(--ui-text-muted)]
+                  transition-colors
+                  hover:bg-[var(--ui-bg-muted)] hover:text-[var(--ui-text)]
                   disabled:cursor-not-allowed disabled:opacity-50
-                  dark:bg-gray-800 dark:text-gray-400
-                  dark:hover:bg-gray-700
                 "
                 :disabled="settings.collapseDepth >= maxCollapseDepth"
                 @click="incrementDepth"
@@ -303,13 +290,11 @@ onClickOutside(settingsDropdownContainer, () =>
             <button
               class="
                 flex flex-1 items-center justify-center gap-2 rounded-lg border
-                border-gray-200 bg-white py-2 text-xs font-semibold
-                text-gray-700 transition-all duration-200
-                hover:border-gray-300 hover:bg-gray-50
-                active:bg-gray-100
-                dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300
-                dark:hover:border-gray-600 dark:hover:bg-gray-800
-                dark:active:bg-gray-800
+                border-[var(--ui-border)] bg-[var(--ui-bg)] py-2 text-xs
+                font-semibold text-[var(--ui-text-highlighted)] transition-all
+                duration-200
+                hover:bg-[var(--ui-bg-elevated)]
+                active:bg-[var(--ui-bg-elevated)]
               "
               @click="collapseAll"
             >
@@ -321,13 +306,11 @@ onClickOutside(settingsDropdownContainer, () =>
             <button
               class="
                 flex flex-1 items-center justify-center gap-2 rounded-lg border
-                border-gray-200 bg-white py-2 text-xs font-semibold
-                text-gray-700 transition-all duration-200
-                hover:border-gray-300 hover:bg-gray-50
-                active:bg-gray-100
-                dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300
-                dark:hover:border-gray-600 dark:hover:bg-gray-800
-                dark:active:bg-gray-800
+                border-[var(--ui-border)] bg-[var(--ui-bg)] py-2 text-xs
+                font-semibold text-[var(--ui-text-highlighted)] transition-all
+                duration-200
+                hover:bg-[var(--ui-bg-elevated)]
+                active:bg-[var(--ui-bg-elevated)]
               "
               @click="expandAll"
             >

@@ -77,9 +77,8 @@ async function onSubmit()
         <template #hint>
           <RouterLink :to="{ name: 'public.forgot-password' }"
             class="
-              text-sm font-medium text-primary-600
-              hover:text-primary-500
-              dark:text-primary-400
+              text-sm font-medium text-[var(--ui-primary)]
+              hover:opacity-80
             "
           >
             Lupa password?
@@ -118,17 +117,12 @@ async function onSubmit()
 
     <ProviderAuthSection />
 
-    <p class="
-      mt-6 text-center text-sm text-gray-500
-      dark:text-gray-400
-    "
-    >
+    <p class="mt-6 text-center text-sm text-[var(--ui-text-muted)]">
       Belum punya akun?
       <RouterLink :to="{ name: 'public.register' }"
         class="
-          ml-1 font-medium text-primary-600 transition-colors
-          hover:text-primary-500 hover:underline
-          dark:text-primary-400
+          ml-1 font-medium text-[var(--ui-primary)] transition-colors
+          hover:underline hover:opacity-80
         "
       >
         Sign up

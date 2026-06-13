@@ -36,13 +36,13 @@ export class SearchPlugin implements GraphPlugin
       .style('position', 'absolute')
       .style('pointer-events', 'none')
       .style('opacity', 0)
-      .style('background', '#1e293b')
-      .style('color', '#fff')
+      .style('background', 'var(--ui-bg-elevated)')
+      .style('color', 'var(--ui-text)')
       .style('padding', '6px 12px')
       .style('border-radius', '6px')
       .style('font-size', '12px')
       .style('box-shadow', '0 4px 6px -1px rgba(0, 0, 0, 0.1)')
-      .style('border', '1px solid #334155')
+      .style('border', '1px solid var(--ui-border)')
       .style('z-index', 10);
   }
 
@@ -247,20 +247,20 @@ export class SearchPlugin implements GraphPlugin
     this._tooltip
       .html(`
         <div style="text-align: center;">
-          <div style="font-weight: 600; color: #fbbf24;">${node.label}</div>
-          <div style="font-size: 10px; color: #94a3b8;">Exact Match</div>
+          <div style="font-weight: 600; color: var(--ui-warning);">${node.label}</div>
+          <div style="font-size: 10px; color: var(--ui-text-muted);">Exact Match</div>
         </div>
         <!-- Arrow border -->
         <div 
           style="position: absolute; bottom: -7px; left: 50%; 
           transform: translateX(-50%); border-width: 7px 7px 0 7px; 
-          border-style: solid; border-color: #334155 transparent transparent transparent;">
+          border-style: solid; border-color: var(--ui-border) transparent transparent transparent;">
         </div>
         <!-- Arrow fill -->
         <div 
           style="position: absolute; bottom: -6px; left: 50%; 
           transform: translateX(-50%); border-width: 6px 6px 0 6px; 
-          border-style: solid; border-color: #1e293b transparent transparent transparent;">
+          border-style: solid; border-color: var(--ui-bg-elevated) transparent transparent transparent;">
         </div>
       `)
       .style('position', 'fixed')
@@ -290,20 +290,20 @@ export class SearchPlugin implements GraphPlugin
     this._tooltip
       .html(`
         <div style="text-align: center;">
-          <div style="font-weight: 600; color: #fbbf24;">${node.label}</div>
-          <div style="font-size: 10px; color: #94a3b8;">is inside <strong>${parentNode.label}</strong></div>
+          <div style="font-weight: 600; color: var(--ui-warning);">${node.label}</div>
+          <div style="font-size: 10px; color: var(--ui-text-muted);">is inside <strong>${parentNode.label}</strong></div>
         </div>
         <!-- Arrow border -->
         <div 
           style="position: absolute; bottom: -7px; left: 50%; 
           transform: translateX(-50%); border-width: 7px 7px 0 7px; 
-          border-style: solid; border-color: #334155 transparent transparent transparent;">
+          border-style: solid; border-color: var(--ui-border) transparent transparent transparent;">
         </div>
         <!-- Arrow fill -->
         <div 
           style="position: absolute; bottom: -6px; left: 50%; 
           transform: translateX(-50%); border-width: 6px 6px 0 6px; 
-          border-style: solid; border-color: #1e293b transparent transparent transparent;">
+          border-style: solid; border-color: var(--ui-bg-elevated) transparent transparent transparent;">
         </div>
       `)
       .style('position', 'fixed')

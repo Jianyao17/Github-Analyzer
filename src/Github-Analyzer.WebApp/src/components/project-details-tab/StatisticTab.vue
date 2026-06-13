@@ -44,10 +44,7 @@ const commentRatio = computed(() =>
             stroke="currentColor"
             stroke-width="8"
             fill="transparent"
-            class="
-              text-gray-200
-              dark:text-gray-700
-            "
+            class="text-[var(--ui-border)]"
           />
         </svg>
         <svg class="absolute inset-0 h-full w-full animate-spin"
@@ -65,26 +62,17 @@ const commentRatio = computed(() =>
             class="text-primary-500"
           />
         </svg>
-        <span class="
-          text-xl font-bold text-gray-800
-          dark:text-white
-        "
-        >
+        <span class="text-xl font-bold text-[var(--ui-text-highlighted)]">
           {{ Math.round(progress?.progress || 0) }}<span class="
-            text-xs text-gray-400
+            text-xs text-[var(--ui-text-muted)]
           "
           >%</span>
         </span>
       </div>
       <div class="text-center">
+        <p class="font-semibold text-[var(--ui-text)]">Menyiapkan Analisis Statistik...</p>
         <p class="
-          font-semibold text-gray-700
-          dark:text-gray-300
-        "
-        >Menyiapkan Analisis Statistik...</p>
-        <p class="
-          mt-1 max-w-sm animate-pulse text-sm text-gray-500
-          dark:text-gray-400
+          mt-1 max-w-sm animate-pulse text-sm text-[var(--ui-text-muted)]
         "
         >
           {{ progress?.message || 'Menunggu proses analisa selesai.' }}
@@ -102,8 +90,7 @@ const commentRatio = computed(() =>
         <h2
           class="
             mb-3 flex items-center gap-2 text-xs font-semibold tracking-wider
-            text-gray-400 uppercase
-            dark:text-gray-500
+            text-[var(--ui-text-muted)] uppercase
           "
         >
           <NIcon name="i-lucide-git-branch"
@@ -116,10 +103,7 @@ const commentRatio = computed(() =>
         "
         >
 
-          <NCard class="
-            border-0 ring-1 ring-gray-200
-            dark:ring-gray-800
-          "
+          <NCard class="border-0 ring-1 ring-[var(--ui-border)]"
             :ui="{ body: 'p-4' }"
           >
             <div class="flex items-center gap-3">
@@ -137,25 +121,18 @@ const commentRatio = computed(() =>
               </div>
               <div>
                 <p class="
-                  text-2xl font-bold text-gray-900 tabular-nums
-                  dark:text-white
+                  text-2xl font-bold text-[var(--ui-text-highlighted)]
+                  tabular-nums
                 "
                 >
                   {{ data.totalCommits?.toLocaleString() ?? '—' }}
                 </p>
-                <p class="
-                  text-xs text-gray-500
-                  dark:text-gray-400
-                "
-                >Total Commits</p>
+                <p class="text-xs text-[var(--ui-text-muted)]">Total Commits</p>
               </div>
             </div>
           </NCard>
 
-          <NCard class="
-            border-0 ring-1 ring-gray-200
-            dark:ring-gray-800
-          "
+          <NCard class="border-0 ring-1 ring-[var(--ui-border)]"
             :ui="{ body: 'p-4' }"
           >
             <div class="flex items-center gap-3">
@@ -173,25 +150,18 @@ const commentRatio = computed(() =>
               </div>
               <div>
                 <p class="
-                  text-2xl font-bold text-gray-900 tabular-nums
-                  dark:text-white
+                  text-2xl font-bold text-[var(--ui-text-highlighted)]
+                  tabular-nums
                 "
                 >
                   {{ data.totalContributors?.toLocaleString() ?? '—' }}
                 </p>
-                <p class="
-                  text-xs text-gray-500
-                  dark:text-gray-400
-                "
-                >Contributors</p>
+                <p class="text-xs text-[var(--ui-text-muted)]">Contributors</p>
               </div>
             </div>
           </NCard>
 
-          <NCard class="
-            border-0 ring-1 ring-gray-200
-            dark:ring-gray-800
-          "
+          <NCard class="border-0 ring-1 ring-[var(--ui-border)]"
             :ui="{ body: 'p-4' }"
           >
             <div class="flex items-center gap-3">
@@ -209,17 +179,13 @@ const commentRatio = computed(() =>
               </div>
               <div>
                 <p class="
-                  text-2xl font-bold text-gray-900 tabular-nums
-                  dark:text-white
+                  text-2xl font-bold text-[var(--ui-text-highlighted)]
+                  tabular-nums
                 "
                 >
                   {{ data.totalBranches?.toLocaleString() ?? '—' }}
                 </p>
-                <p class="
-                  text-xs text-gray-500
-                  dark:text-gray-400
-                "
-                >Branches</p>
+                <p class="text-xs text-[var(--ui-text-muted)]">Branches</p>
               </div>
             </div>
           </NCard>
@@ -232,8 +198,7 @@ const commentRatio = computed(() =>
         <h2
           class="
             mb-3 flex items-center gap-2 text-xs font-semibold tracking-wider
-            text-gray-400 uppercase
-            dark:text-gray-500
+            text-[var(--ui-text-muted)] uppercase
           "
         >
           <NIcon name="i-lucide-folder-open"
@@ -246,10 +211,7 @@ const commentRatio = computed(() =>
         "
         >
 
-          <NCard class="
-            border-0 ring-1 ring-gray-200
-            dark:ring-gray-800
-          "
+          <NCard class="border-0 ring-1 ring-[var(--ui-border)]"
             :ui="{ body: 'p-4' }"
           >
             <div class="flex items-center gap-3">
@@ -267,25 +229,18 @@ const commentRatio = computed(() =>
               </div>
               <div>
                 <p class="
-                  text-2xl font-bold text-gray-900 tabular-nums
-                  dark:text-white
+                  text-2xl font-bold text-[var(--ui-text-highlighted)]
+                  tabular-nums
                 "
                 >
                   {{ data.totalFolders?.toLocaleString() ?? '—' }}
                 </p>
-                <p class="
-                  text-xs text-gray-500
-                  dark:text-gray-400
-                "
-                >Folders</p>
+                <p class="text-xs text-[var(--ui-text-muted)]">Folders</p>
               </div>
             </div>
           </NCard>
 
-          <NCard class="
-            border-0 ring-1 ring-gray-200
-            dark:ring-gray-800
-          "
+          <NCard class="border-0 ring-1 ring-[var(--ui-border)]"
             :ui="{ body: 'p-4' }"
           >
             <div class="flex items-center gap-3">
@@ -303,25 +258,18 @@ const commentRatio = computed(() =>
               </div>
               <div>
                 <p class="
-                  text-2xl font-bold text-gray-900 tabular-nums
-                  dark:text-white
+                  text-2xl font-bold text-[var(--ui-text-highlighted)]
+                  tabular-nums
                 "
                 >
                   {{ data.totalFiles?.toLocaleString() ?? '—' }}
                 </p>
-                <p class="
-                  text-xs text-gray-500
-                  dark:text-gray-400
-                "
-                >Files</p>
+                <p class="text-xs text-[var(--ui-text-muted)]">Files</p>
               </div>
             </div>
           </NCard>
 
-          <NCard class="
-            border-0 ring-1 ring-gray-200
-            dark:ring-gray-800
-          "
+          <NCard class="border-0 ring-1 ring-[var(--ui-border)]"
             :ui="{ body: 'p-4' }"
           >
             <div class="flex items-center gap-3">
@@ -339,17 +287,13 @@ const commentRatio = computed(() =>
               </div>
               <div>
                 <p class="
-                  text-2xl font-bold text-gray-900 tabular-nums
-                  dark:text-white
+                  text-2xl font-bold text-[var(--ui-text-highlighted)]
+                  tabular-nums
                 "
                 >
                   {{ formattedSize }}
                 </p>
-                <p class="
-                  text-xs text-gray-500
-                  dark:text-gray-400
-                "
-                >Total Size</p>
+                <p class="text-xs text-[var(--ui-text-muted)]">Total Size</p>
               </div>
             </div>
           </NCard>
@@ -362,8 +306,7 @@ const commentRatio = computed(() =>
         <h2
           class="
             mb-3 flex items-center gap-2 text-xs font-semibold tracking-wider
-            text-gray-400 uppercase
-            dark:text-gray-500
+            text-[var(--ui-text-muted)] uppercase
           "
         >
           <NIcon name="i-lucide-code-2"
@@ -383,8 +326,8 @@ const commentRatio = computed(() =>
           >
             <div class="flex flex-col gap-1">
               <span class="
-                text-3xl font-bold text-gray-900 tabular-nums
-                dark:text-white
+                text-3xl font-bold text-[var(--ui-text-highlighted)]
+                tabular-nums
               "
               >
                 {{ data.totalLinesOfCode?.toLocaleString() ?? '—' }}
@@ -425,8 +368,7 @@ const commentRatio = computed(() =>
             </div>
             <div class="flex flex-col gap-1">
               <span class="
-                text-3xl font-bold text-gray-500 tabular-nums
-                dark:text-gray-400
+                text-3xl font-bold text-[var(--ui-text-muted)] tabular-nums
               "
               >
                 {{ data.blankLines?.toLocaleString() ?? '—' }}
@@ -454,14 +396,12 @@ const commentRatio = computed(() =>
                 :style="{ width: ((data.commentLines || 0) / data.totalLinesOfCode * 100) + '%' }"
               />
               <div class="
-                flex-1 bg-gray-200 transition-all duration-700
-                dark:bg-gray-700
+                flex-1 bg-[var(--ui-border)] transition-all duration-700
               "
               />
             </div>
             <div class="
-              flex items-center gap-4 text-xs text-gray-500
-              dark:text-gray-400
+              flex items-center gap-4 text-xs text-[var(--ui-text-muted)]
             "
             >
               <span class="flex items-center gap-1.5">
@@ -478,8 +418,7 @@ const commentRatio = computed(() =>
               </span>
               <span class="flex items-center gap-1.5">
                 <span class="
-                  inline-block h-2.5 w-2.5 rounded-sm bg-gray-200
-                  dark:bg-gray-700
+                  inline-block h-2.5 w-2.5 rounded-sm bg-[var(--ui-border)]
                 "
                 ></span>
                 Blank
@@ -491,10 +430,7 @@ const commentRatio = computed(() =>
 
       <!-- Footer meta -->
       <p v-if="data.generatedAtUtc"
-        class="
-          pb-1 text-right text-xs text-gray-400
-          dark:text-gray-600
-        "
+        class="pb-1 text-right text-xs text-[var(--ui-text-muted)]"
       >
         Generated {{ new Date(data.generatedAtUtc).toLocaleString() }}
       </p>

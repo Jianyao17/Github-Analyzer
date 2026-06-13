@@ -52,21 +52,15 @@ const activeTabPathParts = computed(() =>
 </script>
 
 <template>
-  <div class="
-    flex h-full w-full flex-col bg-white
-    dark:bg-gray-950
-  "
-  >
+  <div class="flex h-full w-full flex-col bg-[var(--ui-bg)]">
     <div class="
-      relative z-40 flex items-end justify-between bg-gray-50 pr-2
-      dark:bg-gray-900
+      relative z-40 flex items-end justify-between bg-[var(--ui-bg-muted)] pr-2
     "
     >
       <!-- Seamless Bottom Border -->
       <div class="
         pointer-events-none absolute right-0 bottom-0 left-0 z-0 h-[1px] w-full
-        bg-gray-200
-        dark:bg-gray-800
+        bg-[var(--ui-border)]
       "
       ></div>
 
@@ -80,11 +74,10 @@ const activeTabPathParts = computed(() =>
       <div class="relative z-10 flex items-center gap-2 pb-1.5 pl-2">
         <button
           class="
-            flex items-center justify-center rounded p-1.5 text-gray-500
-            transition-colors
-            hover:bg-gray-200
-            dark:text-gray-400
-            dark:hover:bg-gray-800
+            flex items-center justify-center rounded p-1.5
+            text-[var(--ui-text-muted)] transition-colors
+            hover:bg-[var(--ui-bg-elevated)]
+            hover:text-[var(--ui-text-highlighted)]
           "
           title="Search in File"
           @click="isSearchOpen = !isSearchOpen"
@@ -96,11 +89,10 @@ const activeTabPathParts = computed(() =>
         <CodeViewerSettings v-model:theme="viewerTheme" />
         <button
           class="
-            flex items-center justify-center rounded p-1.5 text-gray-500
-            transition-colors
-            hover:bg-gray-200
-            dark:text-gray-400
-            dark:hover:bg-gray-800
+            flex items-center justify-center rounded p-1.5
+            text-[var(--ui-text-muted)] transition-colors
+            hover:bg-[var(--ui-bg-elevated)]
+            hover:text-[var(--ui-text-highlighted)]
           "
           title="Close Viewer"
           @click="$emit('close-viewer')"
@@ -115,9 +107,8 @@ const activeTabPathParts = computed(() =>
     <!-- Breadcrumbs -->
     <div v-if="activeTabPathParts.length > 0"
       class="
-        flex items-center border-b border-gray-200 bg-white px-4 py-1.5 text-xs
-        text-gray-500
-        dark:border-gray-800 dark:bg-[#1f1f1f] dark:text-gray-400
+        flex items-center border-b border-[var(--ui-border)] bg-[var(--ui-bg)]
+        px-4 py-1.5 text-xs text-[var(--ui-text-muted)]
       "
     >
       <template v-for="(part, index) in activeTabPathParts"
@@ -125,8 +116,7 @@ const activeTabPathParts = computed(() =>
       >
         <span class="
           cursor-pointer transition-colors
-          hover:text-gray-700
-          dark:hover:text-gray-200
+          hover:text-[var(--ui-text)]
         "
           @click="$emit('focus-node', activeTabPathParts.slice(0, index + 1).join('/'))"
         >{{ part }}</span>
@@ -148,12 +138,14 @@ const activeTabPathParts = computed(() =>
       <div
         v-if="isLoading"
         class="
-          absolute inset-0 z-10 flex items-center justify-center bg-white/50
-          backdrop-blur-sm
-          dark:bg-gray-950/50
+          absolute inset-0 z-10 flex items-center justify-center
+          bg-[var(--ui-bg)]/50 backdrop-blur-sm
         "
       >
-        <span class="loading-dots text-sm font-medium text-gray-500">Loading code</span>
+        <span class="
+          loading-dots text-sm font-medium text-[var(--ui-text-muted)]
+        "
+        >Loading code</span>
       </div>
 
       <!-- Empty State -->
@@ -161,8 +153,7 @@ const activeTabPathParts = computed(() =>
         v-if="tabs.length === 0"
         class="
           absolute inset-0 flex items-center justify-center text-sm
-          text-gray-400
-          dark:text-gray-600
+          text-[var(--ui-text-muted)]
         "
       >
         Select a node to view source code

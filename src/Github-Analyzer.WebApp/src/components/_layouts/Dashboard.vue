@@ -8,8 +8,7 @@ const { isCollapsed, isOpen, isMobile,
 
 <template>
   <div class="
-    flex h-screen overflow-hidden bg-gray-50 font-sans
-    dark:bg-gray-950
+    flex h-screen overflow-hidden bg-[var(--ui-bg-elevated)] font-sans
   "
   >
     <Sidebar

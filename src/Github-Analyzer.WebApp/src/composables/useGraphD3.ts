@@ -58,7 +58,7 @@ export interface GraphD3Options
   layout?:        'hierarchical' | 'star-balloon';
   orientation?:   'LR' | 'TB' | 'RL' | 'BT';
   collapseDepth?: number;
-  onShowSourceCode?: (node: D3Node) => void;
+  onContextMenu?: (x: number, y: number, node: D3Node) => void;
 }
 
 /**
@@ -98,10 +98,10 @@ export function useGraphD3(
           logMemory: true,
         }), 999);
 
-      if (initialOptions.onShowSourceCode) 
+      if (initialOptions.onContextMenu) 
       {
         _engine.use(new graphPluginsModule!.ContextMenuPlugin({
-          onShowSourceCode: initialOptions.onShowSourceCode
+          onContextMenu: initialOptions.onContextMenu
         }), 5);
       }
 
@@ -130,7 +130,7 @@ export function useGraphD3(
       layout:        initialOptions.layout        || 'star-balloon',
       orientation:   initialOptions.orientation   || 'LR',
       collapseDepth: initialOptions.collapseDepth || 2,
-      onShowSourceCode: initialOptions.onShowSourceCode || (() => {})
+      onContextMenu: initialOptions.onContextMenu || (() => {})
     });
 
   /**

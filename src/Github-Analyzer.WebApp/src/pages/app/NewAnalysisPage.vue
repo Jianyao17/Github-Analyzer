@@ -125,24 +125,15 @@ async function onSubmit()
     <div class="mb-8 text-center">
       <div class="
         mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl
-        bg-primary-50 ring-1 ring-primary-200
-        dark:bg-primary-950 dark:ring-primary-800
+        bg-[var(--ui-primary)]/10 ring-1 ring-[var(--ui-primary)]/30
       "
       >
         <NIcon name="i-lucide-git-branch-plus"
-          class="h-6 w-6 text-primary-500"
+          class="h-6 w-6 text-[var(--ui-primary)]"
         />
       </div>
-      <h1 class="
-        text-2xl font-bold text-gray-900
-        dark:text-white
-      "
-      >Mulai Analisa Baru</h1>
-      <p class="
-        mt-1 text-sm text-gray-500
-        dark:text-gray-400
-      "
-      >
+      <h1 class="text-2xl font-bold text-[var(--ui-text-highlighted)]">Mulai Analisa Baru</h1>
+      <p class="mt-1 text-sm text-[var(--ui-text-muted)]">
         Masukkan URL repositori, lalu pilih branch dan commit yang ingin dianalisa.
       </p>
     </div>
@@ -151,9 +142,8 @@ async function onSubmit()
     <form @submit.prevent="onSubmit"
       class="
         mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-2xl border
-        border-gray-200 bg-white p-6
+        border-[var(--ui-border)] bg-[var(--ui-bg)] p-6
         sm:p-7
-        dark:border-gray-800 dark:bg-gray-900
       "
     >
       <!-- URL Input -->
@@ -161,16 +151,14 @@ async function onSubmit()
         <label class="sr-only">URL Repositori</label>
         <div class="
           relative flex w-full items-stretch overflow-hidden rounded-xl border
-          border-gray-200 bg-gray-50 transition-colors
-          focus-within:border-transparent focus-within:bg-white
-          focus-within:ring-2 focus-within:ring-green-500
-          dark:border-gray-700 dark:bg-gray-800
-          dark:focus-within:bg-gray-900
+          border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] transition-colors
+          focus-within:border-transparent focus-within:bg-[var(--ui-bg)]
+          focus-within:ring-2 focus-within:ring-[var(--ui-primary)]
         "
         >
           <div class="pointer-events-none flex items-center pl-4">
             <NIcon name="i-lucide-link"
-              class="h-5 w-5 text-gray-400"
+              class="h-5 w-5 text-[var(--ui-text-muted)]"
             />
           </div>
           <input
@@ -181,11 +169,10 @@ async function onSubmit()
             :disabled="creating"
             class="
               w-full min-w-0 flex-1 bg-transparent py-2.5 pr-2 pl-3 text-xs
-              text-gray-900 placeholder-gray-400
+              text-[var(--ui-text)] placeholder-[var(--ui-text-muted)]
               focus:outline-none
               disabled:opacity-50
               sm:py-3 sm:text-sm
-              dark:text-white
             "
           />
           <button
@@ -193,14 +180,13 @@ async function onSubmit()
             :disabled="creating || !repoUrl"
             aria-label="Mulai analisa"
             class="
-              relative hidden items-center justify-center gap-2 bg-green-500
-              px-2 text-xs font-semibold text-white transition-colors
-              hover:bg-green-600
-              focus:bg-green-600 focus:outline-none
-              disabled:cursor-not-allowed disabled:bg-gray-300
-              disabled:text-gray-500
+              relative hidden items-center justify-center gap-2
+              bg-[var(--ui-primary)] px-2 text-xs font-semibold
+              text-[var(--ui-bg)] transition-colors
+              hover:bg-[var(--ui-primary)]/90
+              focus:bg-[var(--ui-primary)]/90 focus:outline-none
+              disabled:cursor-not-allowed disabled:opacity-50
               sm:flex sm:px-6 sm:text-base
-              dark:disabled:bg-gray-700
             "
           >
             <span :class="{ 'opacity-0': creating }">Mulai Analisa</span>
@@ -240,7 +226,7 @@ async function onSubmit()
             </span>
             <span v-else-if="isFetchingBranches"
               class="
-                flex items-center gap-1.5 text-xs text-green-500
+                flex items-center gap-1.5 text-xs text-[var(--ui-primary)]
                 sm:text-sm
               "
             >
@@ -250,9 +236,8 @@ async function onSubmit()
             </span>
             <span v-else-if="hasBranches"
               class="
-                flex items-center gap-1.5 text-xs text-green-600
+                flex items-center gap-1.5 text-xs text-[var(--ui-primary)]
                 sm:text-sm
-                dark:text-green-400
               "
             >
               <NIcon name="i-lucide-check-circle-2"
@@ -261,7 +246,7 @@ async function onSubmit()
             </span>
             <span v-else
               class="
-                text-xs text-gray-400
+                text-xs text-[var(--ui-text-muted)]
                 sm:text-sm
               "
             >
@@ -288,7 +273,7 @@ async function onSubmit()
           "
           >
             <NIcon name="i-lucide-git-branch"
-              class="h-4 w-4 text-gray-400"
+              class="h-4 w-4 text-[var(--ui-text-muted)]"
             />
           </div>
           <select
@@ -296,12 +281,11 @@ async function onSubmit()
             :disabled="creating || !hasBranches"
             class="
               w-full cursor-pointer appearance-none rounded-xl border
-              border-gray-200 bg-gray-50 py-2.5 pr-8 pl-10 text-xs text-gray-900
-              transition-colors
-              focus:ring-2 focus:ring-green-500 focus:outline-none
+              border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] py-2.5 pr-8
+              pl-10 text-xs text-[var(--ui-text)] transition-colors
+              focus:ring-2 focus:ring-[var(--ui-primary)] focus:outline-none
               disabled:cursor-not-allowed disabled:opacity-50
               sm:text-sm
-              dark:border-gray-700 dark:bg-gray-800 dark:text-white
             "
           >
             <option value=""
@@ -315,7 +299,7 @@ async function onSubmit()
           </select>
           <div class="
             pointer-events-none absolute inset-y-0 right-0 flex items-center
-            pr-3 text-gray-400
+            pr-3 text-[var(--ui-text-muted)]
           "
           >
             <NIcon name="i-lucide-chevron-down"
@@ -335,7 +319,7 @@ async function onSubmit()
           "
           >
             <NIcon name="i-lucide-git-commit"
-              class="h-4 w-4 text-gray-400"
+              class="h-4 w-4 text-[var(--ui-text-muted)]"
             />
           </div>
           <select
@@ -343,12 +327,11 @@ async function onSubmit()
             :disabled="creating || !hasCommits"
             class="
               w-full cursor-pointer appearance-none rounded-xl border
-              border-gray-200 bg-gray-50 py-2.5 pr-8 pl-10 text-xs text-gray-900
-              transition-colors
-              focus:ring-2 focus:ring-green-500 focus:outline-none
+              border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] py-2.5 pr-8
+              pl-10 text-xs text-[var(--ui-text)] transition-colors
+              focus:ring-2 focus:ring-[var(--ui-primary)] focus:outline-none
               disabled:cursor-not-allowed disabled:opacity-50
               sm:text-sm
-              dark:border-gray-700 dark:bg-gray-800 dark:text-white
             "
           >
             <option value="">Commit terbaru</option>
@@ -359,7 +342,7 @@ async function onSubmit()
           </select>
           <div class="
             pointer-events-none absolute inset-y-0 right-0 flex items-center
-            pr-3 text-gray-400
+            pr-3 text-[var(--ui-text-muted)]
           "
           >
             <NIcon name="i-lucide-chevron-down"
@@ -376,14 +359,12 @@ async function onSubmit()
         aria-label="Mulai analisa"
         class="
           relative flex w-full items-center justify-center gap-2 rounded-xl
-          bg-green-500 px-4 py-3 text-sm font-semibold text-white
-          transition-colors
-          hover:bg-green-600
-          focus:bg-green-600 focus:outline-none
-          disabled:cursor-not-allowed disabled:bg-gray-300
-          disabled:text-gray-500
+          bg-[var(--ui-primary)] px-4 py-3 text-sm font-semibold
+          text-[var(--ui-bg)] transition-colors
+          hover:bg-[var(--ui-primary)]/90
+          focus:bg-[var(--ui-primary)]/90 focus:outline-none
+          disabled:cursor-not-allowed disabled:opacity-50
           sm:hidden
-          dark:disabled:bg-gray-700
         "
       >
         <span :class="{ 'opacity-0': creating }">Mulai Analisa</span>
@@ -431,7 +412,7 @@ async function onSubmit()
       </div>
     </form>
 
-    <p class="mt-6 text-center text-xs text-gray-400">
+    <p class="mt-6 text-center text-xs text-[var(--ui-text-muted)]">
       Analyzer dapat membuat kesalahan. Periksa informasi penting sebelum digunakan.
     </p>
   </div>

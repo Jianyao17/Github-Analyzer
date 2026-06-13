@@ -1,9 +1,10 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
+
 @layer base {
   body {
-    @apply bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white;
+    @apply antialiased text-default bg-default scheme-light dark:scheme-dark;
   }
 
   button,
@@ -11,4 +12,8 @@
   a {
     cursor: pointer;
   }
+}
+
+:root {
+  --ui-radius: 0.25rem;
 }

@@ -126,10 +126,9 @@ function toggleProjectsCollapsed()
     <aside
       v-show="!isMobile || isOpen"
       class="
-        fixed inset-y-0 left-0 z-50 flex flex-col border-r border-gray-200
-        bg-white transition-[width] duration-300 ease-in-out
-        will-change-[width,transform]
-        dark:border-gray-800 dark:bg-gray-900
+        fixed inset-y-0 left-0 z-50 flex flex-col border-r
+        border-[var(--ui-border)] bg-[var(--ui-bg)] transition-[width]
+        duration-300 ease-in-out will-change-[width,transform]
       "
       :class="isMobile ? 'w-64' : (isCollapsed ? 'w-18' : 'w-64')"
     >
@@ -165,8 +164,7 @@ function toggleProjectsCollapsed()
               />
             </div>
             <span class="
-              truncate text-lg font-bold tracking-tight text-gray-900
-              dark:text-white
+              truncate text-lg font-bold tracking-tight text-[var(--ui-text)]
             "
             >
               GitHub Analyzer
@@ -211,11 +209,7 @@ function toggleProjectsCollapsed()
         <template v-if="!isCollapsed || isMobile">
           <div class="group mb-2 flex items-center justify-between px-2">
             <div class="w-1/2">
-              <span class="
-                text-sm font-medium text-gray-600
-                dark:text-gray-300
-              "
-              >
+              <span class="text-sm font-medium text-[var(--ui-text-muted)]">
                 Projects
               </span>
             </div>
@@ -225,10 +219,9 @@ function toggleProjectsCollapsed()
                 color="gray"
                 size="sm"
                 class="
-                  group w-full justify-end gap-1.5 px-0 text-xs text-gray-500
-                  hover:text-gray-700
-                  dark:text-gray-400
-                  dark:hover:text-gray-200
+                  group w-full justify-end gap-1.5 px-0 text-xs
+                  text-[var(--ui-text-muted)]
+                  hover:text-[var(--ui-text)]
                 "
                 @click="toggleProjectsCollapsed"
               >
@@ -251,7 +244,7 @@ function toggleProjectsCollapsed()
             v-show="!isProjectsCollapsed"
           >
             <div v-if="projects.length === 0"
-              class="px-2 py-4 text-center text-xs text-gray-500"
+              class="px-2 py-4 text-center text-xs text-[var(--ui-text-muted)]"
             >
               <span>No projects yet</span>
             </div>
@@ -285,12 +278,12 @@ function toggleProjectsCollapsed()
                   "
                   :class="open 
                     ? `
-                      bg-gray-100 text-primary-600
-                      dark:bg-gray-800 dark:text-primary-400
+                      bg-[var(--ui-bg-elevated)] text-primary-600
+                      dark:text-primary-400
                     ` 
                     : `
-                      hover:bg-gray-100 hover:text-gray-900
-                      dark:hover:bg-gray-800 dark:hover:text-white
+                      hover:bg-[var(--ui-bg-elevated)]
+                      hover:text-[var(--ui-text)]
                     `"
                 />
               </template>
@@ -298,8 +291,7 @@ function toggleProjectsCollapsed()
                 <div class="flex w-64 flex-col p-3">
                   <div class="group mb-2 flex items-center justify-between px-2">
                     <span class="
-                      text-sm font-medium text-gray-600
-                      dark:text-gray-300
+                      text-sm font-medium text-[var(--ui-text-muted)]
                     "
                     >
                       Projects
@@ -310,7 +302,10 @@ function toggleProjectsCollapsed()
                   "
                   >
                     <div v-if="projects.length === 0"
-                      class="px-2 py-4 text-center text-xs text-gray-500"
+                      class="
+                        px-2 py-4 text-center text-xs
+                        text-[var(--ui-text-muted)]
+                      "
                     >
                       <span>No projects yet</span>
                     </div>
@@ -363,14 +358,9 @@ function toggleProjectsCollapsed()
     </template>
     
     <template #body>
-      <p class="
-        text-sm leading-relaxed text-gray-600
-        dark:text-gray-300
-      "
-      >
+      <p class="text-sm leading-relaxed text-[var(--ui-text-muted)]">
         Are you sure you want to delete <span class="
-          font-semibold text-gray-900
-          dark:text-white
+          font-semibold text-[var(--ui-text)]
         "
         >"{{ projectToDelete?.title }}"</span>? 
         <br/> This action cannot be undone and will <span class="

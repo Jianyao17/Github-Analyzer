@@ -94,8 +94,7 @@ function handleFocusNode(path: string)
       v-if="!data"
       class="
         absolute inset-0 z-10 flex flex-col items-center justify-center gap-6
-        bg-white/80 backdrop-blur-sm
-        dark:bg-gray-900/80
+        bg-[var(--ui-bg)]/80 backdrop-blur-sm
       "
       style="background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px;"
     >
@@ -111,10 +110,7 @@ function handleFocusNode(path: string)
             stroke="currentColor"
             stroke-width="8"
             fill="transparent"
-            class="
-              text-gray-200
-              dark:text-gray-700
-            "
+            class="text-[var(--ui-border)]"
           />
         </svg>
 
@@ -131,18 +127,14 @@ function handleFocusNode(path: string)
             fill="transparent"
             stroke-dasharray="264"
             stroke-dashoffset="160"
-            class="text-green-500"
+            class="text-[var(--ui-primary)]"
           />
         </svg>
 
         <!-- Percentage label -->
-        <span class="
-          text-2xl font-bold text-gray-800
-          dark:text-white
-        "
-        >
+        <span class="text-2xl font-bold text-[var(--ui-text-highlighted)]">
           {{ Math.round(progress?.progress || 0) }}<span class="
-            text-sm text-gray-500
+            text-sm text-[var(--ui-text-muted)]
           "
           >%</span>
         </span>
@@ -150,16 +142,11 @@ function handleFocusNode(path: string)
 
       <!-- Status text -->
       <div class="text-center">
-        <p class="
-          text-lg font-bold text-gray-700
-          dark:text-gray-300
-        "
-        >
+        <p class="text-lg font-bold text-[var(--ui-text)]">
           Menyiapkan Graph Node Codebase...
         </p>
         <p class="
-          mt-1 max-w-md animate-pulse text-sm text-gray-500
-          dark:text-gray-400
+          mt-1 max-w-md animate-pulse text-sm text-[var(--ui-text-muted)]
         "
         >
           {{ progress?.message || 'Menunggu proses analisa selesai.' }}
@@ -203,11 +190,42 @@ function handleFocusNode(path: string)
   background-color: transparent;
 }
 .splitpanes.default-theme .splitpanes__splitter {
-  background-color: #f3f4f6;
-  border-left: 1px solid #e5e7eb;
+  background-color: var(--ui-bg-elevated);
+  border-left: 1px solid var(--ui-border);
+  position: relative;
+  transition: background-color 0.2s ease;
 }
-.dark .splitpanes.default-theme .splitpanes__splitter {
-  background-color: #1f2937;
-  border-left: 1px solid #374151;
+.splitpanes.default-theme .splitpanes__splitter:hover {
+  background-color: var(--ui-border);
+}
+
+/* Modern Handle Indicator */
+.splitpanes.default-theme .splitpanes__splitter:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--ui-text-muted);
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+  z-index: 10;
+}
+.splitpanes.default-theme .splitpanes__splitter:after {
+  display: none !important; /* Hide the default splitpanes second line */
+}
+
+.splitpanes.default-theme .splitpanes__splitter:hover:before {
+  background-color: var(--ui-primary);
+}
+
+/* Handle Dimensions based on orientation */
+.splitpanes--vertical > .splitpanes__splitter:before {
+  width: 3px;
+  height: 30px;
+}
+.splitpanes--horizontal > .splitpanes__splitter:before {
+  width: 30px;
+  height: 3px;
 }
 </style>

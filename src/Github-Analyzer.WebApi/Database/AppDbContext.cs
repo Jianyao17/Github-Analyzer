@@ -58,6 +58,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
         modelBuilder.Entity<IdentityRoleClaim<Guid>>().ToTable("RoleClaims", "Auth");
         modelBuilder.Entity<IdentityUserToken<Guid>>().ToTable("UserTokens", "Auth");
 
+
+
         modelBuilder.Entity<Project>(entity =>
         {
             entity.HasMany(p => p.Queues)
@@ -109,6 +111,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
                 .HasConversion(jsonDocumentConverter)
                 .HasColumnType("jsonb");
         });
+
 
         // ─── Cache schema ────────────────────────────────────────────────
         modelBuilder.Entity<CodeGraphCache>(entity =>

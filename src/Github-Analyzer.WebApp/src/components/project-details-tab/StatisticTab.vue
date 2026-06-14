@@ -366,8 +366,12 @@ watch(() => props.data, (newData) =>
               "
               >
                 Code Lines
-                <NTooltip text="Baris kode murni (tanpa komentar/kosong)." :popper="{ placement: 'top' }">
-                  <NIcon name="i-lucide-info" class="h-3 w-3 cursor-help text-[var(--ui-text-muted)]" />
+                <NTooltip text="Baris kode murni (tanpa komentar/kosong)."
+                  :popper="{ placement: 'top' }"
+                >
+                  <NIcon name="i-lucide-info"
+                    class="h-3 w-3 cursor-help text-[var(--ui-text-muted)]"
+                  />
                 </NTooltip>
               </span>
             </div>
@@ -385,8 +389,12 @@ watch(() => props.data, (newData) =>
               "
               >
                 Comments
-                <NTooltip text="Baris dokumentasi atau komentar." :popper="{ placement: 'top' }">
-                  <NIcon name="i-lucide-info" class="h-3 w-3 cursor-help text-[var(--ui-text-muted)]" />
+                <NTooltip text="Baris dokumentasi atau komentar."
+                  :popper="{ placement: 'top' }"
+                >
+                  <NIcon name="i-lucide-info"
+                    class="h-3 w-3 cursor-help text-[var(--ui-text-muted)]"
+                  />
                 </NTooltip>
               </span>
             </div>
@@ -403,8 +411,12 @@ watch(() => props.data, (newData) =>
               "
               >
                 Blank Lines
-                <NTooltip text="Baris kosong untuk spasi pemformatan." :popper="{ placement: 'top' }">
-                  <NIcon name="i-lucide-info" class="h-3 w-3 cursor-help text-[var(--ui-text-muted)]" />
+                <NTooltip text="Baris kosong untuk spasi pemformatan."
+                  :popper="{ placement: 'top' }"
+                >
+                  <NIcon name="i-lucide-info"
+                    class="h-3 w-3 cursor-help text-[var(--ui-text-muted)]"
+                  />
                 </NTooltip>
               </span>
             </div>
@@ -430,7 +442,8 @@ watch(() => props.data, (newData) =>
               </NTooltip>
               <NTooltip :text="`${((data.blankLines || 0) / data.totalLinesOfCode * 100).toFixed(1)}% (${data.blankLines?.toLocaleString() ?? 0} lines)`">
                 <div class="
-                  h-full flex-1 bg-[var(--ui-border)] transition-all duration-700
+                  h-full flex-1 bg-[var(--ui-border)] transition-all
+                  duration-700
                 "
                 />
               </NTooltip>

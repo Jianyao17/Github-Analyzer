@@ -273,7 +273,9 @@ onMounted(() =>
           sm:flex-row sm:gap-5
         "
       >
-        <NTooltip text="Pilih branch target analisa." :popper="{ placement: 'top' }">
+        <NTooltip text="Pilih branch target analisa."
+          :popper="{ placement: 'top' }"
+        >
           <div class="
             relative w-full
             sm:w-1/2
@@ -321,7 +323,9 @@ onMounted(() =>
           </div>
         </NTooltip>
 
-        <NTooltip text="Pilih commit spesifik, kosongkan untuk commit terbaru." :popper="{ placement: 'top' }">
+        <NTooltip text="Pilih commit spesifik, kosongkan untuk commit terbaru."
+          :popper="{ placement: 'top' }"
+        >
           <div class="
             relative w-full
             sm:w-1/2

@@ -117,9 +117,12 @@ export class HoverPlugin implements GraphPlugin
     let left = event.clientX + 12;
     let top  = event.clientY + 18;
 
-    // Basic edge boundary check untuk menghindari tooltip terpotong layar
-    if (left + 250 > window.innerWidth) left = event.clientX - 250;
-    if (top + 80 > window.innerHeight) top = event.clientY - 80;
+    // Gunakan ukuran aktual tooltip agar posisi tepat saat mepet layar
+    const w = this.tooltip.offsetWidth;
+    const h = this.tooltip.offsetHeight;
+
+    if (left + w > window.innerWidth - 10) left = event.clientX - w - 12;
+    if (top + h > window.innerHeight - 10) top  = event.clientY - h - 12;
 
     this.tooltip.style.left = `${left}px`;
     this.tooltip.style.top  = `${top}px`;

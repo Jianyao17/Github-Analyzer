@@ -185,13 +185,19 @@ function handleFocusNode(path: string)
         />
         <!-- Tooltip Canvas Navigation -->
         <div class="absolute top-4 right-4 z-20">
-          <NTooltip text="Scroll untuk zoom, drag untuk geser, klik node untuk lihat kode." :popper="{ placement: 'left' }">
+          <NTooltip text="Scroll untuk zoom, drag untuk geser, klik node untuk lihat kode."
+            :popper="{ placement: 'left' }"
+          >
             <button class="
               flex h-8 w-8 items-center justify-center rounded-full
-              bg-[var(--ui-bg)] text-[var(--ui-text-muted)] ring-1 ring-[var(--ui-border)]
-              transition-colors hover:bg-[var(--ui-bg-elevated)] hover:text-[var(--ui-text)]
-            ">
-              <NIcon name="i-lucide-info" class="h-4.5 w-4.5" />
+              bg-[var(--ui-bg)] text-[var(--ui-text-muted)] ring-1
+              ring-[var(--ui-border)] transition-colors
+              hover:bg-[var(--ui-bg-elevated)] hover:text-[var(--ui-text)]
+            "
+            >
+              <NIcon name="i-lucide-info"
+                class="h-4.5 w-4.5"
+              />
             </button>
           </NTooltip>
         </div>

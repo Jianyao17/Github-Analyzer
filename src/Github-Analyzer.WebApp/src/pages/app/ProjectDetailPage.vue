@@ -368,12 +368,14 @@ onUnmounted(() =>
                   />
                   {{ project.branchName }}
                 </span>
-                <NTooltip text="Hash commit target analisa." :popper="{ placement: 'top' }">
+                <NTooltip text="Hash commit target analisa."
+                  :popper="{ placement: 'top' }"
+                >
                   <span v-if="project.lastCommitHash"
                     class="
-                      inline-flex items-center gap-1 rounded-full
+                      inline-flex cursor-help items-center gap-1 rounded-full
                       bg-[var(--ui-bg-elevated)] px-2 py-0.5 text-xs font-medium
-                      text-[var(--ui-text-muted)] cursor-help
+                      text-[var(--ui-text-muted)]
                     "
                   >
                     <NIcon name="i-lucide-git-commit-horizontal"
@@ -382,12 +384,14 @@ onUnmounted(() =>
                     {{ project.lastCommitHash.slice(0, 7) }}
                   </span>
                 </NTooltip>
-                <NTooltip text="Waktu analisa tersimpan di database." :popper="{ placement: 'top' }">
+                <NTooltip text="Waktu analisa tersimpan di database."
+                  :popper="{ placement: 'top' }"
+                >
                   <span v-if="formattedCreatedAt"
                     class="
-                      inline-flex items-center gap-1 rounded-full
+                      inline-flex cursor-help items-center gap-1 rounded-full
                       bg-[var(--ui-bg-elevated)] px-2 py-0.5 text-xs font-medium
-                      text-[var(--ui-text-muted)] cursor-help
+                      text-[var(--ui-text-muted)]
                     "
                   >
                     <NIcon name="i-lucide-calendar"
@@ -407,7 +411,9 @@ onUnmounted(() =>
         flex shrink-0 items-center gap-1 border-b border-[var(--ui-border)]
       "
       >
-        <NTooltip text="Ringkasan metrik kode dan analisis statis." :popper="{ placement: 'top' }">
+        <NTooltip text="Ringkasan metrik kode dan analisis statis."
+          :popper="{ placement: 'top' }"
+        >
           <button id="tab-statistic"
             @click="activeTab = 'statistic'"
             class="
@@ -427,7 +433,9 @@ onUnmounted(() =>
             Statistik
           </button>
         </NTooltip>
-        <NTooltip text="Visualisasi struktur dan dependensi codebase." :popper="{ placement: 'top' }">
+        <NTooltip text="Visualisasi struktur dan dependensi codebase."
+          :popper="{ placement: 'top' }"
+        >
           <button id="tab-codegraph"
             @click="activeTab = 'codegraph'"
             class="

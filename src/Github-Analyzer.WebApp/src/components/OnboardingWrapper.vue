@@ -37,112 +37,113 @@ function handleReset()
     >
       <template #default="{ previous, next, step, exit, isFirst, isLast }">
         <VOnboardingStep>
-            <NCard 
-              :key="step.content?.title"
+          <NCard 
+            :key="step.content?.title"
+            class="
+              onboarding-card-animate pointer-events-auto z-[9999] w-[340px]
+              border-[var(--ui-border)] shadow-2xl ring-1
+              ring-[var(--ui-border)]
+              sm:w-[380px]
+            " 
+            :ui="{ body: 'p-5 sm:p-6 flex flex-col gap-3' }"
+          >
+            <!-- Media (Image/Video) -->
+            <div v-if="step.content?.media"
               class="
-                onboarding-card-animate
-                pointer-events-auto z-[9999] w-[340px] border-[var(--ui-border)]
-                shadow-2xl ring-1 ring-[var(--ui-border)]
-                sm:w-[380px]
-              " 
-              :ui="{ body: 'p-5 sm:p-6 flex flex-col gap-3' }"
+                mb-1 w-full overflow-hidden rounded-lg ring-1
+                ring-[var(--ui-border)]
+              "
             >
-              <!-- Media (Image/Video) -->
-              <div v-if="step.content?.media"
-                class="
-                  mb-1 w-full overflow-hidden rounded-lg ring-1
-                  ring-[var(--ui-border)]
-                "
-              >
-                <video 
-                  v-if="step.content.media.type === 'video'" 
-                  :src="step.content.media.url" 
-                  autoplay 
-                  loop 
-                  muted 
-                  class="h-auto w-full object-cover" 
-                />
-                <img 
-                  v-else 
-                  :src="step.content.media.url" 
-                  class="h-auto w-full object-cover" 
-                />
-              </div>
+              <video 
+                v-if="step.content.media.type === 'video'" 
+                :src="step.content.media.url" 
+                autoplay 
+                loop 
+                muted 
+                class="h-auto w-full object-cover" 
+              />
+              <img 
+                v-else 
+                :src="step.content.media.url" 
+                class="h-auto w-full object-cover" 
+              />
+            </div>
 
-              <!-- Header / Title -->
-              <div class="flex items-start justify-between gap-4">
-                <div class="
-                  flex items-center gap-2.5 text-lg font-bold
-                  text-[var(--ui-text-highlighted)]
-                "
-                >
-                  <div class="
-                    flex items-center justify-center rounded-lg
-                    bg-[var(--ui-primary)]/10 p-1.5 text-[var(--ui-primary)]
-                  "
-                  >
-                    <NIcon 
-                      :name="step.content?.icon || 'i-lucide-info'" 
-                      class="h-5 w-5 shrink-0" 
-                    />
-                  </div>
-                  <span>{{ step.content?.title }}</span>
-                </div>
-
-                <!-- Step Counter -->
-                <div class="
-                  mt-0.5 flex shrink-0 items-center justify-center rounded-full
-                  bg-[var(--ui-bg-elevated)] px-2.5 py-1 text-xs font-semibold
-                  text-[var(--ui-text-muted)] ring-1 ring-inset ring-[var(--ui-border)]
-                "
-                >
-                  {{ store.currentSteps.findIndex(s => s.content?.title === step.content?.title) + 1 }} / {{ store.currentSteps.length }}
-                </div>
-              </div>
-            
-              <!-- Description -->
-              <p class="text-sm leading-relaxed text-[var(--ui-text-toned)]">
-                {{ step.content?.description }}
-              </p>
-
-              <!-- Footer Actions -->
+            <!-- Header / Title -->
+            <div class="flex items-start justify-between gap-4">
               <div class="
-                mt-1 flex items-center justify-between border-t
-                border-[var(--ui-border)] pt-3
+                flex items-center gap-2.5 text-lg font-bold
+                text-[var(--ui-text-highlighted)]
               "
               >
+                <div class="
+                  flex items-center justify-center rounded-lg
+                  bg-[var(--ui-primary)]/10 p-1.5 text-[var(--ui-primary)]
+                "
+                >
+                  <NIcon 
+                    :name="step.content?.icon || 'i-lucide-info'" 
+                    class="h-5 w-5 shrink-0" 
+                  />
+                </div>
+                <span>{{ step.content?.title }}</span>
+              </div>
+
+              <!-- Step Counter -->
+              <div class="
+                mt-0.5 flex shrink-0 items-center justify-center rounded-full
+                bg-[var(--ui-bg-elevated)] px-2.5 py-1 text-xs font-semibold
+                text-[var(--ui-text-muted)] ring-1 ring-[var(--ui-border)]
+                ring-inset
+              "
+              >
+                {{ store.currentSteps.findIndex(s => s.content?.title === step.content?.title) + 1 }} / {{ store.currentSteps.length }}
+              </div>
+            </div>
+            
+            <!-- Description -->
+            <p class="text-sm leading-relaxed text-[var(--ui-text-toned)]">
+              {{ step.content?.description }}
+            </p>
+
+            <!-- Footer Actions -->
+            <div class="
+              mt-1 flex items-center justify-between border-t
+              border-[var(--ui-border)] pt-3
+            "
+            >
+              <NButton 
+                variant="ghost" 
+                color="gray" 
+                size="md" 
+                @click="exit" 
+                class="
+                  text-[var(--ui-text-muted)]
+                  hover:text-[var(--ui-text)]
+                "
+              >
+                Lewati
+              </NButton>
+              <div class="flex gap-2">
                 <NButton 
-                  variant="ghost" 
+                  v-if="!isFirst" 
+                  variant="soft" 
                   color="gray" 
                   size="md" 
-                  @click="exit" 
-                  class="
-                    text-[var(--ui-text-muted)]
-                    hover:text-[var(--ui-text)]
-                  "
+                  @click="previous"
                 >
-                  Lewati
+                  Kembali
                 </NButton>
-                <div class="flex gap-2">
-                  <NButton 
-                    v-if="!isFirst" 
-                    variant="soft" 
-                    color="gray" 
-                    size="md" 
-                    @click="previous"
-                  >
-                    Kembali
-                  </NButton>
-                  <NButton 
-                    color="primary" 
-                    size="md" 
-                    @click="next"
-                  >
-                    {{ isLast ? 'Selesai' : 'Lanjut' }}
-                  </NButton>
-                </div>
+                <NButton 
+                  color="primary" 
+                  size="md" 
+                  @click="next"
+                >
+                  {{ isLast ? 'Selesai' : 'Lanjut' }}
+                </NButton>
               </div>
-            </NCard>
+            </div>
+          </NCard>
         </VOnboardingStep>
       </template>
     </VOnboardingWrapper>
@@ -228,8 +229,11 @@ function handleReset()
   border-width: 0 0 1px 1px !important; /* Keep bottom and left borders */
 }
 
-/* Smooth Animation for Overlay Cutout */
-[data-v-onboarding-wrapper] svg path {
+/* Smooth Animation for Overlay Cutout and Emission Effect */
+[data-v-onboarding-wrapper] svg path 
+{
+  stroke-width: 2px !important;
+  stroke: var(--ui-primary) !important;
   transition: d 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 

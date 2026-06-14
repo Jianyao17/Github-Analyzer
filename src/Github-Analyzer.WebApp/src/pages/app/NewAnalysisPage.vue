@@ -365,6 +365,7 @@ onMounted(() =>
 
       <!-- Submit Button (Mobile Only) -->
       <button
+        id="onboarding-submit-btn-mobile"
         type="submit"
         :disabled="creating || !repoUrl"
         aria-label="Mulai analisa"

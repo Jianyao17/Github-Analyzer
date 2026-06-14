@@ -27,7 +27,14 @@ const graphData = computed(() => props.data);
 const searchModal = ref<{ open: () => void; close: () => void } | null>(null);
 
 // ─── Context Menu state ───────────────────────────────────────────────────────
-const contextMenu = ref({ show: false, x: 0, y: 0, node: null as D3Node | null });
+export interface ContextMenuData {
+  id: string;
+  x: number;
+  y: number;
+  node: D3Node;
+  isPinned: boolean;
+}
+const contextMenus = ref<ContextMenuData[]>([]);
 
 // ─── D3 Graph ─────────────────────────────────────────────────────────────────
 const { 
@@ -47,12 +54,30 @@ const {
     // Show context menu when node is right clicked
     onContextMenu: (x, y, node) => 
     {
-      contextMenu.value = {
-        show: true,
-        x,
-        y,
-        node
-      };
+      // Remove unpinned menus
+      contextMenus.value = contextMenus.value.filter(m => m.isPinned);
+      
+      // Add new menu if not already open
+      if (!contextMenus.value.some(m => m.id === node.id)) 
+      {
+        contextMenus.value.push({
+          id: node.id,
+          x: x + 100,
+          y: y - 100,
+          node,
+          isPinned: false
+        });
+      }
+      else 
+      {
+        // Update position if already exists but user right clicked again
+        const existing = contextMenus.value.find(m => m.id === node.id);
+        if (existing && !existing.isPinned) 
+        {
+          existing.x = x;
+          existing.y = y;
+        }
+      }
     }
   }
 );
@@ -67,6 +92,25 @@ function handleShowSourceCode(node: D3Node)
       startLine: node.startLine,
       endLine: node.endLine
     });
+}
+
+function handleCloseMenu(id: string) 
+{
+  contextMenus.value = contextMenus.value.filter(m => m.id !== id);
+}
+
+function handleTogglePin(id: string) 
+{
+  const menu = contextMenus.value.find(m => m.id === id);
+  if (menu) 
+  {
+    menu.isPinned = !menu.isPinned;
+  }
+}
+
+function handleHighlightRelations(node: D3Node) 
+{
+  highlightNode(node.id);
 }
 
 // ─── Settings ─────────────────────────────────────────────────────────────────
@@ -95,18 +139,22 @@ defineExpose({
     <div
       ref="graphContainer"
       class="
-        absolute inset-0 cursor-grab
+        absolute inset-0 z-10 cursor-grab
         active:cursor-grabbing
       "
+      @contextmenu.prevent
     />
 
     <!-- ── Search trigger (top-left, z-20) ──────────────────────────────────── -->
     <div class="absolute top-4 left-4 z-20">
-      <NTooltip text="Cari file/node dalam grafik." :popper="{ placement: 'right' }">
+      <NTooltip text="Cari file/node dalam grafik."
+        :popper="{ placement: 'right' }"
+      >
         <button
           class="
-            flex items-center gap-2.5 rounded-lg border border-[var(--ui-border)]
-            bg-[var(--ui-bg)] px-3.5 py-2.5 text-sm transition-colors
+            flex items-center gap-2.5 rounded-lg border
+            border-[var(--ui-border)] bg-[var(--ui-bg)] px-3.5 py-2.5 text-sm
+            transition-colors
             hover:bg-[var(--ui-bg-elevated)]
           "
           @click="searchModal?.open()"
@@ -149,7 +197,8 @@ defineExpose({
     <div
       v-if="data.nodes?.length === 0"
       class="
-        pointer-events-none absolute inset-0 flex items-center justify-center
+        pointer-events-none absolute inset-0 z-20 flex items-center
+        justify-center
       "
     >
       <div class="text-center text-[var(--ui-text-muted)] italic">
@@ -162,7 +211,7 @@ defineExpose({
     <div
       v-if="isGraphLoading"
       class="
-        absolute inset-0 z-10 flex items-center justify-center
+        absolute inset-0 z-40 flex items-center justify-center
         bg-[var(--ui-bg)]/50 backdrop-blur-sm
       "
     >
@@ -180,12 +229,14 @@ defineExpose({
 
     <!-- ── Settings & Legend (bottom-right, z-20) ────────────────────────────── -->
     <div class="
-      absolute right-4 bottom-4 z-20 flex items-end gap-3
+      absolute right-4 bottom-4 z-30 flex items-end gap-3
       sm:right-6 sm:bottom-6
     "
     >
       <!-- Graph Settings Menu -->
-      <NTooltip text="Atur tata letak dan visibilitas node grafik." :popper="{ placement: 'top' }">
+      <NTooltip text="Atur tata letak dan visibilitas node grafik."
+        :popper="{ placement: 'top' }"
+      >
         <div>
           <GraphSettingsMenu 
             :supports-namespace="supportsNamespace"
@@ -198,20 +249,31 @@ defineExpose({
       </NTooltip>
 
       <!-- Legend -->
-      <NTooltip text="Keterangan warna tipe node." :popper="{ placement: 'top' }">
+      <NTooltip text="Keterangan warna tipe node."
+        :popper="{ placement: 'top' }"
+      >
         <div class="pointer-events-none">
           <GraphLegend :data="data" />
         </div>
       </NTooltip>
     </div>
 
-    <!-- ── Context Menu (absolute top-0 left-0, z-50) ───────────────────────── -->
+    <!-- ── Context Menu (absolute inset-0 z-50 pointer-events-none) ────────── -->
     <GraphContextMenu
-      v-model:show="contextMenu.show"
-      :x="contextMenu.x"
-      :y="contextMenu.y"
-      :node="contextMenu.node"
+      v-for="menu in contextMenus"
+      :key="menu.id"
+      :show="true"
+      :x="menu.x"
+      :y="menu.y"
+      :node="menu.node"
+      :is-pinned="menu.isPinned"
+      :data="data"
+      :graph-container="graphContainer"
+      @close="handleCloseMenu(menu.id)"
+      @toggle-pin="handleTogglePin(menu.id)"
       @show-source-code="handleShowSourceCode"
+      @highlight-relations="handleHighlightRelations"
+      @focus-node="focusNode"
     />
   </div>
 </template>

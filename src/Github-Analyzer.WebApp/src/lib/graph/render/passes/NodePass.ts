@@ -38,6 +38,7 @@ export class NodePass
   private _bus:       EventBus;
 
   private _focusedNodeId: string | null = null;
+  private _relatedNodeIds: Set<string> | undefined;
   private _highlightedNodeIds: Set<string> = new Set();
   private _dimOpacity: number = 0.24;
 
@@ -94,9 +95,10 @@ export class NodePass
     this._syncState();
   }
 
-  applyFocus(nodeId: string | null): void 
+  applyFocus(nodeId: string | null, relatedNodeIds?: Set<string>): void 
   {
     this._focusedNodeId = nodeId;
+    this._relatedNodeIds = relatedNodeIds;
     this._syncState();
   }
 
@@ -105,6 +107,7 @@ export class NodePass
     if (!this._selection) return;
     const hasQuery = this._highlightedNodeIds.size > 0;
     const focused = this._focusedNodeId;
+    const related = this._relatedNodeIds;
     const highlighted = this._highlightedNodeIds;
     const dim = this._dimOpacity;
 
@@ -114,9 +117,19 @@ export class NodePass
       const isMatched = highlighted.has(d.id);
       const isFocused = d.id === focused;
 
+      let opacity = 1;
+      if (focused) 
+      {
+        if (!related?.has(d.id)) opacity = 0.15;
+      }
+      else if (hasQuery) 
+      {
+        if (!isMatched) opacity = dim;
+      }
+
       g.transition()
         .duration(200)
-        .attr('opacity', hasQuery && !isMatched ? dim : 1);
+        .attr('opacity', opacity);
 
       const stroke = isFocused ? FOCUS_STROKE_COLOR : (isMatched ? HIGHLIGHT_STROKE_COLOR : 'none');
       const strokeWidth = (isFocused || isMatched) ? STROKE_WIDTH_ACTIVE : 0;
@@ -174,7 +187,17 @@ export class NodePass
       const isFocused = d.id === this._focusedNodeId;
       const hasQuery = this._highlightedNodeIds.size > 0;
 
-      g.attr('opacity', hasQuery && !isMatched ? this._dimOpacity : 1);
+      let opacity = 1;
+      if (this._focusedNodeId) 
+      {
+        if (!this._relatedNodeIds?.has(d.id)) opacity = 0.15;
+      }
+      else if (hasQuery) 
+      {
+        if (!isMatched) opacity = this._dimOpacity;
+      }
+
+      g.attr('opacity', opacity);
 
       const stroke = isFocused ? FOCUS_STROKE_COLOR : (isMatched ? HIGHLIGHT_STROKE_COLOR : 'none');
       const strokeWidth = (isFocused || isMatched) ? STROKE_WIDTH_ACTIVE : 0;

@@ -91,12 +91,40 @@ export class GraphEngine
   }
 
   /**
-   * Highlights a single node by its ID (blue stroke focus).
+   * Highlights a single node by its ID (blue stroke focus) and zooms to it.
    */
   highlightNode(nodeId: string | null): void 
   {
     this._ctx.focusedNodeId = nodeId;
-    this._bus.emit('highlight:focus', { nodeId });
+    
+    let relatedNodeIds: Set<string> | undefined;
+
+    if (nodeId) 
+    {
+      relatedNodeIds = new Set<string>();
+      relatedNodeIds.add(nodeId);
+      
+      // Find neighbors from all context edges
+      for (const edge of this._ctx.edges) 
+      {
+        const srcId = typeof edge.source === 'object' ? (edge.source as D3Node).id : edge.source as string;
+        const tgtId = typeof edge.target === 'object' ? (edge.target as D3Node).id : edge.target as string;
+        
+        if (srcId === nodeId) relatedNodeIds.add(tgtId);
+        if (tgtId === nodeId) relatedNodeIds.add(srcId);
+      }
+      
+      // Zoom to the target node
+      const node = this._ctx.nodes.find(n => n.id === nodeId);
+      if (node) 
+      {
+        const tx = node.targetX ?? node.x ?? 0;
+        const ty = node.targetY ?? node.y ?? 0;
+        this._bus.emit('zoom:to', { x: tx, y: ty, scale: 2 });
+      }
+    }
+
+    this._bus.emit('highlight:focus', { nodeId, relatedNodeIds });
   }
 
   /**

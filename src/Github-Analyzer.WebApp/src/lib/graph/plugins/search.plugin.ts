@@ -130,7 +130,20 @@ export class SearchPlugin implements GraphPlugin
     if (this._ctx && node.id) 
     {
       this._ctx.focusedNodeId = node.id;
-      this._ctx.bus.emit('highlight:focus', { nodeId: node.id });
+      
+      const relatedNodeIds = new Set<string>();
+      relatedNodeIds.add(node.id);
+      
+      for (const edge of this._ctx.edges) 
+      {
+        const srcId = typeof edge.source === 'object' ? (edge.source as D3Node).id : edge.source as string;
+        const tgtId = typeof edge.target === 'object' ? (edge.target as D3Node).id : edge.target as string;
+        
+        if (srcId === node.id) relatedNodeIds.add(tgtId);
+        if (tgtId === node.id) relatedNodeIds.add(srcId);
+      }
+      
+      this._ctx.bus.emit('highlight:focus', { nodeId: node.id, relatedNodeIds });
     }
 
     // Dynamically check if the node is currently hidden in the live context
@@ -200,6 +213,7 @@ export class SearchPlugin implements GraphPlugin
   clearSearch(): void 
   {
     this._ctx?.bus.emit('highlight:clear', undefined as never);
+    this._ctx?.bus.emit('highlight:focus', { nodeId: null });
     this.clearTooltip();
   }
 

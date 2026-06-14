@@ -9,6 +9,32 @@ export class EdgePass
 {
   private _selection: EdgeSelection | null = null;
   private _config: GraphConfig | null = null;
+  private _focusedNodeId: string | null = null;
+
+  applyFocus(nodeId: string | null): void 
+  {
+    this._focusedNodeId = nodeId;
+    this._syncState();
+  }
+
+  private _syncState(): void 
+  {
+    if (!this._selection) return;
+    const focused = this._focusedNodeId;
+    
+    this._selection.each(function(d) 
+    {
+      const srcId = typeof d.source === 'object' ? (d.source as D3Node).id : d.source as string;
+      const tgtId = typeof d.target === 'object' ? (d.target as D3Node).id : d.target as string;
+      
+      const isRelated = focused ? (srcId === focused || tgtId === focused) : true;
+      
+      d3.select(this)
+        .transition()
+        .duration(200)
+        .attr('stroke-opacity', focused && !isRelated ? 0.05 : 0.6);
+    });
+  }
 
   run(
     viewport: d3.Selection<SVGGElement, unknown, null, undefined>,
@@ -150,11 +176,21 @@ export class EdgePass
           .attr('stroke',           style.color)
           .attr('stroke-opacity',   0.6)
           .attr('stroke-width',     style.strokeWidth)
-          // Disable dashed lines for very large graphs because bezier + dash calculation kills GPU
           .attr('stroke-dasharray', edges.length > 500 ? null : (style.dashArray === 'none' ? null : style.dashArray))
           .attr('marker-end',       `url(#graph-arrow-${d.type})`);
       });
 
-    return entered.merge(bound);
+    const merged = entered.merge(bound);
+    
+    const focused = this._focusedNodeId;
+    merged.each(function(d) 
+    {
+      const srcId = typeof d.source === 'object' ? (d.source as D3Node).id : d.source as string;
+      const tgtId = typeof d.target === 'object' ? (d.target as D3Node).id : d.target as string;
+      const isRelated = focused ? (srcId === focused || tgtId === focused) : true;
+      d3.select(this).attr('stroke-opacity', focused && !isRelated ? 0.05 : 0.6);
+    });
+
+    return merged;
   }
 }

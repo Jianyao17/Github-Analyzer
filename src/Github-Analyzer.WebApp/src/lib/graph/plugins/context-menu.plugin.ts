@@ -36,12 +36,6 @@ export class ContextMenuPlugin implements GraphPlugin
 
     ctx.nodeSelection.on('contextmenu.plugin', (event: MouseEvent, d: any) => 
     {
-      // Allow only File, Class, Function (exclude Directory, Namespace)
-      if (d.type === 0 || d.type === 1) 
-      { // 0=Directory, 1=Namespace
-        return;
-      }
-
       event.preventDefault();
       event.stopPropagation();
       

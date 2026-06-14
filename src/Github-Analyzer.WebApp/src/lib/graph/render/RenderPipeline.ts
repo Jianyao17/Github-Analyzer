@@ -95,6 +95,15 @@ export class RenderPipeline
 
       this._viewport = this._svg.append('g').attr('class', 'viewport');
       this.markerPass.run(this._svg, this._config);
+
+      this._svg.on('click', (event) => 
+      {
+        if (event.target && event.target.tagName && event.target.tagName.toLowerCase() === 'svg') 
+        {
+          this._bus.emit('highlight:clear', undefined as never);
+          this._bus.emit('highlight:focus', { nodeId: null });
+        }
+      });
     } 
     else 
     {
@@ -160,9 +169,10 @@ export class RenderPipeline
         this.nodePass.clearHighlight();
       }),
 
-      this._bus.on('highlight:focus', ({ nodeId }) => 
+      this._bus.on('highlight:focus', ({ nodeId, relatedNodeIds }) => 
       {
-        this.nodePass.applyFocus(nodeId);
+        this.nodePass.applyFocus(nodeId, relatedNodeIds);
+        this.edgePass.applyFocus(nodeId);
       })
     );
   }

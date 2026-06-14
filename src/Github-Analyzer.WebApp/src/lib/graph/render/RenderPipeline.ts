@@ -173,6 +173,11 @@ export class RenderPipeline
       {
         this.nodePass.applyFocus(nodeId, relatedNodeIds);
         this.edgePass.applyFocus(nodeId);
+      }),
+
+      this._bus.on('highlight:single', ({ nodeId }) => 
+      {
+        this.nodePass.applySingleFocus(nodeId);
       })
     );
   }

@@ -128,6 +128,28 @@ export class GraphEngine
   }
 
   /**
+   * Highlights a single node by its ID (blue stroke focus) and zooms to it,
+   * without dimming its surrounding nodes.
+   */
+  focusNode(nodeId: string | null): void 
+  {
+    this._ctx.focusedNodeId = nodeId;
+    
+    if (nodeId) 
+    {
+      const node = this._ctx.nodes.find(n => n.id === nodeId);
+      if (node) 
+      {
+        const tx = node.targetX ?? node.x ?? 0;
+        const ty = node.targetY ?? node.y ?? 0;
+        this._bus.emit('zoom:to', { x: tx, y: ty, scale: 2 });
+      }
+    }
+
+    this._bus.emit('highlight:single', { nodeId });
+  }
+
+  /**
    * Expose context for consumers (e.g. LayoutManager or Plugins).
    * Context holds live references to nodes, edges, and active selections.
    */

@@ -37,9 +37,9 @@ let startDragY = 0;
 let startMenuX = 0;
 let startMenuY = 0;
 
-function startDrag(e: MouseEvent) 
+function startDrag(e: PointerEvent) 
 {
-  if (e.button !== 0) return; // Only left click
+  if (e.pointerType === 'mouse' && e.button !== 0) return; // Only left click for mouse
 
   isDragging = true;
   
@@ -48,13 +48,21 @@ function startDrag(e: MouseEvent)
   
   startMenuX = menuX.value;
   startMenuY = menuY.value;
-  document.addEventListener('mousemove', onDrag);
-  document.addEventListener('mouseup', stopDrag);
+  
+  document.addEventListener('pointermove', onDrag);
+  document.addEventListener('pointerup', stopDrag);
+  document.addEventListener('pointercancel', stopDrag);
 }
 
-function onDrag(e: MouseEvent) 
+function onDrag(e: PointerEvent) 
 {
   if (!isDragging) return;
+
+  // Prevent default scrolling on touch devices during drag
+  if (e.pointerType !== 'mouse' && e.cancelable) 
+  {
+    e.preventDefault();
+  }
 
   menuX.value = startMenuX + (e.clientX - startDragX);
   menuY.value = startMenuY + (e.clientY - startDragY);
@@ -64,8 +72,9 @@ function stopDrag()
 {
   isDragging = false;
 
-  document.removeEventListener('mousemove', onDrag);
-  document.removeEventListener('mouseup', stopDrag);
+  document.removeEventListener('pointermove', onDrag);
+  document.removeEventListener('pointerup', stopDrag);
+  document.removeEventListener('pointercancel', stopDrag);
 }
 
 // ─── Tracking Node Position ──────────────────────────────────────────────────
@@ -313,27 +322,32 @@ onUnmounted(() =>
     <div
       ref="menuRef"
       class="
-        pointer-events-auto absolute z-[1050] flex max-w-[320px] min-w-[240px]
+        pointer-events-auto absolute z-[1050] flex max-w-[260px] min-w-[200px]
         flex-col rounded-lg bg-[var(--ui-bg)]/95 shadow-xl ring-1
         ring-[var(--ui-border)] backdrop-blur-sm
         focus:outline-none
+        sm:max-w-[320px] sm:min-w-[240px]
       "
       :style="{ left: menuX + 'px', top: menuY + 'px' }"
     >
       <!-- Header -->
       <div class="
-        flex h-9 cursor-move items-center justify-between overflow-hidden
-        rounded-t-lg border-b border-[var(--ui-border)]
-        bg-[var(--ui-bg-elevated)]/50 py-0 pr-0 pl-3 select-none
+        flex h-8 cursor-move touch-none items-center justify-between
+        overflow-hidden rounded-t-lg border-b border-[var(--ui-border)]
+        bg-[var(--ui-bg-elevated)]/50 py-0 pr-0 pl-2 select-none
+        sm:h-9 sm:pl-3
       "
-        @mousedown.stop="startDrag"
+        @pointerdown.stop="startDrag"
       >
         <div class="flex min-w-0 items-center gap-2">
           <NIcon :name="iconName"
             class="h-4 w-4 shrink-0"
             :style="{ color: iconColor }"
           />
-          <span class="truncate text-sm font-medium text-[var(--ui-text)]"
+          <span class="
+            truncate text-xs font-medium text-[var(--ui-text)]
+            sm:text-sm
+          "
             :title="node?.label"
           >
             {{ node?.label }}
@@ -390,7 +404,8 @@ onUnmounted(() =>
 
       <!-- Info Body -->
       <div class="
-        flex flex-col gap-2 border-b border-[var(--ui-border)] px-3 py-2
+        flex flex-col gap-1.5 border-b border-[var(--ui-border)] px-2 py-1.5
+        sm:gap-2 sm:px-3 sm:py-2
       "
       >
         <div class="flex items-center justify-between gap-2">
@@ -452,8 +467,9 @@ onUnmounted(() =>
           <div v-if="node?.startLine"
             class="
               flex shrink-0 items-center gap-1 rounded
-              bg-[var(--ui-bg-elevated)] px-1.5 py-0.5 font-mono text-[10px]
+              bg-[var(--ui-bg-elevated)] px-1 py-0.5 font-mono text-[9px]
               text-[var(--ui-text-muted)]
+              sm:px-1.5 sm:text-[10px]
             "
             title="Lines"
           >
@@ -467,9 +483,10 @@ onUnmounted(() =>
       <div class="flex flex-col border-b border-[var(--ui-border)]">
         <button 
           class="
-            flex w-full items-center justify-between px-3 py-2 text-xs
+            flex w-full items-center justify-between px-2 py-1.5 text-[11px]
             transition-colors
             hover:bg-[var(--ui-bg-elevated)]
+            sm:px-3 sm:py-2 sm:text-xs
           "
           @click.stop="isRelationsExpanded = !isRelationsExpanded"
         >
@@ -505,7 +522,8 @@ onUnmounted(() =>
         
         <div v-if="isRelationsExpanded"
           class="
-            flex flex-col gap-2 bg-[var(--ui-bg-elevated)]/30 px-3 pt-1 pb-3
+            flex flex-col gap-1.5 bg-[var(--ui-bg-elevated)]/30 px-2 pt-1 pb-2
+            sm:gap-2 sm:px-3 sm:pb-3
           "
         >
           
@@ -605,9 +623,10 @@ onUnmounted(() =>
       <div class="flex flex-col p-1.5">
         <button
           class="
-            flex w-full items-center gap-2.5 rounded px-2.5 py-2 text-left
-            text-sm text-[var(--ui-text)] transition-colors
+            flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs
+            text-[var(--ui-text)] transition-colors
             hover:bg-[var(--ui-bg-elevated)]
+            sm:gap-2.5 sm:px-2.5 sm:py-2 sm:text-sm
           "
           @click.stop="$emit('focus-node', node!)"
         >
@@ -619,9 +638,10 @@ onUnmounted(() =>
         <!-- Highlight Relations button has been moved to the Collapsable Relations section -->
         <button v-if="node && node.type > 1 && node.startLine !== undefined"
           class="
-            flex w-full items-center gap-2.5 rounded px-2.5 py-2 text-left
-            text-sm text-[var(--ui-text)] transition-colors
+            flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs
+            text-[var(--ui-text)] transition-colors
             hover:bg-[var(--ui-bg-elevated)]
+            sm:gap-2.5 sm:px-2.5 sm:py-2 sm:text-sm
           "
           @click.stop="$emit('show-source-code', node!)"
         >

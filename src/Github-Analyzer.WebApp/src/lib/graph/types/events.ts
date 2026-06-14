@@ -10,9 +10,10 @@ export interface GraphEvents
   'view:reset'            : void;
 
   // Highlight (dari SearchPlugin / CollapsePlugin → NodePass)
-  'highlight:nodes': { ids: Set<string>; dimOpacity: number };
-  'highlight:focus': { nodeId: string | null; relatedNodeIds?: Set<string> };
-  'highlight:clear': void;
+  'highlight:nodes' : { ids: Set<string>; dimOpacity: number };
+  'highlight:focus' : { nodeId: string | null; relatedNodeIds?: Set<string> };
+  'highlight:single': { nodeId: string | null };
+  'highlight:clear' : void;
 
   // Collapse (dari SearchPlugin -> CollapsePlugin)
   'collapse:collapse-all' : void;
@@ -24,6 +25,9 @@ export interface GraphEvents
   // Node interaction (dari DragPlugin / HoverPlugin → consumer)
   'node:click': { node: D3Node; event: MouseEvent };
   'node:hover': { node: D3Node | null };
+  
+  // Context Menu (dari ContextMenuPlugin → consumer)
+  'context-menu:open': { node: D3Node; x?: number; y?: number; isKeyboard?: boolean };
 
   // Zoom (dari SearchPlugin → ZoomPlugin)
   'zoom:to'  : { x: number; y: number; scale?: number; duration?: number };
@@ -31,8 +35,8 @@ export interface GraphEvents
 
   // Simulation (dari CollapsePlugin / LayoutManager → SimulationController)
   'simulation:reheat' : { alpha?: number };
-  'simulation:cool'   : void;
   'simulation:settled': void;
+  'simulation:cool'   : void;
 
   // Layout (dari LayoutManager → SimulationController)
   'layout:change': { layout: IGraphLayout };

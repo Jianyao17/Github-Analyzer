@@ -116,7 +116,8 @@ function toggleProjectsCollapsed()
   <div 
     v-if="isMobile && isOpen" 
     class="
-      fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm transition-opacity
+      fixed inset-0 z-40 bg-[var(--ui-bg-elevated)]/50 backdrop-blur-sm
+      transition-opacity
     " 
     @click="$emit('close')" 
   />

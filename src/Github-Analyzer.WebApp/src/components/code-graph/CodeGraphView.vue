@@ -52,18 +52,23 @@ const {
     collapseDepth: 2,
 
     // Show context menu when node is right clicked
-    onContextMenu: (x, y, node) => 
+    onContextMenu: (x, y, node, isKeyboard = false) => 
     {
+      const existingUnpinned = contextMenus.value.find(m => m.id === node.id && !m.isPinned);
+
       // Remove unpinned menus
       contextMenus.value = contextMenus.value.filter(m => m.isPinned);
       
+      // Toggle logic for keyboard shortcut
+      if (existingUnpinned && isKeyboard) return;
+
       // Add new menu if not already open
       if (!contextMenus.value.some(m => m.id === node.id)) 
       {
         contextMenus.value.push({
           id: node.id,
-          x: x + 100,
-          y: y - 100,
+          x: x + (isKeyboard ? 120 : 80),
+          y: y - (isKeyboard ? 80  : 80),
           node,
           isPinned: false
         });

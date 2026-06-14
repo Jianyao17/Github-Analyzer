@@ -38,6 +38,7 @@ export class NodePass
   private _bus:       EventBus;
 
   private _focusedNodeId: string | null = null;
+  private _isSingleFocus: boolean = false;
   private _relatedNodeIds: Set<string> | undefined;
   private _highlightedNodeIds: Set<string> = new Set();
   private _dimOpacity: number = 0.24;
@@ -92,6 +93,14 @@ export class NodePass
   clearHighlight(): void 
   {
     this._highlightedNodeIds.clear();
+    this._isSingleFocus = false;
+    this._syncState();
+  }
+
+  applySingleFocus(nodeId: string | null): void 
+  {
+    this._focusedNodeId = nodeId;
+    this._isSingleFocus = true;
     this._syncState();
   }
 
@@ -99,6 +108,7 @@ export class NodePass
   {
     this._focusedNodeId = nodeId;
     this._relatedNodeIds = relatedNodeIds;
+    this._isSingleFocus = false;
     this._syncState();
   }
 
@@ -109,6 +119,7 @@ export class NodePass
     const focused = this._focusedNodeId;
     const related = this._relatedNodeIds;
     const highlighted = this._highlightedNodeIds;
+    const isSingleFocus = this._isSingleFocus;
     const dim = this._dimOpacity;
 
     this._selection.each(function (d) 
@@ -118,7 +129,7 @@ export class NodePass
       const isFocused = d.id === focused;
 
       let opacity = 1;
-      if (focused) 
+      if (focused && !isSingleFocus) 
       {
         if (!related?.has(d.id)) opacity = 0.15;
       }
@@ -165,6 +176,8 @@ export class NodePass
       .append('g')
       .attr('class',  'node')
       .attr('cursor', 'pointer')
+      .style('user-select', 'none')
+      .style('-webkit-user-select', 'none')
       .on('click', (event, d) => this._bus.emit('node:click', { node: d, event }));
 
     entered.each((d, i, nodes) => 
@@ -188,7 +201,7 @@ export class NodePass
       const hasQuery = this._highlightedNodeIds.size > 0;
 
       let opacity = 1;
-      if (this._focusedNodeId) 
+      if (this._focusedNodeId && !this._isSingleFocus) 
       {
         if (!this._relatedNodeIds?.has(d.id)) opacity = 0.15;
       }

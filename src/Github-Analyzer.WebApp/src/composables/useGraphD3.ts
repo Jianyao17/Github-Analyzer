@@ -58,7 +58,7 @@ export interface GraphD3Options
   layout?:        'hierarchical' | 'star-balloon';
   orientation?:   'LR' | 'TB' | 'RL' | 'BT';
   collapseDepth?: number;
-  onContextMenu?: (x: number, y: number, node: D3Node) => void;
+  onContextMenu?: (x: number, y: number, node: D3Node, isKeyboard?: boolean) => void;
 }
 
 /**
@@ -88,11 +88,12 @@ export function useGraphD3(
       // Modules are guaranteed to be loaded here
       const _engine = new GraphEngineClass!();
       _engine
-        .use(new graphPluginsModule!.ZoomPlugin(),     0)
-        .use(new graphPluginsModule!.DragPlugin(),     1)
-        .use(new graphPluginsModule!.CollapsePlugin(), 2)
-        .use(new graphPluginsModule!.HoverPlugin(),    3)
-        .use(new graphPluginsModule!.SearchPlugin(),   4)
+        .use(new graphPluginsModule!.ZoomPlugin(),       0)
+        .use(new graphPluginsModule!.DragPlugin(),       1)
+        .use(new graphPluginsModule!.CollapsePlugin(),   2)
+        .use(new graphPluginsModule!.HoverPlugin(),      3)
+        .use(new graphPluginsModule!.SearchPlugin(),     4)
+        .use(new graphPluginsModule!.NavigationPlugin(), 6)
         .use(new graphPluginsModule!.DebugPlugin({
           enabled: import.meta.env.DEV,
           logMemory: true,

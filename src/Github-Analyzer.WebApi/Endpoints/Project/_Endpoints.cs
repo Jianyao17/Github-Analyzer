@@ -33,13 +33,15 @@ public static class Endpoints
         group.MapListProjectsEndpoint()
             .WithName("ListProjects")
             .Produces<ApiResponse<List<ProjectResponse>>>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .RequireUserCache();
 
         group.MapGetProjectEndpoint()
             .WithName("GetProject")
             .Produces<ApiResponse<ProjectResponse>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .RequireUserCache();
 
         group.MapRenameProjectEndpoint()
             .WithName("RenameProject")
@@ -77,14 +79,16 @@ public static class Endpoints
             .Produces<ApiResponse<CodeGraphAnalysis>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .RequireUserCache();
 
         group.MapGetSourceContentEndpoint()
             .WithName("GetSourceContent")
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .RequireUserCache();
 
         // External Repositories (Github)
         group.MapFetchRepoInfoEndpoint()

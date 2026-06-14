@@ -1,3 +1,4 @@
+using GithubAnalyzer.Analysis.Reader;
 using GithubAnalyzer.Analysis.Interface;
 using GithubAnalyzer.Analysis.TreeSitter;
 using GithubAnalyzer.WebApi.Interfaces;
@@ -13,7 +14,6 @@ using GithubAnalyzer.WebApi.Workers;
 using Microsoft.AspNetCore.HttpOverrides;
 using Scalar.AspNetCore;
 using Asp.Versioning;
-using GithubAnalyzer.Analysis.Reader;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,6 +59,10 @@ builder.AddApiRateLimiting();
 builder.AddAnalysisConfig();
 builder.AddMailService();
 
+// Add Redis Output Cache
+builder.AddRedisOutputCache("cache");
+builder.Services.AddProjectOutputCache();
+
 builder.Services.AddSingleton<RepoDownloadGate>();
 builder.Services.AddTransient<IRepositoryFetcher, RepositoryFetcher>();
 builder.Services.AddHttpClient<IRepositoryProvider, GithubRepositoryProvider>(
@@ -91,6 +95,7 @@ app.UseCors(CorsPolicyConfig.Frontend);
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
+app.UseOutputCache();
 
 // Map endpoints
 app.MapDefaultEndpoints();

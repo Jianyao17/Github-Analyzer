@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.OutputCaching;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Extensions;
+using GithubAnalyzer.WebApi.Config;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Project;
 
@@ -17,6 +19,7 @@ public static class RenameProjectEndpoint
             RenameProjectRequest request,
             ClaimsPrincipal claimsPrincipal,
             AppDbContext dbContext,
+            IOutputCacheStore cacheStore,
             CancellationToken ct) =>
         {
             var userIdStr = claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? 
@@ -32,6 +35,9 @@ public static class RenameProjectEndpoint
 
             project.Title = request.Title;
             await dbContext.SaveChangesAsync(ct);
+
+            // Invalidate cache for this user
+            await cacheStore.EvictByTagAsync($"{UserSpecificCachePolicy.UserTagPrefix}{userIdStr}", ct);
 
             return ApiResults.Ok("Project renamed successfully.");
         });

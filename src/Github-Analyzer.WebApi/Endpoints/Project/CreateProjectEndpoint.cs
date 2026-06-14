@@ -1,11 +1,13 @@
 using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.OutputCaching;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Entities.Repo;
 using GithubAnalyzer.WebApi.Models.Analysis;
 using GithubAnalyzer.WebApi.Models;
+using GithubAnalyzer.WebApi.Config;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Project;
 
@@ -21,6 +23,7 @@ public static class CreateProjectEndpoint
         return group.MapPost("/new", async (
             CreateProjectRequest request, ClaimsPrincipal claimsPrincipal,
             AppDbContext dbContext, IRepositoryFetcher repositoryFetcher,
+            IOutputCacheStore cacheStore,
             CancellationToken ct) =>
         {
             // Get User ID from claims
@@ -89,6 +92,9 @@ public static class CreateProjectEndpoint
             // Save project and jobs to database
             dbContext.ProjectQueues.AddRange(statisticJob, codeGraphJob);
             await dbContext.SaveChangesAsync(ct);
+
+            // Invalidate cache for this user
+            await cacheStore.EvictByTagAsync($"{UserSpecificCachePolicy.UserTagPrefix}{userIdStr}", ct);
 
             // Return the created project
             var response = new ProjectResponse(

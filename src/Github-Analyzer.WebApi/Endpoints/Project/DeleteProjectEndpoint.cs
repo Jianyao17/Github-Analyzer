@@ -1,6 +1,8 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.OutputCaching;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Extensions;
+using GithubAnalyzer.WebApi.Config;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Project;
 
@@ -12,6 +14,7 @@ public static class DeleteProjectEndpoint
             Guid projectGuid,
             ClaimsPrincipal claimsPrincipal,
             AppDbContext dbContext,
+            IOutputCacheStore cacheStore,
             CancellationToken ct) =>
         {
             var userIdStr = claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? 
@@ -27,6 +30,9 @@ public static class DeleteProjectEndpoint
 
             dbContext.Projects.Remove(project);
             await dbContext.SaveChangesAsync(ct);
+
+            // Invalidate cache for this user
+            await cacheStore.EvictByTagAsync($"{UserSpecificCachePolicy.UserTagPrefix}{userIdStr}", ct);
 
             return ApiResults.Ok("Project deleted successfully.");
         });

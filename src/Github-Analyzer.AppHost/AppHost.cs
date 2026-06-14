@@ -20,6 +20,8 @@ if (builder.Environment.IsDevelopment())
 var mailpit = builder.AddMailPit("mailpit")
     .WithLifetime(ContainerLifetime.Persistent);
 
+var cache = builder.AddRedis("cache");
+
 const int webappPort = 5017;
 
 var webapp = builder.AddNpmApp("webapp", "../Github-Analyzer.WebApp", "dev")
@@ -30,7 +32,9 @@ var api = builder.AddProject<Projects.Github_Analyzer_WebApi>("webapi")
     .WithEnvironment("Cors__AllowedOrigins__0", webapp.GetEndpoint("http"))
     .WithReference(postgresDb)
     .WithReference(mailpit)
-    .WaitFor(postgresDb);
+    .WithReference(cache)
+    .WaitFor(postgresDb)
+    .WaitFor(cache);
 
 webapp
     .WithEnvironment("VITE_API_BASE_URL", api.GetEndpoint("http"))

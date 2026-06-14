@@ -102,34 +102,36 @@ defineExpose({
 
     <!-- ── Search trigger (top-left, z-20) ──────────────────────────────────── -->
     <div class="absolute top-4 left-4 z-20">
-      <button
-        class="
-          flex items-center gap-2.5 rounded-lg border border-[var(--ui-border)]
-          bg-[var(--ui-bg)] px-3.5 py-2.5 text-sm transition-colors
-          hover:bg-[var(--ui-bg-elevated)]
-        "
-        @click="searchModal?.open()"
-      >
-        <NIcon name="i-lucide-search"
-          class="h-5 w-5 shrink-0 text-[var(--ui-text-muted)]"
-        />
-        <span class="
-          hidden text-[var(--ui-text-muted)]
-          sm:block
-        "
-        >Search</span>
-        <div class="
-          hidden h-4 w-px shrink-0 bg-[var(--ui-border)]
-          sm:block
-        "
-        />
-        <NKbd size="md"
+      <NTooltip text="Cari file/node dalam grafik." :popper="{ placement: 'right' }">
+        <button
           class="
-            hidden
-            sm:flex
+            flex items-center gap-2.5 rounded-lg border border-[var(--ui-border)]
+            bg-[var(--ui-bg)] px-3.5 py-2.5 text-sm transition-colors
+            hover:bg-[var(--ui-bg-elevated)]
           "
-        >Ctrl K</NKbd>
-      </button>
+          @click="searchModal?.open()"
+        >
+          <NIcon name="i-lucide-search"
+            class="h-5 w-5 shrink-0 text-[var(--ui-text-muted)]"
+          />
+          <span class="
+            hidden text-[var(--ui-text-muted)]
+            sm:block
+          "
+          >Search</span>
+          <div class="
+            hidden h-4 w-px shrink-0 bg-[var(--ui-border)]
+            sm:block
+          "
+          />
+          <NKbd size="md"
+            class="
+              hidden
+              sm:flex
+            "
+          >Ctrl K</NKbd>
+        </button>
+      </NTooltip>
     </div>
 
     <!-- ── Search modal (absolute inset-0 z-30, contained within this element) ── -->
@@ -183,18 +185,24 @@ defineExpose({
     "
     >
       <!-- Graph Settings Menu -->
-      <GraphSettingsMenu 
-        :supports-namespace="supportsNamespace"
-        :max-collapse-depth="maxCollapseDepth"
-        v-model:settings="settings"
-        @expand-all="expandAll"
-        @collapse-all="collapseAll"
-      />
+      <NTooltip text="Atur tata letak dan visibilitas node grafik." :popper="{ placement: 'top' }">
+        <div>
+          <GraphSettingsMenu 
+            :supports-namespace="supportsNamespace"
+            :max-collapse-depth="maxCollapseDepth"
+            v-model:settings="settings"
+            @expand-all="expandAll"
+            @collapse-all="collapseAll"
+          />
+        </div>
+      </NTooltip>
 
       <!-- Legend -->
-      <div class="pointer-events-none">
-        <GraphLegend :data="data" />
-      </div>
+      <NTooltip text="Keterangan warna tipe node." :popper="{ placement: 'top' }">
+        <div class="pointer-events-none">
+          <GraphLegend :data="data" />
+        </div>
+      </NTooltip>
     </div>
 
     <!-- ── Context Menu (absolute top-0 left-0, z-50) ───────────────────────── -->

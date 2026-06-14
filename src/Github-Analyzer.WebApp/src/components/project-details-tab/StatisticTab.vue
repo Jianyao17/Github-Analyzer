@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import type { StatisticAnalysis } from '../../types/analysis/statistic-analysis';
 import type { ProgressEvent } from '../../composables/useProjectApi';
-import { computed } from 'vue';
+import { useOnboardingStore } from '../../stores/onboarding.store';
+import { computed, watch } from 'vue';
+
+const store = useOnboardingStore();
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 const props = defineProps<{
@@ -26,6 +29,15 @@ const commentRatio = computed(() =>
   if (!total || !comments) return 0;
   return Math.round((comments / total) * 100);
 });
+
+// ─── Onboarding ───────────────────────────────────────────────────────────────
+watch(() => props.data, (newData) => 
+{
+  if (newData) 
+  {
+    store.triggerOverviewTour();
+  }
+}, { immediate: true });
 </script>
 
 <template>
@@ -97,10 +109,11 @@ const commentRatio = computed(() =>
             class="h-3.5 w-3.5"
           /> Git Statistics
         </h2>
-        <div class="
-          grid grid-cols-2 gap-3
-          sm:grid-cols-3
-        "
+        <div id="onboarding-git-stats"
+          class="
+            grid grid-cols-2 gap-3
+            sm:grid-cols-3
+          "
         >
 
           <NCard class="border-0 ring-1 ring-[var(--ui-border)]"
@@ -313,10 +326,11 @@ const commentRatio = computed(() =>
             class="h-3.5 w-3.5"
           /> Analisis Baris Kode
         </h2>
-        <NCard class="
-          border-0 ring-1 ring-gray-200
-          dark:ring-gray-800
-        "
+        <NCard id="onboarding-code-lines"
+          class="
+            border-0 ring-1 ring-gray-200
+            dark:ring-gray-800
+          "
           :ui="{ body: 'p-5' }"
         >
           <div class="
@@ -347,10 +361,15 @@ const commentRatio = computed(() =>
                 {{ data.codeLines?.toLocaleString() ?? '—' }}
               </span>
               <span class="
-                text-xs text-gray-500
+                flex items-center gap-1 text-xs text-gray-500
                 dark:text-gray-400
               "
-              >Code Lines</span>
+              >
+                Code Lines
+                <NTooltip text="Baris kode murni (tanpa komentar/kosong)." :popper="{ placement: 'top' }">
+                  <NIcon name="i-lucide-info" class="h-3 w-3 cursor-help text-[var(--ui-text-muted)]" />
+                </NTooltip>
+              </span>
             </div>
             <div class="flex flex-col gap-1">
               <span class="
@@ -361,10 +380,15 @@ const commentRatio = computed(() =>
                 {{ data.commentLines?.toLocaleString() ?? '—' }}
               </span>
               <span class="
-                text-xs text-gray-500
+                flex items-center gap-1 text-xs text-gray-500
                 dark:text-gray-400
               "
-              >Comments</span>
+              >
+                Comments
+                <NTooltip text="Baris dokumentasi atau komentar." :popper="{ placement: 'top' }">
+                  <NIcon name="i-lucide-info" class="h-3 w-3 cursor-help text-[var(--ui-text-muted)]" />
+                </NTooltip>
+              </span>
             </div>
             <div class="flex flex-col gap-1">
               <span class="
@@ -374,10 +398,15 @@ const commentRatio = computed(() =>
                 {{ data.blankLines?.toLocaleString() ?? '—' }}
               </span>
               <span class="
-                text-xs text-gray-500
+                flex items-center gap-1 text-xs text-gray-500
                 dark:text-gray-400
               "
-              >Blank Lines</span>
+              >
+                Blank Lines
+                <NTooltip text="Baris kosong untuk spasi pemformatan." :popper="{ placement: 'top' }">
+                  <NIcon name="i-lucide-info" class="h-3 w-3 cursor-help text-[var(--ui-text-muted)]" />
+                </NTooltip>
+              </span>
             </div>
           </div>
 
@@ -386,19 +415,25 @@ const commentRatio = computed(() =>
             class="mt-5 space-y-2"
           >
             <div class="flex h-3 w-full gap-px overflow-hidden rounded-full">
-              <div class="
-                bg-emerald-500 transition-all duration-700
-                dark:bg-emerald-400
-              "
-                :style="{ width: ((data.codeLines || 0) / data.totalLinesOfCode * 100) + '%' }"
-              />
-              <div class="bg-sky-400 transition-all duration-700"
-                :style="{ width: ((data.commentLines || 0) / data.totalLinesOfCode * 100) + '%' }"
-              />
-              <div class="
-                flex-1 bg-[var(--ui-border)] transition-all duration-700
-              "
-              />
+              <NTooltip :text="`${((data.codeLines || 0) / data.totalLinesOfCode * 100).toFixed(1)}% (${data.codeLines?.toLocaleString() ?? 0} lines)`">
+                <div class="
+                  h-full bg-emerald-500 transition-all duration-700
+                  dark:bg-emerald-400
+                "
+                  :style="{ width: ((data.codeLines || 0) / data.totalLinesOfCode * 100) + '%' }"
+                />
+              </NTooltip>
+              <NTooltip :text="`${((data.commentLines || 0) / data.totalLinesOfCode * 100).toFixed(1)}% (${data.commentLines?.toLocaleString() ?? 0} lines)`">
+                <div class="h-full bg-sky-400 transition-all duration-700"
+                  :style="{ width: ((data.commentLines || 0) / data.totalLinesOfCode * 100) + '%' }"
+                />
+              </NTooltip>
+              <NTooltip :text="`${((data.blankLines || 0) / data.totalLinesOfCode * 100).toFixed(1)}% (${data.blankLines?.toLocaleString() ?? 0} lines)`">
+                <div class="
+                  h-full flex-1 bg-[var(--ui-border)] transition-all duration-700
+                "
+                />
+              </NTooltip>
             </div>
             <div class="
               flex items-center gap-4 text-xs text-[var(--ui-text-muted)]

@@ -29,6 +29,7 @@ const { isCollapsed, isOpen, isMobile,
     >
       <!-- Floating Mobile Menu Button -->
       <NButton
+        id="onboarding-mobile-menu-btn"
         v-if="isMobile && !isOpen"
         variant="solid"
         color="primary"

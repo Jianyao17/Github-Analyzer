@@ -9,6 +9,10 @@ import CodeViewer from '@/components/code-viewer/CodeViewer.vue';
 import 'splitpanes/dist/splitpanes.css';
 
 import { useWindowSize } from '@vueuse/core';
+import { watch } from 'vue';
+import { useOnboardingStore } from '../../stores/onboarding.store';
+
+const store = useOnboardingStore();
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 const props = defineProps<{
@@ -24,6 +28,15 @@ const isMobile = computed(() => width.value < 768);
 const codeViewerRef = ref<InstanceType<typeof CodeViewer> | null>(null);
 const codeGraphRef = ref<InstanceType<typeof CodeGraphView> | null>(null);
 const isViewerOpen = ref(false);
+
+// ─── Onboarding ───────────────────────────────────────────────────────────────
+watch(() => props.data, (newData) => 
+{
+  if (newData) 
+  {
+    store.triggerCodeGraphTour();
+  }
+}, { immediate: true });
 
 function handleShowSourceCode(node: GraphNode) 
 {
@@ -156,11 +169,13 @@ function handleFocusNode(path: string)
 
     <!-- ── Graph view & Code view ────────────────────────── -->
     <Splitpanes v-if="data"
+      id="onboarding-code-graph-canvas"
       class="default-theme absolute inset-0"
       :horizontal="isMobile"
     >
       <Pane min-size="20"
         :size="isViewerOpen ? (isMobile ? 50 : 55) : 100"
+        class="relative"
       >
         <CodeGraphView
           ref="codeGraphRef"
@@ -168,6 +183,18 @@ function handleFocusNode(path: string)
           class="h-full w-full"
           @show-source-code="handleShowSourceCode"
         />
+        <!-- Tooltip Canvas Navigation -->
+        <div class="absolute top-4 right-4 z-20">
+          <NTooltip text="Scroll untuk zoom, drag untuk geser, klik node untuk lihat kode." :popper="{ placement: 'left' }">
+            <button class="
+              flex h-8 w-8 items-center justify-center rounded-full
+              bg-[var(--ui-bg)] text-[var(--ui-text-muted)] ring-1 ring-[var(--ui-border)]
+              transition-colors hover:bg-[var(--ui-bg-elevated)] hover:text-[var(--ui-text)]
+            ">
+              <NIcon name="i-lucide-info" class="h-4.5 w-4.5" />
+            </button>
+          </NTooltip>
+        </div>
       </Pane>
       <Pane v-if="isViewerOpen"
         min-size="20"

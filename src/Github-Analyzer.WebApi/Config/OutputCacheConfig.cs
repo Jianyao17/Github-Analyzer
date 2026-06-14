@@ -45,6 +45,12 @@ public class UserSpecificCachePolicy : IOutputCachePolicy
             context.CacheVaryByRules.VaryByValues.Add(UserIdVaryKey, userIdStr);
         }
 
+        // Vary by all query string parameters so endpoints like:
+        //   GET /analysis?type=statistic  vs  GET /analysis?type=codegraph
+        //   GET /content?path=foo.cs      vs  GET /content?path=bar.cs
+        // each produce separate cache entries instead of colliding.
+        context.CacheVaryByRules.QueryKeys = "*";
+
         // Apply duration
         context.ResponseExpirationTimeSpan = TimeSpan.FromMinutes(CacheDurationMinutes);
 

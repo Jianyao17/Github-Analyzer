@@ -77,14 +77,16 @@ public static class Endpoints
             .Produces<ApiResponse<CodeGraphAnalysis>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .RequireUserCache();
 
         group.MapGetSourceContentEndpoint()
             .WithName("GetSourceContent")
             .Produces(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .RequireUserCache();
 
         // External Repositories (Github)
         group.MapFetchRepoInfoEndpoint()

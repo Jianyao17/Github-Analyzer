@@ -151,7 +151,7 @@ export class NodePass
       .enter()
       .append('g')
       .attr('class',  'node')
-      .attr('cursor', 'grab')
+      .attr('cursor', 'pointer')
       .on('click', (event, d) => this._bus.emit('node:click', { node: d, event }));
 
     entered.each((d, i, nodes) => 

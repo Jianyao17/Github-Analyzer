@@ -27,7 +27,7 @@ builder.Services.AddApiVersioning(options =>
     options.ApiVersionReader = new UrlSegmentApiVersionReader();
 });
 
-// Configure forwarded headers to correctly handle client IP 
+// Configure forwarded headers to correctly handle client IP
 // and protocol when behind reverse proxies (e.g., Railway)
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -59,9 +59,8 @@ builder.AddApiRateLimiting();
 builder.AddAnalysisConfig();
 builder.AddMailService();
 
-// Add Redis Output Cache
-builder.AddRedisOutputCache("cache");
-builder.Services.AddProjectOutputCache();
+// Add conditionally Redis Output Cache
+builder.AddProjectOutputCache();
 
 builder.Services.AddSingleton<RepoDownloadGate>();
 builder.Services.AddTransient<IRepositoryFetcher, RepositoryFetcher>();
@@ -95,7 +94,7 @@ app.UseCors(CorsPolicyConfig.Frontend);
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
-app.UseOutputCache();
+app.UseProjectCache();
 
 // Map endpoints
 app.MapDefaultEndpoints();
@@ -103,10 +102,10 @@ app.MapAuthEndpoints();
 app.MapProjectEndpoints();
 
 // Development-only features
-if (app.Environment.IsDevelopment() || 
+if (app.Environment.IsDevelopment() ||
     app.Environment.IsStaging())
 {
-    // Enable OpenAPI documentation and 
+    // Enable OpenAPI documentation and
     // Scalar API reference in development mode
     // OpenAPI JSON: /openapi/v1.json
     app.MapOpenApi("/openapi/{documentName}.json");
@@ -124,7 +123,7 @@ if (app.Environment.IsDevelopment() ||
 
     // Apply pending migrations on startup in development mode
     await app.ApplyMigrationsAsync();
-    
+
     // Map testing endpoints only for benchmarking and development purposes
     app.MapTestingEndpoints();
 }

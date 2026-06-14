@@ -93,8 +93,9 @@ public static class CreateProjectEndpoint
             dbContext.ProjectQueues.AddRange(statisticJob, codeGraphJob);
             await dbContext.SaveChangesAsync(ct);
 
-            // Invalidate cache for this user
-            await cacheStore.EvictByTagAsync($"{UserSpecificCachePolicy.UserTagPrefix}{userIdStr}", ct);
+            // Invalidasi cache untuk user ini setelah DB berhasil di-update.
+            // Ini dilakukan best-effort: jika Redis tidak tersedia, operasi tetap sukses.
+            await cacheStore.TryEvictByTagAsync($"{UserSpecificCachePolicy.UserTagPrefix}{userIdStr}", ct);
 
             // Return the created project
             var response = new ProjectResponse(

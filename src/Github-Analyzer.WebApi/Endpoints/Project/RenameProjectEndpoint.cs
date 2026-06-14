@@ -36,8 +36,9 @@ public static class RenameProjectEndpoint
             project.Title = request.Title;
             await dbContext.SaveChangesAsync(ct);
 
-            // Invalidate cache for this user
-            await cacheStore.EvictByTagAsync($"{UserSpecificCachePolicy.UserTagPrefix}{userIdStr}", ct);
+            // Invalidasi cache untuk user ini setelah DB berhasil di-update.
+            // Ini dilakukan best-effort: jika Redis tidak tersedia, operasi tetap sukses.
+            await cacheStore.TryEvictByTagAsync($"{UserSpecificCachePolicy.UserTagPrefix}{userIdStr}", ct);
 
             return ApiResults.Ok("Project renamed successfully.");
         });

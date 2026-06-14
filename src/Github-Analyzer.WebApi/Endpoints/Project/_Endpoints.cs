@@ -33,15 +33,13 @@ public static class Endpoints
         group.MapListProjectsEndpoint()
             .WithName("ListProjects")
             .Produces<ApiResponse<List<ProjectResponse>>>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .RequireUserCache();
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         group.MapGetProjectEndpoint()
             .WithName("GetProject")
             .Produces<ApiResponse<ProjectResponse>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .RequireUserCache();
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         group.MapRenameProjectEndpoint()
             .WithName("RenameProject")

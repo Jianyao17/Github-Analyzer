@@ -3,6 +3,18 @@ using System.Security.Claims;
 
 namespace GithubAnalyzer.WebApi.Config;
 
+/// <summary>
+/// Konfigurasi Output Cache Redis yang dapat diatur melalui appsettings.
+/// </summary>
+public class OutputCacheSettings
+{
+    public const string SectionName = "OutputCache";
+
+    public int ConnectTimeoutMs { get; init; } = 3000;
+
+    public int SyncTimeoutMs { get; init; } = 1000;
+}
+
 public class UserSpecificCachePolicy : IOutputCachePolicy
 {
     public const string UserTagPrefix = "user-";

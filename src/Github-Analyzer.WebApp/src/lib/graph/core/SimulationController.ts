@@ -1,8 +1,9 @@
 import * as d3 from 'd3';
+import { forceRectCollide } from './ForceRectCollide';
 import type { D3Node, D3Edge } from '../types/node-edge';
-import type { Dimensions }     from '../types/events';
-import type { GraphConfig }    from '../types/config';
-import type { EventBus }       from './EventBus';
+import type { GraphConfig } from '../types/config';
+import type { Dimensions } from '../types/events';
+import type { EventBus } from './EventBus';
 
 /**
  * Manages the D3 force simulation physics for the graph engine.
@@ -61,7 +62,7 @@ export class SimulationController
       )
       .force('charge',  d3.forceManyBody().strength(chargeStrength))
       .force('center',  d3.forceCenter(dims.width / 2, dims.height / 2))
-      .force('collide', d3.forceCollide<D3Node>().radius(d => (d._radius ?? 5) + 2))
+      .force('collide', forceRectCollide(16, 2))
       .on('end',  () => this._bus.emit('simulation:settled', undefined as never))
       .on('tick', onTick); // Direct call, not via bus
   }

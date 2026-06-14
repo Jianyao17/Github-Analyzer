@@ -368,30 +368,34 @@ onUnmounted(() =>
                   />
                   {{ project.branchName }}
                 </span>
-                <span v-if="project.lastCommitHash"
-                  class="
-                    inline-flex items-center gap-1 rounded-full
-                    bg-[var(--ui-bg-elevated)] px-2 py-0.5 text-xs font-medium
-                    text-[var(--ui-text-muted)]
-                  "
-                >
-                  <NIcon name="i-lucide-git-commit-horizontal"
-                    class="h-3 w-3"
-                  />
-                  {{ project.lastCommitHash.slice(0, 7) }}
-                </span>
-                <span v-if="formattedCreatedAt"
-                  class="
-                    inline-flex items-center gap-1 rounded-full
-                    bg-[var(--ui-bg-elevated)] px-2 py-0.5 text-xs font-medium
-                    text-[var(--ui-text-muted)]
-                  "
-                >
-                  <NIcon name="i-lucide-calendar"
-                    class="h-3 w-3"
-                  />
-                  {{ formattedCreatedAt }}
-                </span>
+                <NTooltip text="Hash commit target analisa." :popper="{ placement: 'top' }">
+                  <span v-if="project.lastCommitHash"
+                    class="
+                      inline-flex items-center gap-1 rounded-full
+                      bg-[var(--ui-bg-elevated)] px-2 py-0.5 text-xs font-medium
+                      text-[var(--ui-text-muted)] cursor-help
+                    "
+                  >
+                    <NIcon name="i-lucide-git-commit-horizontal"
+                      class="h-3 w-3"
+                    />
+                    {{ project.lastCommitHash.slice(0, 7) }}
+                  </span>
+                </NTooltip>
+                <NTooltip text="Waktu analisa tersimpan di database." :popper="{ placement: 'top' }">
+                  <span v-if="formattedCreatedAt"
+                    class="
+                      inline-flex items-center gap-1 rounded-full
+                      bg-[var(--ui-bg-elevated)] px-2 py-0.5 text-xs font-medium
+                      text-[var(--ui-text-muted)] cursor-help
+                    "
+                  >
+                    <NIcon name="i-lucide-calendar"
+                      class="h-3 w-3"
+                    />
+                    {{ formattedCreatedAt }}
+                  </span>
+                </NTooltip>
               </div>
             </div>
           </div>
@@ -403,42 +407,46 @@ onUnmounted(() =>
         flex shrink-0 items-center gap-1 border-b border-[var(--ui-border)]
       "
       >
-        <button id="tab-statistic"
-          @click="activeTab = 'statistic'"
-          class="
-            flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium
-            transition-colors duration-150
-          "
-          :class="activeTab === 'statistic'
-            ? `border-[var(--ui-primary)] text-[var(--ui-primary)]`
-            : `
-              border-transparent text-[var(--ui-text-muted)]
-              hover:text-[var(--ui-text)]
-            `"
-        >
-          <NIcon name="i-lucide-bar-chart-2"
-            class="h-4 w-4"
-          />
-          Statistik
-        </button>
-        <button id="tab-codegraph"
-          @click="activeTab = 'codegraph'"
-          class="
-            flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium
-            transition-colors duration-150
-          "
-          :class="activeTab === 'codegraph'
-            ? `border-[var(--ui-primary)] text-[var(--ui-primary)]`
-            : `
-              border-transparent text-[var(--ui-text-muted)]
-              hover:text-[var(--ui-text)]
-            `"
-        >
-          <NIcon name="i-lucide-network"
-            class="h-4 w-4"
-          />
-          Code Graph
-        </button>
+        <NTooltip text="Ringkasan metrik kode dan analisis statis." :popper="{ placement: 'top' }">
+          <button id="tab-statistic"
+            @click="activeTab = 'statistic'"
+            class="
+              flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium
+              transition-colors duration-150
+            "
+            :class="activeTab === 'statistic'
+              ? `border-[var(--ui-primary)] text-[var(--ui-primary)]`
+              : `
+                border-transparent text-[var(--ui-text-muted)]
+                hover:text-[var(--ui-text)]
+              `"
+          >
+            <NIcon name="i-lucide-bar-chart-2"
+              class="h-4 w-4"
+            />
+            Statistik
+          </button>
+        </NTooltip>
+        <NTooltip text="Visualisasi struktur dan dependensi codebase." :popper="{ placement: 'top' }">
+          <button id="tab-codegraph"
+            @click="activeTab = 'codegraph'"
+            class="
+              flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium
+              transition-colors duration-150
+            "
+            :class="activeTab === 'codegraph'
+              ? `border-[var(--ui-primary)] text-[var(--ui-primary)]`
+              : `
+                border-transparent text-[var(--ui-text-muted)]
+                hover:text-[var(--ui-text)]
+              `"
+          >
+            <NIcon name="i-lucide-network"
+              class="h-4 w-4"
+            />
+            Code Graph
+          </button>
+        </NTooltip>
       </div>
 
       <!-- ── Tab Content (fills remaining height, no scroll on page level) ── -->

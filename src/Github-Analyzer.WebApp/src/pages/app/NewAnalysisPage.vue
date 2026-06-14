@@ -273,94 +273,98 @@ onMounted(() =>
           sm:flex-row sm:gap-5
         "
       >
-        <div class="
-          relative w-full
-          sm:w-1/2
-        "
-        >
+        <NTooltip text="Pilih branch target analisa." :popper="{ placement: 'top' }">
           <div class="
-            pointer-events-none absolute inset-y-0 left-0 flex items-center
-            pl-3.5
+            relative w-full
+            sm:w-1/2
           "
           >
-            <NIcon name="i-lucide-git-branch"
-              class="h-4 w-4 text-[var(--ui-text-muted)]"
-            />
-          </div>
-          <select
-            v-model="branch"
-            :disabled="creating || !hasBranches"
-            class="
-              w-full cursor-pointer appearance-none rounded-xl border
-              border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] py-2.5 pr-8
-              pl-10 text-xs text-[var(--ui-text)] transition-colors
-              focus:ring-2 focus:ring-[var(--ui-primary)] focus:outline-none
-              disabled:cursor-not-allowed disabled:opacity-50
-              sm:text-sm
+            <div class="
+              pointer-events-none absolute inset-y-0 left-0 flex items-center
+              pl-3.5
             "
-          >
-            <option value=""
-              disabled
-              hidden
-            >Pilih branch…</option>
-            <option v-for="b in branchOptions"
-              :key="b.value"
-              :value="b.value"
-            >{{ b.label }}</option>
-          </select>
-          <div class="
-            pointer-events-none absolute inset-y-0 right-0 flex items-center
-            pr-3 text-[var(--ui-text-muted)]
-          "
-          >
-            <NIcon name="i-lucide-chevron-down"
-              class="h-4 w-4"
-            />
+            >
+              <NIcon name="i-lucide-git-branch"
+                class="h-4 w-4 text-[var(--ui-text-muted)]"
+              />
+            </div>
+            <select
+              v-model="branch"
+              :disabled="creating || !hasBranches"
+              class="
+                w-full cursor-pointer appearance-none rounded-xl border
+                border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] py-2.5 pr-8
+                pl-10 text-xs text-[var(--ui-text)] transition-colors
+                focus:ring-2 focus:ring-[var(--ui-primary)] focus:outline-none
+                disabled:cursor-not-allowed disabled:opacity-50
+                sm:text-sm
+              "
+            >
+              <option value=""
+                disabled
+                hidden
+              >Pilih branch…</option>
+              <option v-for="b in branchOptions"
+                :key="b.value"
+                :value="b.value"
+              >{{ b.label }}</option>
+            </select>
+            <div class="
+              pointer-events-none absolute inset-y-0 right-0 flex items-center
+              pr-3 text-[var(--ui-text-muted)]
+            "
+            >
+              <NIcon name="i-lucide-chevron-down"
+                class="h-4 w-4"
+              />
+            </div>
           </div>
-        </div>
+        </NTooltip>
 
-        <div class="
-          relative w-full
-          sm:w-1/2
-        "
-        >
+        <NTooltip text="Pilih commit spesifik, kosongkan untuk commit terbaru." :popper="{ placement: 'top' }">
           <div class="
-            pointer-events-none absolute inset-y-0 left-0 flex items-center
-            pl-3.5
+            relative w-full
+            sm:w-1/2
           "
           >
-            <NIcon name="i-lucide-git-commit"
-              class="h-4 w-4 text-[var(--ui-text-muted)]"
-            />
-          </div>
-          <select
-            v-model="commitHash"
-            :disabled="creating || !hasCommits"
-            class="
-              w-full cursor-pointer appearance-none rounded-xl border
-              border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] py-2.5 pr-8
-              pl-10 text-xs text-[var(--ui-text)] transition-colors
-              focus:ring-2 focus:ring-[var(--ui-primary)] focus:outline-none
-              disabled:cursor-not-allowed disabled:opacity-50
-              sm:text-sm
+            <div class="
+              pointer-events-none absolute inset-y-0 left-0 flex items-center
+              pl-3.5
             "
-          >
-            <option value="">Commit terbaru</option>
-            <option v-for="c in commitOptions"
-              :key="c.value"
-              :value="c.value"
-            >{{ c.label }}</option>
-          </select>
-          <div class="
-            pointer-events-none absolute inset-y-0 right-0 flex items-center
-            pr-3 text-[var(--ui-text-muted)]
-          "
-          >
-            <NIcon name="i-lucide-chevron-down"
-              class="h-4 w-4"
-            />
+            >
+              <NIcon name="i-lucide-git-commit"
+                class="h-4 w-4 text-[var(--ui-text-muted)]"
+              />
+            </div>
+            <select
+              v-model="commitHash"
+              :disabled="creating || !hasCommits"
+              class="
+                w-full cursor-pointer appearance-none rounded-xl border
+                border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] py-2.5 pr-8
+                pl-10 text-xs text-[var(--ui-text)] transition-colors
+                focus:ring-2 focus:ring-[var(--ui-primary)] focus:outline-none
+                disabled:cursor-not-allowed disabled:opacity-50
+                sm:text-sm
+              "
+            >
+              <option value="">Commit terbaru</option>
+              <option v-for="c in commitOptions"
+                :key="c.value"
+                :value="c.value"
+              >{{ c.label }}</option>
+            </select>
+            <div class="
+              pointer-events-none absolute inset-y-0 right-0 flex items-center
+              pr-3 text-[var(--ui-text-muted)]
+            "
+            >
+              <NIcon name="i-lucide-chevron-down"
+                class="h-4 w-4"
+              />
+            </div>
           </div>
-        </div>
+        </NTooltip>
       </div>
 
       <!-- Submit Button (Mobile Only) -->

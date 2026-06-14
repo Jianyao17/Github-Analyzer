@@ -8,7 +8,7 @@ setToastApi(toast);
 </script>
 
 <template>
-  <NApp :toaster="toaster">
+  <NApp :toaster="toaster" :tooltip="{ delayDuration: 100 }">
     <RouterView />
     <OnboardingWrapper />
   </NApp>

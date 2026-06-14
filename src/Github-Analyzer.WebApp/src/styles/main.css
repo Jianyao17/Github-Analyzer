@@ -17,3 +17,9 @@
 :root {
   --ui-radius: 0.25rem;
 }
+
+/* Ensure tooltips are not covered by other fixed elements like sidebars */
+[data-radix-popper-content-wrapper],
+[data-reka-popper-content-wrapper] {
+  z-index: 100 !important;
+}

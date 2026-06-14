@@ -133,7 +133,8 @@ function toggleProjectsCollapsed()
       :class="isMobile ? 'w-64' : (isCollapsed ? 'w-18' : 'w-64')"
     >
       <!-- Logo Section -->
-      <div class="flex h-16 shrink-0 items-center gap-3 px-3 py-4"
+      <div id="onboarding-sidebar-logo"
+        class="flex h-16 shrink-0 items-center gap-3 px-3 py-4"
         :class="isCollapsed && !isMobile ? `justify-center` : `justify-between`"
       >
         <!-- Collapsed: Logo is the toggle button -->
@@ -181,7 +182,9 @@ function toggleProjectsCollapsed()
       </div>
 
       <!-- New Analysis Button -->
-      <div class="px-3 py-4">
+      <div id="onboarding-new-analysis-btn"
+        class="px-3 py-4"
+      >
         <!-- Expanded or Mobile: Show icon + text -->
         <NButton
           v-show="!isCollapsed || isMobile"
@@ -205,7 +208,9 @@ function toggleProjectsCollapsed()
       </div>
 
       <!-- Navigation Links -->
-      <div class="flex min-h-0 flex-1 flex-col p-3">
+      <div id="onboarding-projects-list"
+        class="flex min-h-0 flex-1 flex-col p-3"
+      >
         <template v-if="!isCollapsed || isMobile">
           <div class="group mb-2 flex items-center justify-between px-2">
             <div class="w-1/2">

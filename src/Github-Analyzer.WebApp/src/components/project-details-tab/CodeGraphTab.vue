@@ -9,6 +9,10 @@ import CodeViewer from '@/components/code-viewer/CodeViewer.vue';
 import 'splitpanes/dist/splitpanes.css';
 
 import { useWindowSize } from '@vueuse/core';
+import { watch } from 'vue';
+import { useOnboardingStore } from '../../stores/onboarding.store';
+
+const store = useOnboardingStore();
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 const props = defineProps<{
@@ -24,6 +28,15 @@ const isMobile = computed(() => width.value < 768);
 const codeViewerRef = ref<InstanceType<typeof CodeViewer> | null>(null);
 const codeGraphRef = ref<InstanceType<typeof CodeGraphView> | null>(null);
 const isViewerOpen = ref(false);
+
+// ─── Onboarding ───────────────────────────────────────────────────────────────
+watch(() => props.data, (newData) => 
+{
+  if (newData) 
+  {
+    store.triggerCodeGraphTour();
+  }
+}, { immediate: true });
 
 function handleShowSourceCode(node: GraphNode) 
 {
@@ -156,6 +169,7 @@ function handleFocusNode(path: string)
 
     <!-- ── Graph view & Code view ────────────────────────── -->
     <Splitpanes v-if="data"
+      id="onboarding-code-graph-canvas"
       class="default-theme absolute inset-0"
       :horizontal="isMobile"
     >

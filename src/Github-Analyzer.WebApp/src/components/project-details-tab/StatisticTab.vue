@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import type { StatisticAnalysis } from '../../types/analysis/statistic-analysis';
 import type { ProgressEvent } from '../../composables/useProjectApi';
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
+import { useOnboardingStore } from '../../stores/onboarding.store';
+
+const store = useOnboardingStore();
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 const props = defineProps<{
@@ -26,6 +29,15 @@ const commentRatio = computed(() =>
   if (!total || !comments) return 0;
   return Math.round((comments / total) * 100);
 });
+
+// ─── Onboarding ───────────────────────────────────────────────────────────────
+watch(() => props.data, (newData) => 
+{
+  if (newData) 
+  {
+    store.triggerOverviewTour();
+  }
+}, { immediate: true });
 </script>
 
 <template>
@@ -97,10 +109,11 @@ const commentRatio = computed(() =>
             class="h-3.5 w-3.5"
           /> Git Statistics
         </h2>
-        <div class="
-          grid grid-cols-2 gap-3
-          sm:grid-cols-3
-        "
+        <div id="onboarding-git-stats"
+          class="
+            grid grid-cols-2 gap-3
+            sm:grid-cols-3
+          "
         >
 
           <NCard class="border-0 ring-1 ring-[var(--ui-border)]"
@@ -313,10 +326,11 @@ const commentRatio = computed(() =>
             class="h-3.5 w-3.5"
           /> Analisis Baris Kode
         </h2>
-        <NCard class="
-          border-0 ring-1 ring-gray-200
-          dark:ring-gray-800
-        "
+        <NCard id="onboarding-code-lines"
+          class="
+            border-0 ring-1 ring-gray-200
+            dark:ring-gray-800
+          "
           :ui="{ body: 'p-5' }"
         >
           <div class="

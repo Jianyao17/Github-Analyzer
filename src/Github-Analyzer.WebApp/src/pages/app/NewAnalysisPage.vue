@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { ref, computed, watch, onMounted } from 'vue';
+import { useOnboardingStore } from '../../stores/onboarding.store';
 import { useProjectApi } from '../../composables/useProjectApi';
 import { useRepoInfo } from '../../composables/useRepoInfo';
 
+const store = useOnboardingStore();
 const router = useRouter();
 const { createProject } = useProjectApi();
 const {
@@ -113,6 +115,11 @@ async function onSubmit()
     creating.value = false;
   }
 }
+
+onMounted(() => 
+{
+  store.triggerNewAnalysisTour();
+});
 </script>
 
 <template>
@@ -147,7 +154,9 @@ async function onSubmit()
       "
     >
       <!-- URL Input -->
-      <div class="w-full">
+      <div id="onboarding-repo-url"
+        class="w-full"
+      >
         <label class="sr-only">URL Repositori</label>
         <div class="
           relative flex w-full items-stretch overflow-hidden rounded-xl border
@@ -176,6 +185,7 @@ async function onSubmit()
             "
           />
           <button
+            id="onboarding-submit-btn"
             type="submit"
             :disabled="creating || !repoUrl"
             aria-label="Mulai analisa"
@@ -257,10 +267,11 @@ async function onSubmit()
       </div>
 
       <!-- Branch & Commit Selectors -->
-      <div class="
-        flex w-full flex-col gap-3
-        sm:flex-row sm:gap-5
-      "
+      <div id="onboarding-branch-commit"
+        class="
+          flex w-full flex-col gap-3
+          sm:flex-row sm:gap-5
+        "
       >
         <div class="
           relative w-full

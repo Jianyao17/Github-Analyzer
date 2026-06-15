@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,28 +7,45 @@
   <meta name="supported-color-schemes" content="light dark" />
   <title>{{AppName}}</title>
   <style>
-    /* ── CSS Variables ──────────────────────────────────────────────── */
+    /* CSS Variables Setup (Nuxt UI Theme) */
     :root {
-      /* Brand */
-      --color-primary: #00DC82;
-      --color-primary-hover: #00C974;
-      --color-primary-text: #021a0d;
+      /* Brand (Nuxt Emerald) */
+      --color-primary: #10b981;
+      --color-primary-hover: #059669;
+      --color-primary-text: #ffffff;
 
-      /* Light mode (default) */
-      --color-bg: #FFFFFF;
-      --color-surface: #FFFFFF;
-      --color-border: #E5E7EB;
-      --color-text: #18181B;
-      --color-text-muted: #71717A;
-      --color-text-subtle: #A1A1AA;
-      --color-footer-bg: #F9FAFB;
-      --color-code-bg: #F4F4F5;
+      /* Light Theme (Nuxt Neutral) */
+      --color-bg: #f5f5f5;
+      --color-surface: #ffffff;
+      --color-border: #e5e5e5;
+      --color-text: #171717;
+      --color-text-muted: #525252;
+      --color-text-subtle: #737373;
+      --color-code-bg: #f5f5f5;
+
+      /* Dark Theme (Nuxt Neutral) */
+      --color-bg-dark: #0a0a0a;
+      --color-surface-dark: #171717;
+      --color-border-dark: #262626;
+      --color-text-dark: #fafafa;
+      --color-text-muted-dark: #a3a3a3;
+      --color-text-subtle-dark: #737373;
+      --color-code-bg-dark: #262626;
+
+      /* Warning Theme (Nuxt Amber) */
+      --color-warning-bg: #fffbeb;
+      --color-warning-border: #fde68a;
+      --color-warning-text: #b45309;
+
+      --color-warning-bg-dark: #451a03;
+      --color-warning-border-dark: #78350f;
+      --color-warning-text-dark: #fde68a;
 
       /* Typography */
       --font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       --font-size-sm: 13px;
       --font-size-base: 15px;
-      --font-size-lg: 17px;
+      --font-size-lg: 18px;
       --font-size-xl: 24px;
 
       /* Spacing & Radius */
@@ -38,28 +54,21 @@
       --spacing-section: 32px;
     }
 
-    /* ── Dark mode overrides ────────────────────────────────────────── */
+    /* Dark mode explicit usage */
     @media (prefers-color-scheme: dark) {
-      :root {
-        --color-bg: #0B0F19;
-        --color-surface: #1B1F2E;
-        --color-border: #2E3344;
-        --color-text: #F4F4F5;
-        --color-text-muted: #A1A1AA;
-        --color-text-subtle: #71717A;
-        --color-footer-bg: #151928;
-        --color-code-bg: #252A3A;
-      }
+      body, .email-wrapper { background-color: var(--color-bg-dark) !important; }
+      .email-card { background-color: var(--color-surface-dark) !important; border-color: var(--color-border-dark) !important; }
+      .email-header { border-bottom-color: var(--color-border-dark) !important; }
+      body, .email-header .brand, .email-body h1, .email-body .greeting { color: var(--color-text-dark) !important; }
+      .email-body .subtitle, .email-body .message, .fallback-details .fallback-content { color: var(--color-text-muted-dark) !important; }
+      .email-footer p, .fallback-details summary { color: var(--color-text-subtle-dark) !important; }
+      .fallback-details .fallback-content { background-color: var(--color-code-bg-dark) !important; }
+      .alert-warning { background-color: var(--color-warning-bg-dark) !important; border-color: var(--color-warning-border-dark) !important; color: var(--color-warning-text-dark) !important; }
+      .divider { border-top-color: var(--color-border-dark) !important; }
     }
 
-    /* ── Reset ──────────────────────────────────────────────────────── */
-    body,
-    table,
-    td,
-    p,
-    a,
-    li,
-    blockquote {
+    /* Reset */
+    body, table, td, p, a, li, blockquote {
       -webkit-text-size-adjust: 100%;
       -ms-text-size-adjust: 100%;
     }
@@ -82,6 +91,7 @@
       height: auto;
       outline: none;
       text-decoration: none;
+      max-width: 100%;
     }
 
     a {
@@ -93,11 +103,11 @@
       text-decoration: underline;
     }
 
-    /* ── Layout ─────────────────────────────────────────────────────── */
+    /* Layout */
     .email-wrapper {
       width: 100%;
       background-color: var(--color-bg);
-      padding: 40px 16px 0;
+      padding: 40px 16px;
     }
 
     .email-container {
@@ -105,15 +115,21 @@
       margin: 0 auto;
     }
 
-    /* ── Card (structural wrapper only) ──────────────────────────────────── */
+    /* Card */
     .email-card {
+      width: 100%;
       max-width: 600px;
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      overflow: hidden;
     }
 
-    /* ── Header ─────────────────────────────────────────────────────── */
+    /* Header */
     .email-header {
-      padding: 28px var(--spacing-section);
+      padding: 24px var(--spacing-section);
       text-align: center;
+      border-bottom: 1px solid var(--color-border);
     }
 
     .email-header .brand {
@@ -123,11 +139,7 @@
       letter-spacing: -0.02em;
     }
 
-    .email-header .brand-accent {
-      color: var(--color-primary);
-    }
-
-    /* ── Body ───────────────────────────────────────────────────────── */
+    /* Body */
     .email-body {
       padding: var(--spacing-section);
     }
@@ -151,19 +163,20 @@
       margin: 0 0 16px 0;
       font-size: var(--font-size-base);
       color: var(--color-text);
+      font-weight: 600;
     }
 
     .email-body .message {
-      margin: 0 0 28px 0;
+      margin: 0 0 24px 0;
       font-size: var(--font-size-base);
       color: var(--color-text-muted);
-      line-height: 1.7;
+      line-height: 1.6;
     }
 
-    /* ── CTA Button ─────────────────────────────────────────────────── */
+    /* CTA Button */
     .cta-wrapper {
       text-align: center;
-      margin: 28px 0;
+      margin: 32px 0;
     }
 
     .cta-button {
@@ -181,10 +194,9 @@
 
     .cta-button:hover {
       background-color: var(--color-primary-hover);
-      text-decoration: none !important;
     }
 
-    /* ── Fallback URL (collapsible) ─────────────────────────────────── */
+    /* Fallback Details */
     .fallback-details {
       margin: 24px 0 0 0;
     }
@@ -193,31 +205,16 @@
       font-size: var(--font-size-sm);
       color: var(--color-text-subtle);
       cursor: pointer;
-      list-style: none;
-      user-select: none;
-    }
-
-    .fallback-details summary::-webkit-details-marker {
-      display: none;
-    }
-
-    .fallback-details summary::before {
-      content: '▸ ';
-    }
-
-    .fallback-details[open] summary::before {
-      content: '▾ ';
     }
 
     .fallback-details .fallback-content {
       margin-top: 10px;
       padding: 14px 16px;
       background-color: var(--color-code-bg);
-      border-radius: 8px;
+      border-radius: var(--radius-btn);
       font-size: var(--font-size-sm);
       color: var(--color-text-muted);
       word-break: break-all;
-      line-height: 1.5;
     }
 
     .fallback-details .fallback-content a {
@@ -225,23 +222,30 @@
       word-break: break-all;
     }
 
-    /* ── Divider ────────────────────────────────────────────────────── */
+    /* Alert Warning */
+    .alert-warning {
+      background-color: var(--color-warning-bg);
+      border: 1px solid var(--color-warning-border);
+      color: var(--color-warning-text);
+      padding: 12px 16px;
+      border-radius: var(--radius-btn);
+      font-size: var(--font-size-sm);
+      margin: 24px 0;
+      line-height: 1.5;
+    }
+
+    /* Divider */
     .divider {
       border: none;
       border-top: 1px solid var(--color-border);
       margin: 28px 0;
     }
 
-    /* ── Footer (full-width background, centered content) ─────────── */
-    .email-footer-wrapper {
-      width: 100%;
-      background-color: var(--color-footer-bg);
-    }
-
+    /* Footer */
     .email-footer {
       max-width: 600px;
       margin: 0 auto;
-      padding: 24px var(--spacing-section);
+      padding: 24px 16px;
       text-align: center;
     }
 
@@ -252,74 +256,67 @@
       line-height: 1.6;
     }
 
-    /* ── Responsive ─────────────────────────────────────────────────── */
-    @media only screen and (max-width: 640px) {
-      .email-wrapper {
-        padding: 24px 12px 0;
-      }
-
-      .email-body {
-        padding: 24px 20px;
-      }
-
-      .email-header {
-        padding: 20px 20px;
-      }
-
-      .email-footer {
-        padding: 20px;
-      }
-
-      .email-body h1 {
-        font-size: 20px;
-      }
-
-      .cta-button {
-        padding: 12px 24px;
-        font-size: 14px;
+    /* Responsive */
+    @media only screen and (max-width: 640px) 
+    {
+      .email-wrapper { padding: 24px 12px; }
+      .email-body { padding: 24px 20px; }
+      .email-header { padding: 20px; }
+      .email-body h1 { font-size: 20px; }
+      .cta-button { 
+        padding: 12px 24px; 
+        font-size: 14px; 
+        width: 100%; 
+        box-sizing: border-box; 
       }
     }
   </style>
   <!--[if mso]>
   <style type="text/css">
     body, table, td { font-family: 'Segoe UI', Arial, sans-serif !important; }
-    .cta-button { background-color: #00DC82 !important; padding: 12px 32px !important; }
+    .cta-button { background-color: var(--color-primary) !important; padding: 12px 32px !important; }
   </style>
   <![endif]-->
 </head>
-
-<body>
+<body style="background-color: var(--color-bg); margin: 0; padding: 0;">
   <div class="email-wrapper">
+    <!--[if mso | IE]>
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="var(--color-bg)">
+      <tr>
+        <td align="center" valign="top" style="padding: 40px 16px;">
+          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600">
+            <tr>
+              <td align="left" valign="top">
+    <![endif]-->
     <div class="email-container">
-
       <!-- Card -->
       <div class="email-card">
-
         <!-- Header -->
         <div class="email-header">
           <span class="brand">
             {{AppName}}
           </span>
         </div>
-
         <!-- Body -->
         <div class="email-body">
           {{RenderBody}}
         </div>
-
       </div>
       <!-- /Card -->
-
+      <!-- Footer -->
+      <div class="email-footer">
+        <p>&copy; {{Year}} {{AppName}}. All rights reserved.</p>
+        <p>This is an automated message - please do not reply directly.</p>
+      </div>
     </div>
-  </div>
-
-  <!-- Footer (full-width background) -->
-  <div class="email-footer-wrapper">
-    <div class="email-footer">
-      <p>&copy; {{Year}} {{AppName}}. All rights reserved.</p>
-      <p>This is an automated message — please do not reply directly.</p>
-    </div>
+    <!--[if mso | IE]>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    <![endif]-->
   </div>
 </body>
-
 </html>

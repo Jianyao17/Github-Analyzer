@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 using GithubAnalyzer.WebApi.Config;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Models.Emails;
@@ -96,6 +97,9 @@ public abstract class BaseEmailService : IEmailService
             var layoutContent = await File.ReadAllTextAsync(layoutPath, ct);
             finalHtml = layoutContent.Replace("{{RenderBody}}", templateContent);
 
+            // Resolve CSS variables dynamically before inlining
+            finalHtml = ResolveCssVariables(finalHtml);
+
             // Inline CSS automatically using PreMailer.Net
             var inlineResult = PreMailer.Net.PreMailer.MoveCssInline(finalHtml,
               removeStyleElements: true, removeComments: true);
@@ -105,5 +109,40 @@ public abstract class BaseEmailService : IEmailService
 
         _templateCache.TryAdd(templateName, finalHtml);
         return finalHtml;
+    }
+
+    /// <summary>
+    /// Resolves CSS variables defined in the <c>:root</c> block
+    /// and replaces all occurrences of <c>var(--variable)</c> globally.
+    /// </summary>
+    private static string ResolveCssVariables(string html)
+    {
+        var variables = new Dictionary<string, string>();
+        var rootMatch = Regex.Match(html, @":root\s*\{([^}]+)\}");
+        
+        if (rootMatch.Success)
+        {
+            var varMatches = Regex.Matches(rootMatch.Groups[1].Value, @"(--[a-zA-Z0-9-]+)\s*:\s*([^;]+);");
+            foreach (Match match in varMatches)
+            {
+                variables[match.Groups[1].Value] = match.Groups[2].Value.Trim();
+            }
+        }
+
+        var resolvedHtml = html;
+        foreach (var (varName, varValue) in variables)
+        {
+            resolvedHtml = Regex.Replace(resolvedHtml, 
+                $@"var\(\s*{Regex.Escape(varName)}(?:\s*,\s*[^)]+)?\)", 
+                varValue);
+        }
+
+        // Remove :root block to prevent ExCSS parsing errors
+        resolvedHtml = Regex.Replace(resolvedHtml, @":root\s*\{[^}]+\}", string.Empty);
+        
+        // Ensure no leftover var() causes parsing errors
+        resolvedHtml = Regex.Replace(resolvedHtml, @"var\([^)]+\)", "inherit");
+
+        return resolvedHtml;
     }
 }

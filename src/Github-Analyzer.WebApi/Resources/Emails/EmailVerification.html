@@ -1,31 +1,26 @@
 <div>
   <h1>Verify Your Email</h1>
   <p class="subtitle">One quick step to activate your account.</p>
-
   <p class="greeting">Hi <strong>{{UserName}}</strong>,</p>
   <p class="message">
     Thanks for signing up for {{AppName}}! Please verify your email
     address by clicking the button below. This helps us keep your account
     secure and ensures you receive important notifications.
   </p>
-
   <!-- CTA -->
   <div class="cta-wrapper">
     <a href="{{VerificationUrl}}" class="cta-button" target="_blank">
       Verify Email Address
     </a>
   </div>
-
   <!-- Fallback URL (collapsible) -->
   <details class="fallback-details">
-    <summary>Button not working? Click here for the direct link</summary>
+    <summary>&#9662; Button not working? Click here for the direct link</summary>
     <div class="fallback-content">
       <a href="{{VerificationUrl}}">{{VerificationUrl}}</a>
     </div>
   </details>
-
   <hr class="divider" />
-
   <p class="message" style="margin-bottom: 0; font-size: 13px;">
     If you didn't create an account with {{AppName}}, you can safely
     ignore this email. This verification link will expire in 24 hours.

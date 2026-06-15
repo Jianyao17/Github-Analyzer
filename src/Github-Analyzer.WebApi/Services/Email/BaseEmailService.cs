@@ -95,6 +95,12 @@ public abstract class BaseEmailService : IEmailService
         {
             var layoutContent = await File.ReadAllTextAsync(layoutPath, ct);
             finalHtml = layoutContent.Replace("{{RenderBody}}", templateContent);
+
+            // Inline CSS automatically using PreMailer.Net
+            var inlineResult = PreMailer.Net.PreMailer.MoveCssInline(finalHtml,
+              removeStyleElements: true, removeComments: true);
+
+            finalHtml = inlineResult.Html;
         }
 
         _templateCache.TryAdd(templateName, finalHtml);

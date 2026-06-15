@@ -1,6 +1,6 @@
 using GithubAnalyzer.WebApi.Interfaces;
-using GithubAnalyzer.WebApi.Models;
 using GithubAnalyzer.WebApi.Models.Analysis;
+using GithubAnalyzer.WebApi.Models;
 
 namespace GithubAnalyzer.WebApi.Services.Repo;
 

@@ -13,7 +13,7 @@ public static class GetSourceContentEndpoint
         return group.MapGet("/{projectId:guid}/content", async (
             Guid projectId, string path,
             ClaimsPrincipal claimsPrincipal,
-            ISourceCodeProvider sourceCodeProvider,
+            ISourceCodeManager sourceCodeManager,
             AppDbContext dbContext,
             CancellationToken ct) =>
         {
@@ -36,7 +36,7 @@ public static class GetSourceContentEndpoint
             if (string.IsNullOrWhiteSpace(path))
                 return ApiResults.BadRequest("Path is required.");
 
-            var content = await sourceCodeProvider.GetFileContentAsync(project, path, ct);
+            var content = await sourceCodeManager.GetFileContentAsync(project, path, ct);
 
             if (content == null)
                 return ApiResults.NotFound("File not found or could not be fetched.");

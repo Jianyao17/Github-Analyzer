@@ -20,7 +20,8 @@ if (builder.Environment.IsDevelopment())
 var mailpit = builder.AddMailPit("mailpit")
     .WithLifetime(ContainerLifetime.Persistent);
 
-var cache = builder.AddRedis("cache");
+var cache = builder.AddRedis("cache")
+    .WithRedisCommander();
 
 const int webappPort = 5017;
 

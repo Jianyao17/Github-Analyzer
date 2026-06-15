@@ -59,17 +59,11 @@ builder.AddApiRateLimiting();
 builder.AddAnalysisConfig();
 builder.AddMailService();
 
-// Add conditionally Redis Output Cache
+// Add conditional Redis Output Cache
 builder.AddProjectOutputCache();
 
-builder.Services.AddSingleton<RepoDownloadGate>();
-builder.Services.AddTransient<IRepositoryFetcher, RepositoryFetcher>();
-builder.Services.AddHttpClient<IRepositoryProvider, GithubRepositoryProvider>(
-    client => client.DefaultRequestHeaders.Add("User-Agent", "Github-Analyzer"));
-
-builder.Services.AddMemoryCache();
-builder.Services.AddHttpClient<ISourceCodeProvider, GithubSourceCodeProvider>(
-    client => client.DefaultRequestHeaders.Add("User-Agent", "Github-Analyzer"));
+// Add repository services
+builder.AddRepositoryServices();
 
 // Services for analysis
 builder.Services.AddScoped<ICodebaseReader, CodebaseReader>();

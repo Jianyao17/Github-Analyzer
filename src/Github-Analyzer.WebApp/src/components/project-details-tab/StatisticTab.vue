@@ -1,21 +1,25 @@
 <script setup lang="ts">
-import type { StatisticAnalysis } from '../../types/analysis/statistic-analysis';
-import type { ProgressEvent } from '../../composables/useProjectApi';
-import { useOnboardingStore } from '../../stores/onboarding.store';
 import { computed, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import { useProjectApi } from '@/composables/useProjectApi';
+import { useOnboardingStore } from '@/stores/onboarding.store';
+import type { ProgressEvent } from '@/composables/useProjectApi';
 
+const route = useRoute();
 const store = useOnboardingStore();
+const { useStatisticQuery } = useProjectApi();
 
 // ─── Props ────────────────────────────────────────────────────────────────────
-const props = defineProps<{
-    data: StatisticAnalysis | null
-    progress: ProgressEvent | null
-  }>();
+defineProps<{
+  progress: ProgressEvent | null
+}>();
+
+const { data, isLoading } = useStatisticQuery(route.params.id as string);
 
 // ─── Derived ──────────────────────────────────────────────────────────────────
 const formattedSize = computed(() => 
 {
-  const bytes = props.data?.sizeInBytes;
+  const bytes = data.value?.sizeInBytes;
   if (bytes == null) return '—';
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -24,14 +28,14 @@ const formattedSize = computed(() =>
 
 const commentRatio = computed(() => 
 {
-  const total = props.data?.totalLinesOfCode;
-  const comments = props.data?.commentLines;
+  const total = data.value?.totalLinesOfCode;
+  const comments = data.value?.commentLines;
   if (!total || !comments) return 0;
   return Math.round((comments / total) * 100);
 });
 
 // ─── Onboarding ───────────────────────────────────────────────────────────────
-watch(() => props.data, (newData) => 
+watch(data, (newData) => 
 {
   if (newData) 
   {
@@ -42,8 +46,42 @@ watch(() => props.data, (newData) =>
 
 <template>
   <div class="flex h-full min-h-0 w-full flex-col">
+    <!-- ── Loading state ────────────────────────────────────────────────────── -->
+    <div v-if="isLoading"
+      class="grid grid-cols-1 gap-4 overflow-y-auto p-4 pb-4"
+    >
+      <div class="space-y-3">
+        <NSkeleton class="h-4 w-32" />
+        <div class="
+          grid grid-cols-2 gap-3
+          sm:grid-cols-3
+        "
+        >
+          <NSkeleton class="h-24 w-full rounded-xl" />
+          <NSkeleton class="h-24 w-full rounded-xl" />
+          <NSkeleton class="h-24 w-full rounded-xl" />
+        </div>
+      </div>
+      <div class="mt-4 space-y-3">
+        <NSkeleton class="h-4 w-40" />
+        <div class="
+          grid grid-cols-2 gap-3
+          sm:grid-cols-3
+        "
+        >
+          <NSkeleton class="h-24 w-full rounded-xl" />
+          <NSkeleton class="h-24 w-full rounded-xl" />
+          <NSkeleton class="h-24 w-full rounded-xl" />
+        </div>
+      </div>
+      <div class="mt-4 space-y-3">
+        <NSkeleton class="h-4 w-32" />
+        <NSkeleton class="h-32 w-full rounded-xl" />
+      </div>
+    </div>
+
     <!-- ── Waiting / in-progress state ──────────────────────────────────────── -->
-    <div v-if="!data"
+    <div v-else-if="!data"
       class="flex flex-1 flex-col items-center justify-center gap-6 py-16"
     >
       <div class="relative flex h-24 w-24 items-center justify-center">

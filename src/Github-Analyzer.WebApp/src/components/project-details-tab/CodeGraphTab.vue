@@ -1,27 +1,29 @@
 <script setup lang="ts">
-import { ref, nextTick, computed } from 'vue';
 import { useRoute } from 'vue-router';
+import { useWindowSize } from '@vueuse/core';
 import { Splitpanes, Pane } from 'splitpanes';
+import { ref, nextTick, computed, watch } from 'vue';
+import { useProjectApi } from '@/composables/useProjectApi';
+import { useOnboardingStore } from '@/stores/onboarding.store';
 import type { ProgressEvent } from '@/composables/useProjectApi';
-import type { CodeGraph, GraphNode } from '@/types/analysis/code-graph';
+import type { GraphNode } from '@/types/analysis/code-graph';
+
 import CodeGraphView from '@/components/code-graph/CodeGraphView.vue';
 import CodeViewer from '@/components/code-viewer/CodeViewer.vue';
 import 'splitpanes/dist/splitpanes.css';
 
-import { useWindowSize } from '@vueuse/core';
-import { watch } from 'vue';
-import { useOnboardingStore } from '../../stores/onboarding.store';
 
+const { useCodeGraphQuery } = useProjectApi();
 const store = useOnboardingStore();
+const route = useRoute();
 
 // ─── Props ────────────────────────────────────────────────────────────────────
-const props = defineProps<{
-  data: CodeGraph | null
+defineProps<{
   progress: ProgressEvent | null
 }>();
 
-const route = useRoute();
 const { width } = useWindowSize();
+const { data, isLoading } = useCodeGraphQuery(route.params.id as string);
 const isMobile = computed(() => width.value < 768);
 
 // ─── Code Viewer Ref ──────────────────────────────────────────────────────────
@@ -30,7 +32,7 @@ const codeGraphRef = ref<InstanceType<typeof CodeGraphView> | null>(null);
 const isViewerOpen = ref(false);
 
 // ─── Onboarding ───────────────────────────────────────────────────────────────
-watch(() => props.data, (newData) => 
+watch(data, (newData) => 
 {
   if (newData) 
   {
@@ -68,12 +70,12 @@ function handleShowSourceCode(node: GraphNode)
 
 function handleFocusNode(path: string) 
 {
-  if (!codeGraphRef.value || !props.data) return;
+  if (!codeGraphRef.value || !data.value) return;
   
   const normalizedPath = path.replace(/\\/g, '/');
   
   // Find node by id or pathId (some nodes use pathId, some use id)
-  const node:any = props.data.nodes.find(n => 
+  const node:any = data.value?.nodes.find((n: any) => 
   {
     const p = (n.pathId || '').replace(/\\/g, '/');
     return (n as any).id === path || 
@@ -102,9 +104,16 @@ function handleFocusNode(path: string)
 
 <template>
   <div class="relative h-full w-full">
+    <!-- ── Loading state ────────────────────────────────────────────────────── -->
+    <div v-if="isLoading"
+      class="absolute inset-0 z-10 p-4"
+    >
+      <NSkeleton class="h-full w-full rounded-xl" />
+    </div>
+
     <!-- ── Waiting / in-progress overlay ──────────────────────────────────── -->
     <div
-      v-if="!data"
+      v-else-if="!data"
       class="
         absolute inset-0 z-10 flex flex-col items-center justify-center gap-6
         bg-[var(--ui-bg)]/80 backdrop-blur-sm

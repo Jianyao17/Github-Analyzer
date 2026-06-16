@@ -39,6 +39,7 @@ declare module 'vue' {
     NModal: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Modal.vue')['default']
     NPopover: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Popover.vue')['default']
     NSelect: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Select.vue')['default']
+    NSkeleton: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Skeleton.vue')['default']
     NTooltip: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Tooltip.vue')['default']
     OnboardingStepTracker: typeof import('./src/components/OnboardingStepTracker.vue')['default']
     OnboardingWrapper: typeof import('./src/components/OnboardingWrapper.vue')['default']

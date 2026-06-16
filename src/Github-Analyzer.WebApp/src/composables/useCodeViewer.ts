@@ -1,4 +1,4 @@
-import { ref, shallowRef, watch, onUnmounted } from 'vue';
+import { ref, shallowRef, watch, onUnmounted, computed } from 'vue';
 import { getProjectSourceContentApi } from '@/api/project.api';
 import { useThemeStore } from '@/stores/theme.store';
 import type { EditorView } from '@codemirror/view';
@@ -13,32 +13,29 @@ let CMLanguages : typeof import('@/lib/codemirror/languages') | null = null;
 
 let cmLoadPromise: Promise<void> | null = null;
 
-const loadCodeMirror = async () => 
+const loadCodeMirror = (): Promise<void> => 
 {
-  if (CMView) return;
+  if (CMView) return Promise.resolve();
   if (cmLoadPromise) return cmLoadPromise;
   
-  cmLoadPromise = (async () => 
+  cmLoadPromise = Promise.all([
+    import('@codemirror/view'),
+    import('@codemirror/state'),
+    import('@/lib/codemirror/highlight'),
+    import('@/lib/codemirror/config'),
+    import('@/lib/codemirror/theme'),
+    import('@/lib/codemirror/languages')
+  ]).then(([view, state, highlight, config, theme, languages]) => 
   {
-    const [view, state, highlight, config, theme, languages] = 
-      await Promise.all([
-        import('@codemirror/view'),
-        import('@codemirror/state'),
-        import('@/lib/codemirror/highlight'),
-        import('@/lib/codemirror/config'),
-        import('@/lib/codemirror/theme'),
-        import('@/lib/codemirror/languages')
-      ]);
-    
     CMView = view;
     CMState = state;
     CMHighlight = highlight;
     CMConfig = config;
     CMTheme = theme;
     CMLanguages = languages;
-  })();
+  });
   
-  await cmLoadPromise;
+  return cmLoadPromise;
 };
 
 export interface CodeViewerTab {
@@ -49,7 +46,6 @@ export interface CodeViewerTab {
   startLine?: number;
   endLine?: number;
 }
-
 
 export function useCodeViewer(projectId: string) 
 {
@@ -62,54 +58,69 @@ export function useCodeViewer(projectId: string)
   const isLoading = ref(false);
   const isSearchOpen = ref(false);
 
-  const isDark = () => 
-    viewerTheme.value === 'dark';
-
+  const isDark = () => viewerTheme.value === 'dark';
+  const activeTab = computed(() => tabs.value.find(t => t.id === activeTabId.value));
+  
   const openFile = async (relativePath: string, startLine?: number, endLine?: number) => 
   {
     let tab = tabs.value.find(t => t.id === relativePath);
-    
+
     if (!tab) 
     {
-      isLoading.value = true;
-      try 
-      {
-        await loadCodeMirror();
-        const res = await getProjectSourceContentApi(projectId, relativePath);
-        const fileName = relativePath.split('/').pop() || relativePath;
-        
-        const ext = fileName.split('.').pop() || '';
-        const langExt = await CMLanguages!.loadLanguageExtension(ext);
-        
-        tab = {
-          id: relativePath,
-          label: fileName,
-          content: res.content,
-          languageExt: langExt,
-          startLine,
-          endLine
-        };
-        tabs.value = [...tabs.value, tab];
-      }
-      catch (e) 
-      {
-        console.error('Failed to load file content', e);
-      }
-      finally 
-      {
-        isLoading.value = false;
-      }
+      const fileName = relativePath.split('/').pop() || relativePath;
+      tab = {
+        id: relativePath,
+        label: fileName,
+        content: '',
+        languageExt: null,
+        startLine,
+        endLine
+      };
+      tabs.value = [...tabs.value, tab];
     }
     else 
     {
-      // Update lines — always overwrite to prevent stale values from previous node
       tab.startLine = startLine;
       tab.endLine = endLine;
     }
 
-    if (tab) 
+    activeTabId.value = tab.id;
+
+    try 
     {
-      activeTabId.value = tab.id;
+      isLoading.value = true;
+      
+      const [_, sourceData] = await Promise.all([
+        loadCodeMirror()
+          .then(async () => 
+          {
+            if (!tab!.languageExt) 
+            {
+              const ext = tab!.label.split('.').pop() || '';
+              tab!.languageExt = await CMLanguages!.loadLanguageExtension(ext);
+            }
+          }),
+        tab.content 
+          ? Promise.resolve(null) 
+          : getProjectSourceContentApi(projectId, relativePath)
+      ]);
+
+      if (sourceData) 
+      {
+        tab.content = sourceData.content;
+      }
+    }
+    catch (e) 
+    {
+      console.error('Failed to load file resources', e);
+    }
+    finally 
+    {
+      isLoading.value = false;
+    }
+    
+    if (activeTabId.value === tab.id) 
+    {
       renderEditor(tab);
     }
   };
@@ -117,24 +128,24 @@ export function useCodeViewer(projectId: string)
   const closeTab = (id: string) => 
   {
     const idx = tabs.value.findIndex(t => t.id === id);
-    if (idx !== -1) 
+    if (idx === -1) return;
+
+    const newTabs = [...tabs.value];
+    newTabs.splice(idx, 1);
+    tabs.value = newTabs;
+    
+    if (activeTabId.value === id) 
     {
-      const newTabs = [...tabs.value];
-      newTabs.splice(idx, 1);
-      tabs.value = newTabs;
-      if (activeTabId.value === id) 
+      const nextTab = newTabs[idx] || newTabs[idx - 1];
+      activeTabId.value = nextTab ? nextTab.id : null;
+      
+      if (nextTab) 
       {
-        const nextTab = tabs.value[idx] || tabs.value[idx - 1];
-        if (nextTab) 
-        {
-          activeTabId.value = nextTab.id;
-          renderEditor(nextTab);
-        }
-        else 
-        {
-          activeTabId.value = null;
-          destroyEditor();
-        }
+        renderEditor(nextTab);
+      }
+      else 
+      {
+        clearEditor();
       }
     }
   };
@@ -143,7 +154,6 @@ export function useCodeViewer(projectId: string)
   {
     if (editorView.value) return;
     
-    isLoading.value = true;
     try 
     {
       await loadCodeMirror();
@@ -151,42 +161,41 @@ export function useCodeViewer(projectId: string)
         parent: container
       });
 
-      if (activeTabId.value) 
+      if (activeTab.value) 
       {
-        const activeTab = tabs.value.find(t => t.id === activeTabId.value);
-        if (activeTab) renderEditor(activeTab);
+        renderEditor(activeTab.value);
       }
-    } 
-    finally 
+    }
+    catch (e) 
     {
-      isLoading.value = false;
+      console.error('Failed to init editor', e);
     }
   };
 
-  const destroyEditor = () => 
+  const clearEditor = () => 
   {
     if (editorView.value && CMState && CMConfig) 
     {
-      const emptyState = CMState.EditorState.create({
+      editorView.value.setState(CMState.EditorState.create({
         extensions: CMConfig.getBaseExtensions(isDark()),
         doc: '',
-      });
-      editorView.value.setState(emptyState);
+      }));
     }
   };
 
+  // Kept for backward compatibility if used externally
+  const destroyEditor = () => clearEditor();
+
   const renderEditor = (tab: CodeViewerTab) => 
   {
-    if (!editorView.value) return;
+    if (!editorView.value || !CMState) return;
 
-    // Check if this tab's document is already loaded in the editor
     const currentDoc = editorView.value.state.doc.toString();
     const needsRebuild = currentDoc !== tab.content;
 
     if (needsRebuild) 
     {
-      const extensions: any[] = 
-      [
+      const extensions = [
         ...CMConfig!.getBaseExtensions(isDark()),
         ...CMHighlight!.highlightExtension()
       ];
@@ -214,8 +223,7 @@ export function useCodeViewer(projectId: string)
             if (isSearchOpen.value) 
             {
               isSearchOpen.value = false;
-              // Return focus to editor
-              if (editorView.value) editorView.value.focus();
+              editorView.value?.focus();
               return true;
             }
             return false;
@@ -223,15 +231,12 @@ export function useCodeViewer(projectId: string)
         }
       ]));
 
-      const state = CMState!.EditorState.create({
+      editorView.value.setState(CMState.EditorState.create({
         doc: tab.content,
         extensions
-      });
-
-      editorView.value.setState(state);
+      }));
     }
 
-    // Apply highlight via StateEffect dispatch
     if (tab.startLine != null && tab.startLine > 0) 
     {
       highlightLines(tab.startLine, tab.endLine);
@@ -242,32 +247,34 @@ export function useCodeViewer(projectId: string)
     }
   };
 
-  /**
-   * Highlight a range of lines and auto-scroll to them.
-   * Replaces any existing highlight — no stacking.
-   */
   const highlightLines = (startLine: number, endLine?: number): void => 
   {
-    if (!editorView.value || !CMHighlight) return;
-
-    try 
+    if (editorView.value && CMHighlight) 
     {
-      CMHighlight.dispatchHighlight(editorView.value, startLine, endLine);
-    }
-    catch (e) 
-    {
-      console.error('Failed to highlight lines', e);
+      try 
+      {
+        CMHighlight.dispatchHighlight(editorView.value, startLine, endLine);
+      }
+      catch (e) 
+      {
+        console.error('Failed to highlight lines', e);
+      }
     }
   };
 
-  /**
-   * Clear all highlights from the editor.
-   */
   const clearHighlightLines = (): void => 
   {
-    if (!editorView.value || !CMHighlight) return;
-    CMHighlight.clearHighlight(editorView.value);
+    if (editorView.value && CMHighlight) 
+    {
+      CMHighlight.clearHighlight(editorView.value);
+    }
   };
+
+  // Sync theme from store if changed externally
+  watch(() => themeStore.theme, (newTheme) => 
+  {
+    viewerTheme.value = newTheme === 'dark' ? 'dark' : 'light';
+  });
 
   // Dynamic theme switching using Compartment
   watch(viewerTheme, () => 
@@ -282,7 +289,11 @@ export function useCodeViewer(projectId: string)
 
   onUnmounted(() => 
   {
-    destroyEditor();
+    if (editorView.value) 
+    {
+      editorView.value.destroy();
+      editorView.value = null;
+    }
   });
 
   return {

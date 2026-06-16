@@ -1,10 +1,8 @@
-import type { ApiVersion } from '../types/_api/api';
-import type { CodeGraph } from '../types/analysis/code-graph';
-import type { StatisticAnalysis } from '../types/analysis/statistic-analysis';
-import type {
-  CreateProjectRequest,
-  StreamTokenResponse
-} from '../types/_api/project';
+import { unref, type Ref } from 'vue';
+import { useQuery, useMutation, useQueryCache } from '@pinia/colada';
+import type { CreateProjectRequest, StreamTokenResponse } from '@/types/_api/project';
+import type { CodeGraph } from '@/types/analysis/code-graph';
+import type { ApiVersion } from '@/types/_api/api';
 
 import {
   createProjectApi,
@@ -17,7 +15,7 @@ import {
   issueStreamTokenApi,
   renameProjectApi,
   deleteProjectApi,
-} from '../api/project.api';
+} from '@/api/project.api';
 
 
 export interface ProgressEvent {
@@ -51,113 +49,149 @@ export interface StreamProgressOptions {
  */
 export const useProjectApi = (version: ApiVersion = '1') => 
 {
-  const createProject = async (payload: CreateProjectRequest) => 
-  {
-    const response = await createProjectApi(payload, version);
-    if (!response.data) 
+  const queryCache = useQueryCache();
+
+  const useProjectsQuery = () => useQuery(
     {
-      throw new Error('Failed to create project.');
-    }
-    return response.data;
-  };
-
-  const fetchProjects = async () => 
-  {
-    const response = await fetchProjectsApi(version);
-    return response.data ?? [];
-  };
-
-  const fetchProject = async (id: string) => 
-  {
-    const response = await fetchProjectApi(id, version);
-    return response.data;
-  };
-
-  const renameProject = async (id: string, title: string) => 
-  {
-    const response = await renameProjectApi(id, title, version);
-    return response.data;
-  };
-
-  const deleteProject = async (id: string) => 
-  {
-    const response = await deleteProjectApi(id, version);
-    return response.data;
-  };
-
-  const fetchRepoInfo = async (githubUrl: string) => 
-  {
-    const response = await fetchRepoInfoApi(githubUrl, version);
-    return response.data;
-  };
-
-  const getCodeGraphAnalysis = async (id: string) => 
-  {
-    const response = await getCodeGraphAnalysisApi(id, version, { suppressToast: true });
-    const payload = response.data;
-    // Parse the graphJson automatically for convenience
-    if (payload && payload.graphJson) 
-    {
-      try 
+      key: ['projects', version],
+      query: async () => 
       {
-        let parsed: any = payload.graphJson;
-        if (typeof parsed === 'string') 
-        {
-          parsed = JSON.parse(parsed);
-        }
-        if (typeof parsed === 'string') 
-        {
-          parsed = JSON.parse(parsed);
-        }
+        const response = await fetchProjectsApi(version);
+        return response.data ?? [];
+      },
+      staleTime: 0
+    });
 
-        const rawNodes = parsed.nodes || parsed.Nodes || [];
-        const rawSourceEdges = parsed.sourceRelEdges || parsed.SourceRelEdges || [];
-        const rawUseEdges = parsed.useRelEdges || parsed.UseRelEdges || [];
+  const useProjectQuery = (id: Ref<string> | string) => useQuery(
+    {
+      key: () => ['project', unref(id), version],
+      query: async () => 
+      {
+        const response = await fetchProjectApi(unref(id), version);
+        if (!response.data) throw new Error('Project not found');
+        return response.data;
+      },
+      staleTime: 1000 * 60 * 5 // TTL 5 minutes
+    });
 
-        (payload as any).graphData = 
+  
+  const useRepoInfoQuery = (githubUrl: string) => useQuery(
+    {
+      key: ['repo-info', githubUrl, version],
+      query: async () => 
+      {
+        const response = await fetchRepoInfoApi(githubUrl, version);
+        return response.data;
+      },
+      staleTime: 1000 * 60 * 1 // TTL 1 minutes
+    });
+  
+  const useCodeGraphQuery = (id: Ref<string> | string) => useQuery({
+    key: () => ['analysis', 'codegraph', unref(id), version],
+    query: async () => 
+    {
+      const response = await getCodeGraphAnalysisApi(unref(id), version, { suppressToast: true });
+      const payload = response.data;
+      if (payload && payload.graphJson) 
+      {
+        try 
         {
-          nodes: rawNodes.map((n: any) => 
-            ({
+          let parsed: any = payload.graphJson;
+          if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+          if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+
+          const rawNodes = parsed.nodes || parsed.Nodes || [];
+          const rawSourceEdges = parsed.sourceRelEdges || parsed.SourceRelEdges || [];
+          const rawUseEdges = parsed.useRelEdges || parsed.UseRelEdges || [];
+
+          return {
+            nodes: rawNodes.map((n: any) => ({
               pathId: n.pathId || n.PathId,
               label: n.label || n.Label,
               type: n.type !== undefined ? n.type : n.Type,
               startLine: n.startLine ?? n.StartLine,
               endLine: n.endLine ?? n.EndLine
             })),
-          sourceRelEdges: rawSourceEdges.map((e: any) => 
-            ({
+            sourceRelEdges: rawSourceEdges.map((e: any) => ({
               from: e.from || e.From,
               to: e.to || e.To,
               type: e.type !== undefined ? e.type : e.Type
             })),
-          useRelEdges: rawUseEdges.map((e: any) => 
-            ({
+            useRelEdges: rawUseEdges.map((e: any) => ({
               from: e.from || e.From,
               to: e.to || e.To,
               type: e.type !== undefined ? e.type : e.Type
             }))
-        } as CodeGraph;
+          } as CodeGraph;
+        }
+        catch (e) 
+        {
+          console.error('Failed to parse graphJson', e);
+        }
       }
-      catch (e) 
-      {
-        console.error('Failed to parse graphJson', e);
-      }
-    }
-    return payload;
-  };
-
-  const getStatisticAnalysis = async (id: string): Promise<StatisticAnalysis | null> => 
-  {
-    try 
-    {
-      const response = await getStatisticAnalysisApi(id, version, { suppressToast: true });
-      return response.data;
-    }
-    catch 
-    {
       return null;
-    }
-  };
+    },
+    staleTime: 1000 * 60 * 5 // TTL 5 minutes
+  });
+
+  const useStatisticQuery = (id: Ref<string> | string) => useQuery(
+    {
+      key: () => ['analysis', 'statistic', unref(id), version],
+      query: async () => 
+      {
+        try 
+        {
+          const response = await getStatisticAnalysisApi(unref(id), version, { suppressToast: true });
+          return response.data ?? null;
+        }
+        catch 
+        {
+          return null;
+        }
+      },
+      staleTime: 1000 * 60 * 5 // TTL 5 minutes
+    });
+
+  const useCreateProjectMutation = () => useMutation(
+    {
+      mutation: async (payload: CreateProjectRequest) => 
+      {
+        const response = await createProjectApi(payload, version);
+        if (!response.data) throw new Error('Failed to create project.');
+        return response.data;
+      },
+      onSuccess: () => 
+      {
+        queryCache.invalidateQueries({ key: ['projects'] });
+      }
+    });
+
+  const useRenameProjectMutation = () => useMutation(
+    {
+      mutation: async (params: { id: string, title: string }) => 
+      {
+        const response = await renameProjectApi(params.id, params.title, version);
+        return response.data;
+      },
+      onSuccess: (_, params) => 
+      {
+        queryCache.invalidateQueries({ key: ['projects'] });
+        queryCache.invalidateQueries({ key: ['project', params.id] });
+      }
+    });
+
+  const useDeleteProjectMutation = () => useMutation(
+    {
+      mutation: async (id: string) => 
+      {
+        const response = await deleteProjectApi(id, version);
+        return response.data;
+      },
+      onSuccess: () => 
+      {
+        queryCache.invalidateQueries({ key: ['projects'] });
+      }
+    });
 
   /**
    * Menerbitkan ephemeral stream token (berlaku 5 menit) untuk mengakses
@@ -166,21 +200,12 @@ export const useProjectApi = (version: ApiVersion = '1') =>
   const issueStreamToken = async (projectId: string): Promise<StreamTokenResponse> => 
   {
     const response = await issueStreamTokenApi(projectId, version);
-    if (!response.data) 
-    {
-      throw new Error('Failed to issue stream token.');
-    }
+    if (!response.data) throw new Error('Failed to issue stream token.');
     return response.data;
   };
 
   /**
    * Membuka koneksi SSE untuk memonitor progress queue job.
-   *
-   * Jika `options.token` tidak disediakan, token baru akan di-fetch otomatis
-   * via `issueStreamToken()`. Untuk berbagi 1 token antara beberapa stream
-   * dalam 1 project, fetch token terlebih dahulu lalu teruskan via `options.token`.
-   *
-   * @returns Promise yang resolve ke cleanup function untuk menutup EventSource.
    */
   const streamQueueProgress = async (
     projectId: string,
@@ -190,15 +215,8 @@ export const useProjectApi = (version: ApiVersion = '1') =>
   ): Promise<() => void> => 
   {
     const { onComplete, onError, token: preIssuedToken } = options ?? {};
-
-    // Gunakan token yang sudah ada, atau fetch token baru jika tidak disediakan
     const streamToken = preIssuedToken ?? (await issueStreamToken(projectId)).token;
-
-    // Buka SSE connection dengan stream token sebagai query param
-    // EventSource tidak bisa mengirim Authorization header, sehingga
-    // ephemeral token (scope sempit, 5 menit) digunakan sebagai pengganti.
     const url = getProjectQueueEventUrl(projectId, jobType, streamToken, version);
-
     const eventSource = new EventSource(url);
 
     eventSource.onmessage = (e) => 
@@ -206,12 +224,9 @@ export const useProjectApi = (version: ApiVersion = '1') =>
       try 
       {
         const raw = JSON.parse(e.data);
-
-        // Memetakan tipe data C# (PascalCase, Status Enum int) ke Typescript interface (camelCase)
         let statusStr = raw.Status ?? raw.status;
         if (typeof raw.Status === 'number') 
         {
-          // Asumsi pemetaan Status Enum .NET:
           if (raw.Status === 3) statusStr = 'Completed';
           else if (raw.Status === 4) statusStr = 'Failed';
           else if (raw.Progress >= 100) statusStr = 'Completed';
@@ -248,22 +263,19 @@ export const useProjectApi = (version: ApiVersion = '1') =>
       if (onError) onError(err);
     };
 
-    return () => 
-    {
-      eventSource.close();
-    };
+    return () => eventSource.close();
   };
 
   return {
-    createProject,
-    fetchProjects,
-    fetchProject,
-    fetchRepoInfo,
-    getCodeGraphAnalysis,
-    getStatisticAnalysis,
+    useProjectsQuery,
+    useProjectQuery,
+    useCodeGraphQuery,
+    useStatisticQuery,
+    useRepoInfoQuery,
+    useCreateProjectMutation,
+    useRenameProjectMutation,
+    useDeleteProjectMutation,
     issueStreamToken,
-    streamQueueProgress,
-    renameProject,
-    deleteProject
+    streamQueueProgress
   };
 };

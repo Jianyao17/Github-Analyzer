@@ -3,21 +3,15 @@ using Microsoft.Extensions.Caching.Distributed;
 
 namespace GithubAnalyzer.WebApi.Services;
 
-public class ProjectCacheService : IProjectCacheService
+public class ProjectCacheService(IDistributedCache cache) : IProjectCacheService
 {
-    private readonly IDistributedCache _cache;
-    private static readonly TimeSpan CacheSlidingExpiration = TimeSpan.FromHours(1);
+  private static readonly TimeSpan CacheSlidingExpiration = TimeSpan.FromHours(1);
     private static readonly TimeSpan CacheAbsoluteExpiration = TimeSpan.FromHours(24);
 
     private static readonly DistributedCacheEntryOptions CacheEntryOptions =
       new DistributedCacheEntryOptions()
         .SetSlidingExpiration(CacheSlidingExpiration)
         .SetAbsoluteExpiration(CacheAbsoluteExpiration);
-
-    public ProjectCacheService(IDistributedCache cache)
-    {
-        _cache = cache;
-    }
 
     private static string GetProjectKey(Guid projectGuid)
         => $"project:{projectGuid}";
@@ -27,23 +21,23 @@ public class ProjectCacheService : IProjectCacheService
 
 
     public async Task<string?> GetProjectJsonAsync(Guid projectGuid, CancellationToken ct = default)
-      => await _cache.GetStringAsync(GetProjectKey(projectGuid), ct);
+      => await cache.GetStringAsync(GetProjectKey(projectGuid), ct);
 
     public async Task SetProjectJsonAsync(Guid projectGuid, string json, CancellationToken ct = default)
-      => await _cache.SetStringAsync(GetProjectKey(projectGuid), json, CacheEntryOptions, ct);
+      => await cache.SetStringAsync(GetProjectKey(projectGuid), json, CacheEntryOptions, ct);
 
     public async Task RemoveProjectAsync(Guid projectGuid, CancellationToken ct = default)
-      => await _cache.RemoveAsync(GetProjectKey(projectGuid), ct);
+      => await cache.RemoveAsync(GetProjectKey(projectGuid), ct);
 
 
     public async Task<string?> GetAnalysisJsonAsync(Guid projectGuid, string analysisType, CancellationToken ct = default)
-      => await _cache.GetStringAsync(GetAnalysisKey(projectGuid, analysisType), ct);
+      => await cache.GetStringAsync(GetAnalysisKey(projectGuid, analysisType), ct);
 
     public async Task SetAnalysisJsonAsync(Guid projectGuid, string analysisType, string json, CancellationToken ct = default)
-      => await _cache.SetStringAsync(GetAnalysisKey(projectGuid, analysisType), json, CacheEntryOptions, ct);
+      => await cache.SetStringAsync(GetAnalysisKey(projectGuid, analysisType), json, CacheEntryOptions, ct);
 
     public async Task RemoveAnalysisAsync(Guid projectGuid, string analysisType, CancellationToken ct = default)
-      => await _cache.RemoveAsync(GetAnalysisKey(projectGuid, analysisType), ct);
+      => await cache.RemoveAsync(GetAnalysisKey(projectGuid, analysisType), ct);
 
 
     public async Task RemoveAllProjectCachesAsync(Guid projectGuid, CancellationToken ct = default)

@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { computed, onMounted, ref, watch } from 'vue';
-import type { ProjectResponse } from '../types/_api/project.ts';
-import { useProjectApi } from '../composables/useProjectApi';
+import { useProjectApi } from '@/composables/useProjectApi';
+import type { ProjectResponse } from '@/types/_api/project.ts';
 import ProjectItemButton from './ProjectItemButton.vue';
 import UserProfileCard from './UserProfileCard.vue';
 
@@ -21,11 +21,19 @@ defineEmits<{
 
 const route = useRoute();
 const router = useRouter();
-const { fetchProjects, renameProject, deleteProject } = useProjectApi();
+const { 
+  useProjectsQuery, 
+  useRenameProjectMutation, 
+  useDeleteProjectMutation 
+} = useProjectApi();
 
-const projects = ref<ProjectResponse[]>([]);
+const { data: projectsData, isLoading: isProjectsLoading } = useProjectsQuery();
+const { mutateAsync: renameProjectAsync } = useRenameProjectMutation();
+const { mutateAsync: deleteProjectAsync } = useDeleteProjectMutation();
+
+const projects = computed(() => projectsData.value || []);
+
 const isProjectsCollapsed = ref(false);
-
 const isDeleteModalOpen = ref(false);
 const projectToDelete = ref<ProjectResponse | null>(null);
 
@@ -33,8 +41,7 @@ async function handleRename(id: string, newTitle: string)
 {
   try 
   {
-    await renameProject(id, newTitle);
-    await loadProjects();
+    await renameProjectAsync({ id, title: newTitle });
   }
   catch (e) 
   {
@@ -57,12 +64,11 @@ async function confirmDelete()
   if (!projectToDelete.value) return;
   try 
   {
-    await deleteProject(projectToDelete.value.id);
+    await deleteProjectAsync(projectToDelete.value.id);
     if (activeProjectId.value === projectToDelete.value.id) 
     {
       router.push('/app/analysis/new');
     }
-    await loadProjects();
   }
   catch (e) 
   {
@@ -79,31 +85,6 @@ const activeProjectId = computed(() =>
   (Array.isArray(route.params.id)
     ? route.params.id[0]
     : route.params.id));
-
-async function loadProjects() 
-{
-  try 
-  {
-    projects.value = await fetchProjects();
-  }
-  catch (e) 
-  {
-    console.error('Failed to fetch projects for sidebar', e);
-  }
-}
-
-onMounted(() => 
-{
-  loadProjects();
-});
-
-watch(() => route.params.id, (newId) => 
-{
-  if (newId) 
-  {
-    loadProjects();
-  }
-});
 
 function toggleProjectsCollapsed() 
 {
@@ -249,12 +230,20 @@ function toggleProjectsCollapsed()
           <div class="sidebar-scroll flex-1 space-y-1 overflow-y-auto pr-1"
             v-show="!isProjectsCollapsed"
           >
-            <div v-if="projects.length === 0"
+            <div v-if="isProjectsLoading"
+              class="space-y-2 p-2"
+            >
+              <NSkeleton class="h-10 w-full" />
+              <NSkeleton class="h-10 w-full" />
+              <NSkeleton class="h-10 w-full" />
+            </div>
+            <div v-else-if="projects.length === 0"
               class="px-2 py-4 text-center text-xs text-[var(--ui-text-muted)]"
             >
               <span>No projects yet</span>
             </div>
             <ProjectItemButton
+              v-else
               v-for="project in projects"
               :key="project.id"
               :project="project"
@@ -307,7 +296,13 @@ function toggleProjectsCollapsed()
                     sidebar-scroll max-h-[60vh] space-y-1 overflow-y-auto pr-1
                   "
                   >
-                    <div v-if="projects.length === 0"
+                    <div v-if="isProjectsLoading"
+                      class="space-y-2 p-2"
+                    >
+                      <NSkeleton class="h-10 w-full" />
+                      <NSkeleton class="h-10 w-full" />
+                    </div>
+                    <div v-else-if="projects.length === 0"
                       class="
                         px-2 py-4 text-center text-xs
                         text-[var(--ui-text-muted)]
@@ -316,6 +311,7 @@ function toggleProjectsCollapsed()
                       <span>No projects yet</span>
                     </div>
                     <ProjectItemButton
+                      v-else
                       v-for="project in projects"
                       :key="project.id"
                       :project="project"

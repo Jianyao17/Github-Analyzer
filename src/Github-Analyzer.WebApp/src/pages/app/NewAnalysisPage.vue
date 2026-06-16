@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { ref, computed, watch, onMounted } from 'vue';
-import { useOnboardingStore } from '../../stores/onboarding.store';
-import { useProjectApi } from '../../composables/useProjectApi';
-import { useRepoInfo } from '../../composables/useRepoInfo';
+import { useOnboardingStore } from '@/stores/onboarding.store';
+import { useProjectApi } from '@/composables/useProjectApi';
+import { useRepoInfo } from '@/composables/useRepoInfo';
 
-const store = useOnboardingStore();
 const router = useRouter();
-const { createProject } = useProjectApi();
+const store = useOnboardingStore();
+const { useCreateProjectMutation } = useProjectApi();
+const { mutateAsync: createProjectAsync } = useCreateProjectMutation();
 const {
   branches,
   commits,
@@ -98,7 +99,7 @@ async function onSubmit()
 
   try 
   {
-    const project = await createProject({
+    const project = await createProjectAsync({
       repoUrl: repoUrl.value,
       branch: branch.value || 'main',
       commitHash: commitHash.value || undefined,

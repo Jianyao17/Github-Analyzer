@@ -73,7 +73,7 @@ export default defineConfig({
             return 'vendor-splitpanes';
 
           // Data + state
-          if (id.includes('/axios') || id.includes('/pinia')) 
+          if (id.includes('/axios') || id.includes('/pinia') || id.includes('@pinia/colada')) 
             return 'vendor-axios-pinia';
 
           // UI kit + icons + composables

@@ -1,28 +1,25 @@
 <script setup lang="ts">
+import { useQueryCache } from '@pinia/colada';
 import { useRoute, useRouter } from 'vue-router';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useProjectApi } from '../../composables/useProjectApi';
-import StatisticTab from '../../components/project-details-tab/StatisticTab.vue';
-import CodeGraphTab from '../../components/project-details-tab/CodeGraphTab.vue';
-
-import type { ProjectResponse } from '../../types/_api/project.ts';
-import type { ProgressEvent } from '../../composables/useProjectApi';
-import type { StatisticAnalysis } from '../../types/analysis/statistic-analysis.ts';
-import type { CodeGraph } from '../../types/analysis/code-graph.ts';
+import { computed, onUnmounted, ref, watch } from 'vue';
+import { useProjectApi } from '@/composables/useProjectApi';
+import type { ProgressEvent } from '@/composables/useProjectApi';
+import StatisticTab from '@/components/project-details-tab/StatisticTab.vue';
+import CodeGraphTab from '@/components/project-details-tab/CodeGraphTab.vue';
 
 const route = useRoute();
 const router = useRouter();
+const queryCache = useQueryCache();
 const {
-  fetchProject: getProject,
+  useProjectQuery,
   streamQueueProgress,
-  issueStreamToken,
-  getCodeGraphAnalysis,
-  getStatisticAnalysis
+  issueStreamToken
 } = useProjectApi();
 
 // ─── Page state ───────────────────────────────────────────────────────────────
-const loading   = ref(true);
-const project   = ref<ProjectResponse | null>(null);
+const projectId = computed(() => route.params.id as string);
+
+const { data: project, isLoading: loading } = useProjectQuery(projectId);
 const activeTab = computed({
   get() 
   {
@@ -52,11 +49,9 @@ watch(activeTab, (newTab, oldTab) =>
 
 // ─── Code Graph state ─────────────────────────────────────────────────────────
 const codeGraphProgress = ref<ProgressEvent | null>(null);
-const graphData         = ref<CodeGraph | null>(null);
 
 // ─── Statistic state ──────────────────────────────────────────────────────────
 const statisticProgress = ref<ProgressEvent | null>(null);
-const statisticData     = ref<StatisticAnalysis | null>(null);
 
 // ─── Repo display helpers ──────────────────────────────────────────────────────
 const githubRepoInfo = computed(() =>
@@ -114,68 +109,30 @@ function parseGithubRepositoryUrl(repositoryUrl: string)
   }
 }
 
-// ─── Fetch ────────────────────────────────────────────────────────────────────
-async function fetchProject() 
+// ─── Fetch / Watch ────────────────────────────────────────────────────────────
+watch(project, async (newProject) => 
 {
-  loading.value = true;
-  try 
-  {
-    project.value = await getProject(route.params.id as string);
-    if (!project.value) return;
+  if (!newProject) return;
 
-    // Fetch 1 shared token jika ada minimal 1 analisis yang belum selesai.
-    // Satu token berlaku untuk kedua stream (CodeGraph & Statistic) pada project yang sama.
-    let sharedStreamToken: string | undefined;
-    if (!project.value.hasStatistic || !project.value.hasCodeGraph)
-    {
-      const { token } = await issueStreamToken(project.value.id);
-      sharedStreamToken = token;
-    }
-
-    // Statistic: fetch langsung dari DB jika sudah ada, subscribe SSE jika belum
-    if (project.value.hasStatistic) 
-    {
-      await checkExistingStatistic();
-    } 
-    else 
-    {
-      await subscribeToStatistic(sharedStreamToken);
-    }
-
-    // Code Graph: fetch langsung dari DB jika sudah ada, subscribe SSE jika belum
-    if (project.value.hasCodeGraph) 
-    {
-      await checkExistingCodeGraph();
-    } 
-    else 
-    {
-      await subscribeToCodeGraph(sharedStreamToken);
-    }
-  }
-  catch (error) 
+  let sharedStreamToken: string | undefined;
+  if (!newProject.hasStatistic || !newProject.hasCodeGraph)
   {
-    console.error('Failed to fetch project', error);
+    const { token } = await issueStreamToken(newProject.id);
+    sharedStreamToken = token;
   }
-  finally 
+
+  if (!newProject.hasStatistic && !unsubStatistic) 
   {
-    loading.value = false;
+    subscribeToStatistic(sharedStreamToken);
   }
-}
+
+  if (!newProject.hasCodeGraph && !unsubCodeGraph) 
+  {
+    subscribeToCodeGraph(sharedStreamToken);
+  }
+}, { immediate: true });
 
 // ─── Code Graph ───────────────────────────────────────────────────────────────
-async function checkExistingCodeGraph() 
-{
-  try 
-  {
-    const analysis = await getCodeGraphAnalysis(route.params.id as string);
-    if (analysis && (analysis as any).graphData) 
-    {
-      graphData.value = (analysis as any).graphData;
-    }
-  }
-  catch { /* not completed yet */ }
-}
-
 async function subscribeToCodeGraph(token?: string) 
 {
   if (!project.value) return;
@@ -190,14 +147,15 @@ async function subscribeToCodeGraph(token?: string)
         {
           // Small delay to let the backend flush the DB write before we fetch
           await new Promise(r => setTimeout(r, 500));
-          await checkExistingCodeGraph();
+          queryCache.invalidateQueries({ key: ['analysis', 'codegraph', project.value?.id as string] });
+          queryCache.invalidateQueries({ key: ['project', project.value?.id as string] });
         }
       },
       {
         onComplete: () => 
         {
           if (!codeGraphProgress.value || codeGraphProgress.value.status !== 'Completed')
-            checkExistingCodeGraph();
+            queryCache.invalidateQueries({ key: ['analysis', 'codegraph', project.value?.id as string] });
         },
         token
       }
@@ -206,21 +164,11 @@ async function subscribeToCodeGraph(token?: string)
   }
   catch 
   {
-    checkExistingCodeGraph();
+    queryCache.invalidateQueries({ key: ['analysis', 'codegraph', project.value?.id] });
   }
 }
 
 // ─── Statistic ────────────────────────────────────────────────────────────────
-async function checkExistingStatistic() 
-{
-  try 
-  {
-    const data = await getStatisticAnalysis(route.params.id as string);
-    if (data) statisticData.value = data;
-  }
-  catch { /* not completed yet */ }
-}
-
 async function subscribeToStatistic(token?: string) 
 {
   if (!project.value) return;
@@ -234,14 +182,15 @@ async function subscribeToStatistic(token?: string)
         if (event.status === 'Completed') 
         {
           await new Promise(r => setTimeout(r, 500));
-          await checkExistingStatistic();
+          queryCache.invalidateQueries({ key: ['analysis', 'statistic', project.value?.id as string] });
+          queryCache.invalidateQueries({ key: ['project', project.value?.id as string] });
         }
       },
       {
         onComplete: () => 
         {
           if (!statisticProgress.value || statisticProgress.value.status !== 'Completed')
-            checkExistingStatistic();
+            queryCache.invalidateQueries({ key: ['analysis', 'statistic', project.value?.id as string] });
         },
         token
       }
@@ -250,12 +199,11 @@ async function subscribeToStatistic(token?: string)
   }
   catch 
   {
-    checkExistingStatistic();
+    queryCache.invalidateQueries({ key: ['analysis', 'statistic', project.value?.id] });
   }
 }
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
-onMounted(() => fetchProject());
 onUnmounted(() => 
 {
   if (unsubCodeGraph) unsubCodeGraph();
@@ -466,14 +414,12 @@ onUnmounted(() =>
             <StatisticTab
               v-if="activeTab === 'statistic'"
               key="statistic"
-              :data="statisticData"
               :progress="statisticProgress"
               class="min-h-0 flex-1 overflow-y-auto"
             />
             <CodeGraphTab
               v-else-if="activeTab === 'codegraph'"
               key="codegraph"
-              :data="graphData"
               :progress="codeGraphProgress"
               class="
                 relative min-h-0 flex-1 overflow-hidden rounded-xl border-1

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useProjectApi } from '../composables/useProjectApi';
 import type { ProjectResponse } from '../types/_api/project';
 
@@ -12,32 +12,10 @@ const emit = defineEmits<{
   (e: 'update:modelValue', val: string): void;
 }>();
 
-const { fetchProjects } = useProjectApi();
-const allProjects = ref<ProjectResponse[]>([]);
-const loading = ref(false);
+const { useProjectsQuery } = useProjectApi();
+const { data, isLoading: loading } = useProjectsQuery();
 
-// Load all projects in the system to filter versions of the same repository
-const loadProjects = async () => 
-{
-  loading.value = true;
-  try 
-  {
-    allProjects.value = await fetchProjects();
-  } 
-  catch (err) 
-  {
-    console.error('Failed to load projects for selector', err);
-  } 
-  finally 
-  {
-    loading.value = false;
-  }
-};
-
-onMounted(() => 
-{
-  loadProjects();
-});
+const allProjects = computed<ProjectResponse[]>(() => data.value || []);
 
 // Filter out projects belonging to the same repository (case-insensitive and trimmed)
 const siblingProjects = computed(() => 

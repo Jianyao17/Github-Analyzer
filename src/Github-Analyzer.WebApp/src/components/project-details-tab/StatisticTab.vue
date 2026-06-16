@@ -109,7 +109,7 @@ watch(() => props.data, (newData) =>
             class="h-3.5 w-3.5"
           /> Git Statistics
         </h2>
-        <div id="onboarding-git-stats"
+        <div id="git-stats"
           class="
             grid grid-cols-2 gap-3
             sm:grid-cols-3
@@ -326,7 +326,7 @@ watch(() => props.data, (newData) =>
             class="h-3.5 w-3.5"
           /> Analisis Baris Kode
         </h2>
-        <NCard id="onboarding-code-lines"
+        <NCard id="code-lines"
           class="
             border-0 ring-1 ring-gray-200
             dark:ring-gray-800

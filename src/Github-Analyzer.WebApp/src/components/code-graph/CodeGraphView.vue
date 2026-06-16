@@ -156,6 +156,7 @@ defineExpose({
         :popper="{ placement: 'right' }"
       >
         <button
+          id="graph-search"
           class="
             flex items-center gap-2.5 rounded-lg border
             border-[var(--ui-border)] bg-[var(--ui-bg)] px-3.5 py-2.5 text-sm
@@ -242,7 +243,7 @@ defineExpose({
       <NTooltip text="Atur tata letak dan visibilitas node grafik."
         :popper="{ placement: 'top' }"
       >
-        <div>
+        <div id="graph-settings">
           <GraphSettingsMenu 
             :supports-namespace="supportsNamespace"
             :max-collapse-depth="maxCollapseDepth"
@@ -257,7 +258,9 @@ defineExpose({
       <NTooltip text="Keterangan warna tipe node."
         :popper="{ placement: 'top' }"
       >
-        <div class="pointer-events-none">
+        <div id="graph-legend"
+          class="pointer-events-none"
+        >
           <GraphLegend :data="data" />
         </div>
       </NTooltip>

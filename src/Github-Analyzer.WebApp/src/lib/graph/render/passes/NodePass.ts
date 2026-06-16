@@ -31,6 +31,13 @@ const FOCUS_STROKE_COLOR = 'rgba(59, 130, 246, 0.5)';
 const HIGHLIGHT_STROKE_COLOR = '#FCD34D';
 const STROKE_WIDTH_ACTIVE = 3;
 
+const FILE_NODE_TYPE = 2;
+const DIRECTORY_NODE_TYPE = 0;
+const GRAPH_TARGET_NODE_IDS = {
+  directory: 'graph-target-directory-node',
+  file:      'graph-target-file-node',
+} as const;
+
 export class NodePass 
 {
   private _selection: NodeSelection | null = null;
@@ -42,6 +49,9 @@ export class NodePass
   private _relatedNodeIds: Set<string> | undefined;
   private _highlightedNodeIds: Set<string> = new Set();
   private _dimOpacity: number = 0.24;
+
+  private _targetDirectoryId: string | null = null;
+  private _targetFileId: string | null = null;
 
   constructor(measurer: TextMeasurer, bus: EventBus) 
   {
@@ -158,12 +168,55 @@ export class NodePass
     this._selection = null;
   }
 
+  private _precalculateTargets(nodes: D3Node[]): void 
+  {
+    let rootNode: D3Node | null = null;
+    let minSlashes = Infinity;
+    
+    for (const n of nodes) 
+    {
+      if (!n.id) continue;
+      const slashes = (n.id.match(/\//g) || []).length;
+      if (slashes < minSlashes) 
+      {
+        minSlashes = slashes;
+        rootNode = n;
+      }
+    }
+
+    let bestDir: D3Node | null = null;
+    for (const n of nodes) 
+    {
+      if (n.type === DIRECTORY_NODE_TYPE && n !== rootNode) 
+      {
+        const slashes = (n.id.match(/\//g) || []).length;
+        if (slashes === minSlashes + 1) 
+        {
+          bestDir = n;
+          break;
+        }
+      }
+    }
+    
+    if (!bestDir) 
+    {
+      bestDir = nodes.find(n => n.type === DIRECTORY_NODE_TYPE && n !== rootNode) || rootNode;
+    }
+
+    const bestFile = nodes.find(n => n.type >= FILE_NODE_TYPE);
+
+    this._targetDirectoryId = bestDir ? bestDir.id : null;
+    this._targetFileId = bestFile ? bestFile.id : null;
+  }
+
   private _applyUpdatePattern(
     container: d3.Selection<SVGGElement, unknown, null, undefined>,
     nodes:     D3Node[],
     config:    GraphConfig,
   ): NodeSelection 
   {
+    this._precalculateTargets(nodes);
+
     const card = { ...DEFAULT_CARD, ...config.nodeCard };
     const bound = container
       .selectAll<SVGGElement, D3Node>('g.node')
@@ -188,11 +241,14 @@ export class NodePass
       this._renderNodeCard(g, d, style, card);
     });
 
+    const targetIds = new Set<string>(Object.values(GRAPH_TARGET_NODE_IDS));
+
     const merged = entered.merge(bound);
     
     merged.each((d, i, nodes) => 
     {
       const g = d3.select<SVGGElement, D3Node>(nodes[i]);
+      this._syncTargetNodeId(g, d, targetIds);
       this._updateCollapseBadge(g, d);
 
       // Sync state for new and existing nodes immediately without transition
@@ -221,6 +277,39 @@ export class NodePass
     });
 
     return merged;
+  }
+
+  private _syncTargetNodeId(
+    g: d3.Selection<SVGGElement, D3Node, null, undefined>, d: D3Node,
+    targetIds: Set<string>,
+  ): void 
+  {
+    const targetId = this._getTargetNodeId(d);
+    if (targetId) 
+    {
+      g.attr('id', targetId);
+      return;
+    }
+
+    if (targetIds.has(g.attr('id'))) 
+    {
+      g.attr('id', null);
+    }
+  }
+
+  private _getTargetNodeId(d: D3Node): string | null 
+  {
+    if (this._targetDirectoryId && d.id === this._targetDirectoryId) 
+    {
+      return GRAPH_TARGET_NODE_IDS.directory;
+    }
+
+    if (this._targetFileId && d.id === this._targetFileId) 
+    {
+      return GRAPH_TARGET_NODE_IDS.file;
+    }
+
+    return null;
   }
 
   private _renderNodeCard(

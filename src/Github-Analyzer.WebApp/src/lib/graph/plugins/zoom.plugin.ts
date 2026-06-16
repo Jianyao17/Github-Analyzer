@@ -20,6 +20,7 @@ export class ZoomPlugin implements GraphPlugin
       .on('zoom', (event) => 
       {
         ctx.viewport?.attr('transform', event.transform);
+        ctx.bus.emit('view:transform', event.transform);
       });
 
     ctx.svg.call(this._zoom);

@@ -8,6 +8,7 @@ export interface GraphEvents
   'view:refresh-requested': void;
   'view:filter-changed'   : void;
   'view:reset'            : void;
+  'view:transform'        : any;
 
   // Highlight (dari SearchPlugin / CollapsePlugin → NodePass)
   'highlight:nodes' : { ids: Set<string>; dimOpacity: number };

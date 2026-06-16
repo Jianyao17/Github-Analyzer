@@ -293,8 +293,11 @@ function onClickOutside(e: MouseEvent)
 
 onMounted(() => 
 {
-  document.addEventListener('click', onClickOutside);
-  document.addEventListener('contextmenu', onClickOutside);
+  setTimeout(() => 
+  {
+    document.addEventListener('click', onClickOutside);
+    document.addEventListener('contextmenu', onClickOutside);
+  }, 50);
 });
 
 onUnmounted(() => 
@@ -636,7 +639,8 @@ onUnmounted(() =>
           Focus Node
         </button>
         <!-- Highlight Relations button has been moved to the Collapsable Relations section -->
-        <button v-if="node && node.type > 1 && node.startLine !== undefined"
+        <button v-if="node && node.type > 1"
+          id="graph-context-menu-btn"
           class="
             flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs
             text-[var(--ui-text)] transition-colors

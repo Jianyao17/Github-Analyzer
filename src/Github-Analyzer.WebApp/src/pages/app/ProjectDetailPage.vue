@@ -295,7 +295,7 @@ onUnmounted(() =>
       "
       >
         <NCard
-          id="onboarding-repo-header"
+          id="repo-header"
           class="
             min-w-0 flex-1 border-0 bg-[var(--ui-bg)]/70 ring-1
             ring-[var(--ui-border)] backdrop-blur-md

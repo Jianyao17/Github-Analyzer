@@ -154,7 +154,7 @@ onMounted(() =>
       "
     >
       <!-- URL Input -->
-      <div id="onboarding-repo-url"
+      <div id="repo-url"
         class="w-full"
       >
         <label class="sr-only">URL Repositori</label>
@@ -185,7 +185,7 @@ onMounted(() =>
             "
           />
           <button
-            id="onboarding-submit-btn"
+            id="submit-btn"
             type="submit"
             :disabled="creating || !repoUrl"
             aria-label="Mulai analisa"
@@ -267,7 +267,7 @@ onMounted(() =>
       </div>
 
       <!-- Branch & Commit Selectors -->
-      <div id="onboarding-branch-commit"
+      <div id="branch-commit"
         class="
           flex w-full flex-col gap-3
           sm:flex-row sm:gap-5
@@ -373,7 +373,7 @@ onMounted(() =>
 
       <!-- Submit Button (Mobile Only) -->
       <button
-        id="onboarding-submit-btn-mobile"
+        id="submit-btn-mobile"
         type="submit"
         :disabled="creating || !repoUrl"
         aria-label="Mulai analisa"

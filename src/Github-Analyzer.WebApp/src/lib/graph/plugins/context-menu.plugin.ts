@@ -61,7 +61,7 @@ export class ContextMenuPlugin implements GraphPlugin
       event.stopPropagation();
       
       const [x, y] = d3.pointer(event, container);
-      this.options.onContextMenu(x, y, d as D3Node);
+      this.ctx.bus.emit('context-menu:open', { node: d as D3Node, x, y });
     });
 
     let longPressTimer: any;
@@ -76,7 +76,7 @@ export class ContextMenuPlugin implements GraphPlugin
       
       longPressTimer = setTimeout(() => 
       {
-        this.options.onContextMenu(x, y, d as D3Node);
+        this.ctx.bus.emit('context-menu:open', { node: d as D3Node, x, y });
       }, 500); // 500ms long press
     })
       .on('touchmove.plugin touchend.plugin touchcancel.plugin', () => 

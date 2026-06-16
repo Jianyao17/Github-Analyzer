@@ -42,12 +42,14 @@ export class HoverPlugin implements GraphPlugin
       .on('mouseenter.hover', (event: any, d: D3Node) => 
       {
         d3.select(event.currentTarget).style('cursor', 'pointer');
+        ctx.bus.emit('node:hover', { node: d });
         this.show(d);
       })
       .on('mousemove.hover',  (event: any) => this.move(event))
       .on('mouseleave.hover', (event: any) => 
       {
         d3.select(event.currentTarget).style('cursor', null);
+        ctx.bus.emit('node:hover', { node: null });
         this.hide();
       });
   }
@@ -55,6 +57,7 @@ export class HoverPlugin implements GraphPlugin
   private createTooltip(_container: HTMLElement): void
   {
     this.tooltip = document.createElement('div');
+    this.tooltip.id = 'graph-hover';
 
     Object.assign(this.tooltip.style,
       {

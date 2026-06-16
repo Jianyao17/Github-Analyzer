@@ -2,6 +2,7 @@
 import { ref, watch, onMounted } from 'vue';
 import { VOnboardingWrapper, VOnboardingStep, type StepEntity } from 'v-onboarding';
 import { useOnboardingStore, type VOnboardingInstance } from '../stores/onboarding.store';
+import OnboardingStepTracker from './OnboardingStepTracker.vue';
 import 'v-onboarding/dist/style.css';
 
 const store = useOnboardingStore();
@@ -25,6 +26,17 @@ function handleReset()
   store.resetTours();
   window.location.reload();
 }
+
+function handleFinish() 
+{
+  store.deactivateGraphTour();
+}
+
+function handleExit() 
+{
+  store.deactivateGraphTour();
+  wrapperRef.value?.finish();
+}
 </script>
 
 <template>
@@ -32,10 +44,12 @@ function handleReset()
     <VOnboardingWrapper 
       ref="wrapperRef" 
       :steps="(store.currentSteps as StepEntity[])"
-      :options="{ overlay: { borderRadius: 12, padding: 4 } }"
-      @exit="() => wrapperRef?.finish()"
+      :options="{ overlay: { borderRadius: 12, padding: 4, preventOverlayInteraction: false } }"
+      @finish="handleFinish"
+      @exit="handleExit"
     >
       <template #default="{ previous, next, step, exit, isFirst, isLast }">
+        <OnboardingStepTracker :step="step" />
         <VOnboardingStep>
           <NCard 
             :key="step.content?.title"
@@ -143,6 +157,20 @@ function handleReset()
                 </NButton>
               </div>
             </div>
+
+            <!-- Interaction Prompt -->
+            <div 
+              v-if="(step as any).interaction?.actionName" 
+              class="
+                mt-2 flex w-full animate-pulse items-center justify-center gap-2
+                pb-1 text-sm font-medium text-[var(--ui-primary)]
+              "
+            >
+              <NIcon name="i-lucide-hand"
+                class="h-4 w-4 shrink-0"
+              />
+              <span class="text-center">Berinteraksi dengan sorotan, atau klik Lanjut</span>
+            </div>
           </NCard>
         </VOnboardingStep>
       </template>
@@ -177,6 +205,16 @@ function handleReset()
   --v-onboarding-step-z: 99999;
   --v-onboarding-step-arrow-background: var(--ui-bg);
   --v-onboarding-step-arrow-size: 16px;
+}
+
+/* Make the entire onboarding wrapper click-through so user can interact with the app */
+[data-v-onboarding-wrapper] {
+  pointer-events: none !important;
+}
+
+/* Re-enable pointer events ONLY for the onboarding card so buttons still work */
+[data-v-onboarding-wrapper] .onboarding-card-animate {
+  pointer-events: auto !important;
 }
 
 /* Ensure the popper arrow container is correctly sized and sits ON TOP of the NCard */

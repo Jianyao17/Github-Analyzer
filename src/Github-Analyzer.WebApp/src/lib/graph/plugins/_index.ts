@@ -11,3 +11,4 @@ export { SearchPlugin } from './search.plugin';
 export { CollapsePlugin } from './collapse.plugin';
 export { ContextMenuPlugin } from './context-menu.plugin';
 export { NavigationPlugin } from './navigation.plugin';
+export { OnboardingPlugin } from './onboarding.plugin';

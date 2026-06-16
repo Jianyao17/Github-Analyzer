@@ -9,7 +9,10 @@ import type { Ref } from 'vue';
 import type { D3Node } from '@graph.types';
 import type { CodeGraph }  from '@/types/analysis/code-graph';
 import type { GraphEngine as GraphEngineType } from '@graph/core/GraphEngine';
-import type { SearchPlugin as SearchPluginType } from '@graph.plugins';
+import type { 
+  SearchPlugin as SearchPluginType, 
+  OnboardingPlugin as OnboardingPluginType,
+} from '@graph.plugins';
 
 // Global cache for dynamically imported D3/Graph modules
 let GraphEngineClass        : typeof import('@graph/core/GraphEngine').GraphEngine | null = null;
@@ -58,7 +61,12 @@ export interface GraphD3Options
   layout?:        'hierarchical' | 'star-balloon';
   orientation?:   'LR' | 'TB' | 'RL' | 'BT';
   collapseDepth?: number;
-  onContextMenu?: (x: number, y: number, node: D3Node, isKeyboard?: boolean) => void;
+  onContextMenu?: (
+    x: number, 
+    y: number, 
+    node: D3Node, 
+    isKeyboard?: boolean
+  ) => void;
 }
 
 /**
@@ -76,6 +84,7 @@ export function useGraphD3(
 {
   const engine = shallowRef<GraphEngineType | null>(null);
   const searchPlugin = shallowRef<SearchPluginType | null>(null);
+  const onboardingPlugin = shallowRef<OnboardingPluginType | null>(null);
   const isGraphLoading = ref(false);
 
   async function initEngine() 
@@ -94,6 +103,7 @@ export function useGraphD3(
         .use(new graphPluginsModule!.HoverPlugin(),      3)
         .use(new graphPluginsModule!.SearchPlugin(),     4)
         .use(new graphPluginsModule!.NavigationPlugin(), 6)
+        .use(new graphPluginsModule!.OnboardingPlugin(), 9)
         .use(new graphPluginsModule!.DebugPlugin({
           enabled: import.meta.env.DEV,
           logMemory: true,
@@ -101,6 +111,8 @@ export function useGraphD3(
 
       if (initialOptions.onContextMenu) 
       {
+        // Context menu plugin added on the fly with priority 5
+        // after search plugin (4) before navigation plugin (6)
         _engine.use(new graphPluginsModule!.ContextMenuPlugin({
           onContextMenu: initialOptions.onContextMenu
         }), 5);
@@ -108,6 +120,7 @@ export function useGraphD3(
 
       engine.value = _engine;
       searchPlugin.value = _engine.getPlugin<SearchPluginType>('search') ?? null;
+      onboardingPlugin.value = _engine.getPlugin<OnboardingPluginType>('onboarding') ?? null;
 
       _engine.ctx.bus.on('collapse:max-depth', ({ maxDepth }: { maxDepth: number }) => 
       {
@@ -281,5 +294,6 @@ export function useGraphD3(
     focusNode:    (node: D3Node, scale?: number) => searchPlugin.value?.focusNode(node as any, scale),
     focusResults: (results: D3Node[], padding?: number) => searchPlugin.value?.focusResults(results as any, padding),
     clearSearch:  () => searchPlugin.value?.clearSearch(),
+    getOnboardingPlugin: () => onboardingPlugin.value,
   };
 }

@@ -34,7 +34,7 @@ watch(() => props.data, (newData) =>
 {
   if (newData) 
   {
-    store.triggerCodeGraphTour();
+    store.triggerCodeGraphTour(() => codeGraphRef.value?.getEngine() ?? null);
   }
 }, { immediate: true });
 
@@ -169,7 +169,7 @@ function handleFocusNode(path: string)
 
     <!-- ── Graph view & Code view ────────────────────────── -->
     <Splitpanes v-if="data"
-      id="onboarding-code-graph-canvas"
+      id="code-graph-canvas"
       class="default-theme absolute inset-0"
       :horizontal="isMobile"
     >
@@ -207,6 +207,7 @@ function handleFocusNode(path: string)
         size="45"
       >
         <CodeViewer
+          id="code-viewer"
           ref="codeViewerRef"
           :project-id="route.params.id as string"
           @close-viewer="isViewerOpen = false"

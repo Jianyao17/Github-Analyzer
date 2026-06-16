@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.Extensions.Caching.Distributed;
+using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Config;
@@ -19,7 +20,7 @@ public static class RenameProjectEndpoint
             RenameProjectRequest request,
             ClaimsPrincipal claimsPrincipal,
             AppDbContext dbContext,
-            IOutputCacheStore cacheStore,
+            IProjectCacheService cache,
             CancellationToken ct) =>
         {
             var userIdStr = claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? 
@@ -36,9 +37,7 @@ public static class RenameProjectEndpoint
             project.Title = request.Title;
             await dbContext.SaveChangesAsync(ct);
 
-            // Invalidasi cache untuk user ini setelah DB berhasil di-update.
-            // Ini dilakukan best-effort: jika Redis tidak tersedia, operasi tetap sukses.
-            await cacheStore.TryEvictByTagAsync($"{UserSpecificCachePolicy.UserTagPrefix}{userIdStr}", ct);
+            await cache.RemoveAllProjectCachesAsync(projectGuid, ct);
 
             return ApiResults.Ok("Project renamed successfully.");
         });

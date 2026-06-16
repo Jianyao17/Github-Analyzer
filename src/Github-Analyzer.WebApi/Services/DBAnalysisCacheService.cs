@@ -6,13 +6,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GithubAnalyzer.WebApi.Services;
 
-public class AnalysisCacheService(
-    IServiceScopeFactory scopeFactory,
-    ILogger<AnalysisCacheService> logger) : IAnalysisCacheService
+public class DBAnalysisCacheService(
+    IServiceScopeFactory scopeFactory, 
+    ILogger<DBAnalysisCacheService> logger
+  ) : IAnalysisCacheService
 {
     public async Task<bool> TryCopyCacheToProjectAsync(
-        AnalysisType type, Guid projectId, Guid userId, 
-        string repoUrl, string? branch, string? commitHash, 
+        AnalysisType type, Guid projectId, Guid userId,
+        string repoUrl, string? branch, string? commitHash,
         string analysisVersion, CancellationToken ct)
     {
         var lookupKey = CacheLookupKey.Generate(repoUrl, branch, commitHash, analysisVersion);
@@ -131,7 +132,7 @@ public class AnalysisCacheService(
 
             if (cgDeleted > 0 || stDeleted > 0)
             {
-                logger.LogInformation("Cleaned up {CgCount} CodeGraph caches and {StCount} Statistic caches older than {MaxAgeDays} days.", 
+                logger.LogInformation("Cleaned up {CgCount} CodeGraph caches and {StCount} Statistic caches older than {MaxAgeDays} days.",
                     cgDeleted, stDeleted, maxAge.TotalDays);
             }
         }

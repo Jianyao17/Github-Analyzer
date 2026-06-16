@@ -15,9 +15,6 @@ public static class RepoServiceExtensions
         builder.Services.AddSingleton(repoConfig);
         builder.Services.AddSingleton(repoConfig.Github);
 
-        // Setup distributed cache for source code caching (Plug & Play Redis ready)
-        builder.Services.AddDistributedMemoryCache();
-
         builder.Services.AddSingleton<IGitHubClient>(sp =>
         {
             var config = sp.GetRequiredService<GithubConfig>();

@@ -52,6 +52,12 @@ builder.Services.AddOpenApi("v1", options =>
 builder.Services.AddApiProblemDetails(builder.Environment);
 builder.Services.AddCorsPolicies(builder.Configuration);
 
+// Add Redis Distributed Cache
+builder.AddRedisDistributedCache("cache");
+
+// Add repository services
+builder.AddRepositoryServices();
+
 builder.AddApplicationPersistence();
 builder.AddJwtAuthentication();
 builder.AddStreamTokenService();
@@ -59,20 +65,15 @@ builder.AddApiRateLimiting();
 builder.AddAnalysisConfig();
 builder.AddMailService();
 
-// Add conditional Redis Output Cache
-builder.AddProjectOutputCache();
-
-// Add repository services
-builder.AddRepositoryServices();
-
 // Services for analysis
 builder.Services.AddScoped<ICodebaseReader, CodebaseReader>();
 builder.Services.AddScoped<ICodeAnalyzer, TreeSitterAnalyzer>();
 builder.Services.AddScoped<IFileStatisticsService, FileStatisticsService>();
+builder.Services.AddScoped<IProjectCacheService, ProjectCacheService>();
 
 // Queue progress notifier for real-time updates to clients
 builder.Services.AddSingleton<IQueueProgressNotifier, QueueProgressNotifier>();
-builder.Services.AddSingleton<IAnalysisCacheService, AnalysisCacheService>();
+builder.Services.AddSingleton<IAnalysisCacheService, DBAnalysisCacheService>();
 
 // Workers for background processing
 builder.Services.AddHostedService<CodeGraphAnalysisWorker>();
@@ -88,7 +89,6 @@ app.UseCors(CorsPolicyConfig.Frontend);
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
-app.UseProjectCache();
 
 // Map endpoints
 app.MapDefaultEndpoints();

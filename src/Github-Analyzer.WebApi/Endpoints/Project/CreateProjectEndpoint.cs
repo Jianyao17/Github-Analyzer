@@ -23,7 +23,6 @@ public static class CreateProjectEndpoint
         return group.MapPost("/new", async (
             CreateProjectRequest request, ClaimsPrincipal claimsPrincipal,
             AppDbContext dbContext, IRepositoryFetcher repositoryFetcher,
-            IOutputCacheStore cacheStore,
             CancellationToken ct) =>
         {
             // Get User ID from claims
@@ -92,10 +91,6 @@ public static class CreateProjectEndpoint
             // Save project and jobs to database
             dbContext.ProjectQueues.AddRange(statisticJob, codeGraphJob);
             await dbContext.SaveChangesAsync(ct);
-
-            // Invalidasi cache untuk user ini setelah DB berhasil di-update.
-            // Ini dilakukan best-effort: jika Redis tidak tersedia, operasi tetap sukses.
-            await cacheStore.TryEvictByTagAsync($"{UserSpecificCachePolicy.UserTagPrefix}{userIdStr}", ct);
 
             // Return the created project
             var response = new ProjectResponse(

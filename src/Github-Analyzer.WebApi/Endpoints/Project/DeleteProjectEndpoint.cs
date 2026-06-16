@@ -1,5 +1,6 @@
 using System.Security.Claims;
-using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.Extensions.Caching.Distributed;
+using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Config;
@@ -14,7 +15,7 @@ public static class DeleteProjectEndpoint
             Guid projectGuid,
             ClaimsPrincipal claimsPrincipal,
             AppDbContext dbContext,
-            IOutputCacheStore cacheStore,
+            IProjectCacheService cache,
             CancellationToken ct) =>
         {
             var userIdStr = claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? 
@@ -31,9 +32,7 @@ public static class DeleteProjectEndpoint
             dbContext.Projects.Remove(project);
             await dbContext.SaveChangesAsync(ct);
 
-            // Invalidasi cache untuk user ini setelah DB berhasil di-update.
-            // Ini dilakukan best-effort: jika Redis tidak tersedia, operasi tetap sukses.
-            await cacheStore.TryEvictByTagAsync($"{UserSpecificCachePolicy.UserTagPrefix}{userIdStr}", ct);
+            await cache.RemoveAllProjectCachesAsync(projectGuid, ct);
 
             return ApiResults.Ok("Project deleted successfully.");
         });

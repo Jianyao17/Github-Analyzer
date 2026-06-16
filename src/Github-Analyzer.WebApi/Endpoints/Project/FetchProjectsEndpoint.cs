@@ -1,8 +1,11 @@
-using GithubAnalyzer.WebApi.Database;
-using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Models;
+using GithubAnalyzer.WebApi.Database;
+using GithubAnalyzer.WebApi.Interfaces;
+using GithubAnalyzer.WebApi.Extensions;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Project;
 
@@ -51,7 +54,7 @@ public static class FetchProjectsEndpoint
         // GET /api/projects/{project_guid}
         return group.MapGet("/{projectGuid:guid}", async (
             Guid projectGuid, ClaimsPrincipal claimsPrincipal,
-            AppDbContext dbContext, CancellationToken ct) =>
+            AppDbContext dbContext, IProjectCacheService cache, CancellationToken ct) =>
         {
             // Get User ID from claims
             var userIdStr = claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? 
@@ -61,12 +64,21 @@ public static class FetchProjectsEndpoint
             if (!Guid.TryParse(userIdStr, out var userId))
                 return ApiResults.Unauthorized("Invalid user identifier.");
 
+            var cachedJson = await cache.GetProjectJsonAsync(projectGuid, ct);
+            if (!string.IsNullOrEmpty(cachedJson))
+            {
+                var cachedProject = JsonSerializer.Deserialize<ProjectResponse>(cachedJson);
+                if (cachedProject != null)
+                {
+                    return ApiResults.Ok(cachedProject);
+                }
+            }
+
             // Get project for the user, including analysis availability flags
             var project = await dbContext.Projects
                 .Where(p => p.Id == projectGuid && p.UserId == userId)
                 .Select(p => new ProjectResponse(
-                    p.Id,
-                    p.Title,
+                    p.Id, p.Title,
                     p.RepositoryName,
                     p.RepositoryUrl,
                     p.BranchName,
@@ -80,6 +92,9 @@ public static class FetchProjectsEndpoint
 
             if (project == null)
                 return ApiResults.NotFound("Project not found.");
+
+            // Cache project data
+            await cache.SetProjectJsonAsync(projectGuid, JsonSerializer.Serialize(project), ct);
 
             return ApiResults.Ok(project);
         });

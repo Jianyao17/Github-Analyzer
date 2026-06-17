@@ -40,12 +40,15 @@
     "axios": "^1.16.0",
     "codemirror": "^6.0.2",
     "d3": "^7.9.0",
+    "github-markdown-css": "^5.9.0",
+    "highlight.js": "^11.11.1",
     "pinia": "^3.0.4",
     "splitpanes": "^4.1.2",
     "tailwindcss": "^4.2.4",
     "v-onboarding": "^2.12.4",
     "vue": "^3.5.32",
-    "vue-router": "^5.0.6"
+    "vue-router": "^5.0.6",
+    "zero-md": "^3.1.7"
   },
   "devDependencies": {
     "@iconify-json/mdi": "^1.2.3",

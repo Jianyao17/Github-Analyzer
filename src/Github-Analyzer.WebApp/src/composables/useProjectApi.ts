@@ -11,6 +11,7 @@ import {
   fetchRepoInfoApi,
   getCodeGraphAnalysisApi,
   getStatisticAnalysisApi,
+  getProjectSourceContentApi,
   getProjectQueueEventUrl,
   issueStreamTokenApi,
   renameProjectApi,
@@ -266,6 +267,12 @@ export const useProjectApi = (version: ApiVersion = '1') =>
     return () => eventSource.close();
   };
 
+  const getProjectSourceContent = async (projectId: string, path: string): Promise<{path: string; content: string}> => 
+  {
+    const response = await getProjectSourceContentApi(projectId, path, version, { suppressToast: true });
+    return response;
+  };
+
   return {
     useProjectsQuery,
     useProjectQuery,
@@ -275,7 +282,8 @@ export const useProjectApi = (version: ApiVersion = '1') =>
     useCreateProjectMutation,
     useRenameProjectMutation,
     useDeleteProjectMutation,
+    getProjectSourceContent,
     issueStreamToken,
-    streamQueueProgress
+    streamQueueProgress,
   };
 };

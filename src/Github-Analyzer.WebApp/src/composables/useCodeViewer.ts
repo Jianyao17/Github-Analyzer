@@ -1,5 +1,5 @@
 import { ref, shallowRef, watch, onUnmounted, computed } from 'vue';
-import { getProjectSourceContentApi } from '@/api/project.api';
+import { useProjectApi } from '@/composables/useProjectApi';
 import { useThemeStore } from '@/stores/theme.store';
 import type { EditorView } from '@codemirror/view';
 
@@ -49,6 +49,7 @@ export interface CodeViewerTab {
 
 export function useCodeViewer(projectId: string) 
 {
+  const { getProjectSourceContent } = useProjectApi();
   const themeStore = useThemeStore();
   const viewerTheme = ref<'light'|'dark'>(themeStore.theme === 'dark' ? 'dark' : 'light');
   
@@ -102,7 +103,7 @@ export function useCodeViewer(projectId: string)
           }),
         tab.content 
           ? Promise.resolve(null) 
-          : getProjectSourceContentApi(projectId, relativePath)
+          : getProjectSourceContent(projectId, relativePath)
       ]);
 
       if (sourceData) 

@@ -1,14 +1,21 @@
-import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vite';
-import vue from '@vitejs/plugin-vue';
+import { fileURLToPath, URL } from 'node:url';
 import visualizer from 'rollup-plugin-visualizer';
 import tailwind from '@tailwindcss/vite';
+import vue from '@vitejs/plugin-vue';
 import ui from '@nuxt/ui/vite';
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    vue(),
+    vue({
+      template: {
+        compilerOptions: {
+          // Ignore <zero-md> element to prevent Vue from treating it as an unknown component
+          isCustomElement: (tag) => tag.startsWith('zero-md')
+        }
+      }
+    }),
     tailwind({
       optimize: true,
     }),

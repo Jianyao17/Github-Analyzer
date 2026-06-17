@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { computed, onUnmounted, ref, watch } from 'vue';
 import { useProjectApi } from '@/composables/useProjectApi';
 import type { ProgressEvent } from '@/composables/useProjectApi';
-import StatisticTab from '@/components/project-details-tab/StatisticTab.vue';
+import OverviewTab from '@/components/project-details-tab/OverviewTab.vue';
 import CodeGraphTab from '@/components/project-details-tab/CodeGraphTab.vue';
 
 const route = useRoute();
@@ -17,6 +17,7 @@ const {
 } = useProjectApi();
 
 // ─── Page state ───────────────────────────────────────────────────────────────
+
 const projectId = computed(() => route.params.id as string);
 
 const { data: project, isLoading: loading } = useProjectQuery(projectId);
@@ -24,11 +25,11 @@ const activeTab = computed({
   get() 
   {
     const tab = route.query.tab as string;
-    return ['statistic', 'codegraph'].includes(tab) 
-      ? (tab as 'statistic' | 'codegraph') 
-      : 'statistic';
+    return ['overview', 'codegraph'].includes(tab) 
+      ? (tab as 'overview' | 'codegraph') 
+      : 'overview';
   },
-  set(newTab: 'statistic' | 'codegraph') 
+  set(newTab: 'overview' | 'codegraph') 
   {
     router.replace({ query: { ...route.query, tab: newTab } });
   }
@@ -37,11 +38,11 @@ const activeTab = computed({
 const transitionName = ref('slide-left');
 watch(activeTab, (newTab, oldTab) => 
 {
-  if (newTab === 'codegraph' && oldTab === 'statistic') 
+  if (newTab === 'codegraph' && oldTab === 'overview') 
   {
     transitionName.value = 'slide-left';
   }
-  else if (newTab === 'statistic' && oldTab === 'codegraph') 
+  else if (newTab === 'overview' && oldTab === 'codegraph') 
   {
     transitionName.value = 'slide-right';
   }
@@ -362,23 +363,23 @@ onUnmounted(() =>
         <NTooltip text="Ringkasan metrik kode dan analisis statis."
           :popper="{ placement: 'top' }"
         >
-          <button id="tab-statistic"
-            @click="activeTab = 'statistic'"
+          <button id="tab-overview"
+            @click="activeTab = 'overview'"
             class="
               flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium
               transition-colors duration-150
             "
-            :class="activeTab === 'statistic'
+            :class="activeTab === 'overview'
               ? `border-[var(--ui-primary)] text-[var(--ui-primary)]`
               : `
                 border-transparent text-[var(--ui-text-muted)]
                 hover:text-[var(--ui-text)]
               `"
           >
-            <NIcon name="i-lucide-bar-chart-2"
+            <NIcon name="i-lucide-info"
               class="h-4 w-4"
             />
-            Statistik
+            Overview
           </button>
         </NTooltip>
         <NTooltip text="Visualisasi struktur dan dependensi codebase."
@@ -411,9 +412,9 @@ onUnmounted(() =>
           mode="out-in"
         >
           <KeepAlive>
-            <StatisticTab
-              v-if="activeTab === 'statistic'"
-              key="statistic"
+            <OverviewTab
+              v-if="activeTab === 'overview'"
+              key="overview"
               :progress="statisticProgress"
               class="min-h-0 flex-1 overflow-y-auto"
             />
@@ -429,14 +430,13 @@ onUnmounted(() =>
             />
           </KeepAlive>
         </Transition>
-
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* Move forward (statistic -> codegraph) */
+/* Move forward (overview -> codegraph) */
 .slide-left-enter-active,
 .slide-left-leave-active {
   transition: opacity 0.10s ease-out, transform 0.10s ease-out;
@@ -450,7 +450,7 @@ onUnmounted(() =>
   transform: translateX(-15px);
 }
 
-/* Move backward (codegraph -> statistic) */
+/* Move backward (codegraph -> overview) */
 .slide-right-enter-active,
 .slide-right-leave-active {
   transition: opacity 0.10s ease-out, transform 0.10s ease-out;

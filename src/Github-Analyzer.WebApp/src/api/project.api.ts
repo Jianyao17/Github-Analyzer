@@ -82,9 +82,9 @@ export async function deleteProjectApi(id: string, version: ApiVersion = '1')
     .then(res => res.data);
 }
 
-export async function getProjectSourceContentApi(id: string, path: string, version: ApiVersion = '1') 
+export async function getProjectSourceContentApi(id: string, path: string, version: ApiVersion = '1', config?: ApiRequestConfig) 
 {
   return await apiClient.withVersion(version)
-    .get<{path: string; content: string}>(`/projects/${id}/content?path=${encodeURIComponent(path)}`)
+    .get<{path: string; content: string}>(`/projects/${id}/content?path=${encodeURIComponent(path)}`, config)
     .then(res => res.data);
 }

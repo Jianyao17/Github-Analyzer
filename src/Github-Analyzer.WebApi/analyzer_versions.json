@@ -1,6 +1,6 @@
 {
   "CodeGraph": {
-    "CurrentVersion": "20260615_044235-a93ac9b",
+    "CurrentVersion": "20260621_151050-79f8423",
     "WatchPaths": [
       "src/Github-Analyzer.Analysis/Domain",
       "src/Github-Analyzer.Analysis/Interface",
@@ -11,6 +11,18 @@
       "src/Github-Analyzer.WebApi/Entities/Cache/CodeGraphCache.cs"
     ],
     "History": [
+      {
+        "Version": "20260621_151050-79f8423",
+        "Timestamp": "2026-06-21T15:10:50.089Z",
+        "ChangedFiles": [
+          "src/Github-Analyzer.Analysis/Domain/TreeSitter/LangQueryData.cs",
+          "src/Github-Analyzer.Analysis/TreeSitter/LangAnalyzer/JavaScriptLangQuery.cs",
+          "src/Github-Analyzer.Analysis/TreeSitter/QueryDefinitions/CSharpQueries.cs",
+          "src/Github-Analyzer.Analysis/TreeSitter/QueryDefinitions/JavaScriptQueries.cs",
+          "src/Github-Analyzer.Analysis/TreeSitter/QueryDefinitions/PhpQueries.cs",
+          "src/Github-Analyzer.Analysis/TreeSitter/TreeSitterAnalyzer.cs"
+        ]
+      },
       {
         "Version": "20260615_044235-a93ac9b",
         "Timestamp": "2026-06-15T04:42:35.721Z",

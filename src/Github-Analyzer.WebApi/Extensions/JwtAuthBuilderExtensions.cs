@@ -5,6 +5,7 @@ using GithubAnalyzer.WebApi.Services.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using AspNet.Security.OAuth.GitHub;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -23,6 +24,10 @@ public static class JwtAuthBuilderExtensions
         var googleConfig = builder.Configuration
             .GetSection("Authentication:Google")
             .Get<GoogleAuthConfig>() ?? new GoogleAuthConfig();
+            
+        var githubConfig = builder.Configuration
+            .GetSection("Authentication:Github")
+            .Get<GithubAuthConfig>() ?? new GithubAuthConfig();
 
         
         services.AddIdentityCore<ApplicationUser>(builder.LoadIdentityConfig())
@@ -79,6 +84,23 @@ public static class JwtAuthBuilderExtensions
                     // Map additional claims from Google's user info response
                     options.ClaimActions.MapJsonKey("urn:google:picture", "picture");
                     options.ClaimActions.MapJsonKey("urn:google:email_verified", "email_verified");
+                });
+        }
+
+        if (githubConfig.IsEnabled)
+        {
+            authenticationBuilder.AddGitHub(
+                GitHubAuthenticationDefaults.AuthenticationScheme,
+                options =>
+                {
+                    options.ClientId = githubConfig.ClientId;
+                    options.ClientSecret = githubConfig.ClientSecret;
+                    options.SignInScheme = IdentityConstants.ExternalScheme;
+                    options.CallbackPath = githubConfig.CallbackPath;
+
+                    // Map additional claims from Github's user info response
+                    options.ClaimActions.MapJsonKey("urn:github:avatar", "avatar_url");
+                    options.ClaimActions.MapJsonKey("urn:github:login", "login");
                 });
         }
 

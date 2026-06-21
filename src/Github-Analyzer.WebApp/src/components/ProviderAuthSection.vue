@@ -8,7 +8,7 @@ type AuthProviderItem =
   key: string;
   icon: string;
   label: string;
-  kind?: 'google' | 'custom';
+  kind?: 'google' | 'github' | 'custom';
   color?: 'primary' | 'neutral';
   variant?: 'outline' | 'solid';
   onClick?: () => void | Promise<void>;
@@ -22,14 +22,25 @@ const providerItems: AuthProviderItem[] =
     icon: 'material-icon-theme:google',
     label: 'Lanjutkan dengan Google'
   },
+  {
+    key: 'github',
+    kind: 'github',
+    icon: 'i-mdi-github',
+    label: 'Lanjutkan dengan Github'
+  },
 ];
 
 const authApi = useAuthApi();
 const isGoogleAuthEnabled = ref(false);
+const isGithubAuthEnabled = ref(false);
 const isProviderAuthLoading = ref(true);
 
 const visibleProviders = computed(() => 
-  providerItems.filter(provider => provider.kind !== 'google' || isGoogleAuthEnabled.value));
+  providerItems.filter(provider => {
+    if (provider.kind === 'google') return isGoogleAuthEnabled.value;
+    if (provider.kind === 'github') return isGithubAuthEnabled.value;
+    return true;
+  }));
 
 const displayedProviders = computed(() => 
   visibleProviders.value.length ? visibleProviders.value : providerItems);
@@ -37,12 +48,21 @@ const displayedProviders = computed(() =>
 const isProviderContentVisible = computed(() => 
   !isProviderAuthLoading.value && visibleProviders.value.length > 0);
 
-onMounted(() => 
+onMounted(async () => 
 {
-  authApi.isGoogleAuthEnabled()
-    .then(enabled => isGoogleAuthEnabled.value = enabled)
-    .catch(() => isGoogleAuthEnabled.value = false)
-    .finally(() => isProviderAuthLoading.value = false);
+  try 
+  {
+    const [googleEnabled, githubEnabled] = await Promise.all([
+      authApi.isGoogleAuthEnabled().catch(() => false),
+      authApi.isGithubAuthEnabled().catch(() => false),
+    ]);
+    isGoogleAuthEnabled.value = googleEnabled;
+    isGithubAuthEnabled.value = githubEnabled;
+  } 
+  finally 
+  {
+    isProviderAuthLoading.value = false;
+  }
 });
 
 function handleProviderClick(provider: AuthProviderItem) 
@@ -50,6 +70,12 @@ function handleProviderClick(provider: AuthProviderItem)
   if (provider.kind === 'google') 
   {
     authApi.googleAuth();
+    return;
+  }
+
+  if (provider.kind === 'github') 
+  {
+    authApi.githubAuth();
     return;
   }
 

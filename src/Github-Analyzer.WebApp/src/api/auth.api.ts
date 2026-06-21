@@ -52,6 +52,21 @@ export function getGoogleAuthRedirectUrl(returnPath?: string, version: ApiVersio
     (returnPath ? `?returnPath=${encodeURIComponent(returnPath)}` : '');
 }
 
+export async function isGithubAuthEnabledApi(version: ApiVersion = '1') 
+{
+  return await apiClient.withVersion(version)
+    .get<ApiResponse<{ IsEnabled: boolean }>>('/auth/github/isEnabled')
+    .then(res => res.data);
+}
+
+export function getGithubAuthRedirectUrl(returnPath?: string, version: ApiVersion = '1') 
+{
+  const base = baseURL.replace(/\/$/, '');
+
+  return `${base}/api/v${version}/auth/github` +
+    (returnPath ? `?returnPath=${encodeURIComponent(returnPath)}` : '');
+}
+
 export async function verifyEmailApi(payload: VerifyEmailPayload, version: ApiVersion = '1') 
 {
   return await apiClient.withVersion(version)

@@ -82,6 +82,22 @@ public static class Endpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesValidationProblem();
 
+        group.MapGithubAuthIsEnabledEndpoint()
+            .WithName("GithubAuthIsEnabled")
+            .Produces(StatusCodes.Status200OK);
+            
+        group.MapGithubLoginEndpoint()
+            .WithName("GithubLogin")
+            .Produces(StatusCodes.Status302Found)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
+        group.MapGithubCallbackEndpoint()
+            .WithName("GithubCallback")
+            .Produces(StatusCodes.Status302Found)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesValidationProblem();
+
         return app;
     }
 }

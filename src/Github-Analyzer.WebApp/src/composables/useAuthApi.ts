@@ -17,6 +17,8 @@ import {
   getCurrentUserApi,
   isGoogleAuthEnabledApi,
   getGoogleAuthRedirectUrl,
+  isGithubAuthEnabledApi,
+  getGithubAuthRedirectUrl,
   forgotPasswordApi,
   resetPasswordApi,
 } from '../api/auth.api';
@@ -121,6 +123,28 @@ export const useAuthApi = (version: ApiVersion = '1') =>
     window.location.href = getGoogleAuthRedirectUrl(returnPath, version);
   };
 
+  const isGithubAuthEnabled = async () => 
+  {
+    const response = await isGithubAuthEnabledApi(version);
+    const data = response.data as unknown;
+
+    if (typeof data === 'boolean') return data;
+    if (data && typeof data === 'object') 
+    {
+      const payload = data as { IsEnabled?: boolean; isEnabled?: boolean };
+      return payload.IsEnabled ?? payload.isEnabled ?? false;
+    }
+
+    return false;
+  };
+
+  const githubAuth = async (returnPath?: string) => 
+  {
+    // Redirect the user to the backend endpoint that initiates 
+    // the Github OAuth flow with the optional returnPath as a query parameter.
+    window.location.href = getGithubAuthRedirectUrl(returnPath, version);
+  };
+
   const verifyEmail = async (payload: VerifyEmailPayload) => 
   {
     const response = await verifyEmailApi(payload, version);
@@ -144,9 +168,11 @@ export const useAuthApi = (version: ApiVersion = '1') =>
     register,
     logout,
     googleAuth,
+    githubAuth,
     initialize,
     loadCurrentUser,
     isGoogleAuthEnabled,
+    isGithubAuthEnabled,
     getCurrentUser,
     verifyEmail,
     forgotPassword,

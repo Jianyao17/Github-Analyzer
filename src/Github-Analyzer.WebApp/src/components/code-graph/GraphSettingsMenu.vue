@@ -95,6 +95,7 @@ onClickOutside(settingsDropdownContainer, () =>
     >
       <div
         v-if="isSettingsOpen"
+        id="graph-settings-menu-content"
         class="
           fixed bottom-20 left-1/2 z-30 w-[90vw] max-w-[320px] -translate-x-1/2
           rounded-xl border border-[var(--ui-border)] bg-[var(--ui-bg)] p-3

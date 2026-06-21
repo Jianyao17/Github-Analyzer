@@ -321,21 +321,23 @@ export const useOnboardingStore = defineStore('onboarding', () =>
             }
           },
           {
-            attachTo: { element: '#graph-search' },
-            options: { popper: { placement: 'bottom-start' } },
-            content: { 
-              icon: 'i-lucide-search', 
-              title: 'Pencarian Node', 
-              description: 'Gunakan fitur search ini untuk mencari file, class, atau fungsi di dalam graph. Shortcut: Ctrl+K.' 
-            }
-          },
-          {
-            attachTo: { element: '#graph-settings' },
+            attachTo: { element: '#graph-settings-menu-content' },
             options: { popper: { placement: 'left-end' } },
             content: { 
               icon: 'i-lucide-settings', 
               title: 'Pengaturan Graph', 
               description: 'Atur tata letak, mode tampilan (directory/namespace), dan kedalaman collapse di sini.' 
+            },
+            interaction: {
+              onBeforeStep: async () => 
+              {
+                if (!document.getElementById('graph-settings-menu-content')) 
+                {
+                  const btn = document.querySelector('#graph-settings button') as HTMLButtonElement;
+                  if (btn) btn.click();
+                  await new Promise(resolve => setTimeout(resolve, 300));
+                }
+              }
             }
           },
           {
@@ -345,6 +347,115 @@ export const useOnboardingStore = defineStore('onboarding', () =>
               icon: 'i-lucide-palette', 
               title: 'Keterangan Warna', 
               description: 'Setiap warna mewakili tipe node berbeda. Klik untuk melihat rincian jumlah node dan relasi.' 
+            },
+            interaction: {
+              onBeforeStep: async () => 
+              {
+                const content = document.getElementById('graph-legend-content');
+                if (content && content.style.display === 'none') 
+                {
+                  const btn = document.querySelector('#graph-legend button') as HTMLButtonElement;
+                  if (btn) btn.click();
+                  await new Promise(resolve => setTimeout(resolve, 300));
+                }
+              }
+            }
+          },
+          {
+            attachTo: { element: '#graph-search' },
+            options: { popper: { placement: 'bottom-start' } },
+            content: { 
+              icon: 'i-lucide-search', 
+              title: 'Buka Pencarian', 
+              description: 'Klik tombol ini atau gunakan shortcut Ctrl+K untuk membuka modal pencarian.' 
+            },
+            interaction: {
+              onBeforeStep: async () => 
+              {
+                const modalInput = document.getElementById('graph-search-input-container');
+                if (!modalInput) 
+                {
+                  document.getElementById('graph-search')?.click();
+                  await new Promise(resolve => setTimeout(resolve, 300));
+                }
+              }
+            }
+          },
+          {
+            attachTo: { element: '#graph-search-input-container' },
+            options: { popper: { placement: 'bottom' } },
+            content: {
+              icon: 'i-lucide-keyboard',
+              title: 'Ketik Kata Kunci',
+              description: 'Ketik nama file, class, atau fungsi yang ingin dicari. Kami mengisinya untuk Anda sebagai contoh.'
+            },
+            interaction: {
+              onBeforeStep: async (plugin: any) => 
+              {
+                // Pastikan modal terbuka walau ditutup manual oleh user
+                if (!document.getElementById('graph-search-input-container')) 
+                {
+                  document.getElementById('graph-search')?.click();
+                  await new Promise(resolve => setTimeout(resolve, 300));
+                }
+
+                const input = document.querySelector('#graph-search-input-container input') as HTMLInputElement;
+                if (input && !input.value) 
+                {
+                  const nodes = plugin?._data?.nodes || plugin?._ctx?.nodes || [];
+                  const functionNodes = nodes.filter((n: any) => n.type === 4);
+                  let targetLabel = 'a';
+                  if (functionNodes.length > 0) 
+                  {
+                    const randomIdx = Math.floor(Math.random() * functionNodes.length);
+                    targetLabel = functionNodes[randomIdx].label;
+                  }
+                  else if (nodes.length > 0) 
+                  {
+                    targetLabel = nodes[0].label;
+                  }
+                  
+                  // Use native setter to trigger reactivity
+                  const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+                  nativeInputValueSetter?.call(input, targetLabel);
+                  input.dispatchEvent(new Event('input', { bubbles: true }));
+                  
+                  await new Promise(resolve => setTimeout(resolve, 300));
+                }
+              }
+            }
+          },
+          {
+            attachTo: { element: '#graph-search-first-result' },
+            options: { popper: { placement: 'right' } },
+            content: {
+              icon: 'i-lucide-mouse-pointer-click',
+              title: 'Pilih Hasil Pencarian',
+              description: 'Klik salah satu hasil pencarian ini. Graph akan secara otomatis memusatkan tampilan pada node tersebut.'
+            },
+            interaction: {
+              onBeforeStep: async () => 
+              {
+                // Pastikan modal terbuka
+                if (!document.getElementById('graph-search-first-result')) 
+                {
+                  document.getElementById('graph-search')?.click();
+                  await new Promise(resolve => setTimeout(resolve, 300));
+                }
+
+                const btn = document.getElementById('graph-search-first-result');
+                if (btn) 
+                {
+                  btn.addEventListener('click', () => 
+                  {
+                    setTimeout(() => 
+                    {
+                      // Index 6 adalah step Zoom (setelah search sequence)
+                      if (wrapperRef.value) wrapperRef.value.goToStep(6);
+                    }, 500);
+                  }, { once: true });
+                }
+              }
             }
           },
           {
@@ -356,7 +467,13 @@ export const useOnboardingStore = defineStore('onboarding', () =>
             },
             interaction: {
               actionName: 'zoom',
-              onBeforeStep: (plugin: any) => plugin._ctx?.bus.emit('zoom:fit', { padding: 60 })
+              onBeforeStep: (plugin: any) => 
+              {
+                const closeBtn = document.querySelector('#graph-search-input-container button:last-child') as HTMLButtonElement;
+                if (closeBtn) closeBtn.click();
+                
+                plugin._ctx?.bus.emit('zoom:fit', { padding: 60 });
+              }
             }
           },
           {
@@ -433,7 +550,7 @@ export const useOnboardingStore = defineStore('onboarding', () =>
                     {
                       if (wrapperRef.value) 
                       {
-                        wrapperRef.value.goToStep(9);
+                        wrapperRef.value.goToStep(11);
                       }
                     }, 500);
                   }, { once: true });

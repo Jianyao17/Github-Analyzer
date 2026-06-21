@@ -36,7 +36,8 @@ const isGithubAuthEnabled = ref(false);
 const isProviderAuthLoading = ref(true);
 
 const visibleProviders = computed(() => 
-  providerItems.filter(provider => {
+  providerItems.filter(provider => 
+  {
     if (provider.kind === 'google') return isGoogleAuthEnabled.value;
     if (provider.kind === 'github') return isGithubAuthEnabled.value;
     return true;

@@ -176,7 +176,7 @@ export class EdgePass
           .attr('stroke',           style.color)
           .attr('stroke-opacity',   0.6)
           .attr('stroke-width',     style.strokeWidth)
-          .attr('stroke-dasharray', edges.length > 500 ? null : (style.dashArray === 'none' ? null : style.dashArray))
+          .attr('stroke-dasharray', style.dashArray === 'none' ? null : style.dashArray)
           .attr('marker-end',       `url(#graph-arrow-${d.type})`);
       });
 

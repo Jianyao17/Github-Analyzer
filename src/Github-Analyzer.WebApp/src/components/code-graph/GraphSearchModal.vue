@@ -217,7 +217,9 @@ defineExpose({ open, close });
               "
             >
               <!-- ── Input row ─────────────────────────────────────────────── -->
-              <div class="flex items-center gap-2 px-2 py-1">
+              <div class="flex items-center gap-2 px-2 py-1"
+                id="graph-search-input-container"
+              >
                 <NInput
                   ref="inputRef"
                   v-model="searchQuery"
@@ -268,6 +270,7 @@ defineExpose({ open, close });
                 >
                   <button
                     v-for="(node, i) in searchResults.slice(0, MAX_RESULTS)"
+                    :id="i === 0 ? 'graph-search-first-result' : undefined"
                     :key="node.id"
                     :class="[
                       `

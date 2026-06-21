@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import type { CodeGraph } from '@/types/analysis/code-graph';
-import { NODE_TYPE_KEYS, defaultGraphConfig } from '@/lib/graph/config';
+import { NODE_TYPE_KEYS, EDGE_TYPE_KEYS, defaultGraphConfig } from '@/lib/graph/config';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 const props = defineProps<{
@@ -17,6 +17,13 @@ const NODE_LEGEND = [
   { key: 'function',  label: 'Function'  },
 ] as const;
 
+const EDGE_LEGEND = [
+  { key: 'belongsTo', label: 'Belongs To' },
+  { key: 'define',    label: 'Define' },
+  { key: 'call',      label: 'Call' },
+  { key: 'include',   label: 'Include' },
+] as const;
+
 // ─── Computed stats ───────────────────────────────────────────────────────────
 const nodeCountByType = computed(() =>
   props.data.nodes.reduce<Record<string, number>>((acc, node) =>
@@ -26,13 +33,28 @@ const nodeCountByType = computed(() =>
     return acc;
   }, {}));
 
-const totalNodes  = computed(() => props.data.nodes.length);
-const sourceCount = computed(() => props.data.sourceRelEdges.length);
-const useCount    = computed(() => props.data.useRelEdges.length);
-
-function getColor(key: string): string
+const edgeCountByType = computed(() => 
 {
-  return defaultGraphConfig.nodeTypes[key]?.color ?? '#9CA3AF';
+  const allEdges = [...props.data.sourceRelEdges, ...props.data.useRelEdges];
+  return allEdges.reduce<Record<string, number>>((acc, edge) => 
+  {
+    const key = EDGE_TYPE_KEYS[edge.type] ?? 'other';
+    acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  }, {});
+});
+
+const totalNodes  = computed(() => props.data.nodes.length);
+
+function getNodeConfig(key: string) 
+{
+  // Need to cast to any because TS might complain about indexing Record with string
+  return (defaultGraphConfig.nodeTypes as any)[key] ?? defaultGraphConfig.nodeTypes.default;
+}
+
+function getEdgeConfig(key: string) 
+{
+  return (defaultGraphConfig.edgeTypes as any)[key] ?? defaultGraphConfig.edgeTypes.default;
 }
 
 // ─── Collapse State ───────────────────────────────────────────────────────────
@@ -72,7 +94,9 @@ const isExpanded = ref(false);
     </button>
 
     <!-- ── Body ─────────────────────────────────────────────────────────────── -->
-    <div v-show="isExpanded">
+    <div v-show="isExpanded"
+      id="graph-legend-content"
+    >
       <div class="border-t border-[var(--ui-border)] px-3 pt-2 pb-3">
 
         <!-- Node types with counts -->
@@ -83,9 +107,10 @@ const isExpanded = ref(false);
             class="flex items-center justify-between gap-2"
           >
             <div class="flex min-w-0 items-center gap-2">
-              <span
-                class="h-2.5 w-2.5 shrink-0 rounded-full"
-                :style="{ backgroundColor: getColor(item.key) }"
+              <NIcon 
+                :name="`i-lucide-${getNodeConfig(item.key).icon}`"
+                class="h-4 w-4 shrink-0"
+                :style="{ color: getNodeConfig(item.key).color }"
               />
               <span class="truncate text-[var(--ui-text-muted)]">{{ item.label }}</span>
             </div>
@@ -108,27 +133,46 @@ const isExpanded = ref(false);
             Relations
           </p>
           <div class="space-y-1.5">
-            <div class="flex items-center justify-between gap-2">
+            <div
+              v-for="item in EDGE_LEGEND"
+              :key="item.key"
+              class="flex items-center justify-between gap-2"
+            >
               <div class="flex items-center gap-2">
-                <span class="
-                  h-2.5 w-2.5 shrink-0 rounded-full bg-gray-400
-                  dark:bg-gray-500
-                "
-                />
-                <span class="text-[var(--ui-text-muted)]">Source</span>
+                <svg width="24"
+                  height="12"
+                  class="shrink-0 overflow-visible"
+                >
+                  <defs>
+                    <marker :id="`legend-arrow-${item.key}`"
+                      viewBox="0 -5 10 10"
+                      refX="8"
+                      refY="0"
+                      markerWidth="6"
+                      markerHeight="6"
+                      orient="auto"
+                    >
+                      <path d="M0,-5L10,0L0,5"
+                        :fill="getEdgeConfig(item.key).color"
+                      />
+                    </marker>
+                  </defs>
+                  <line 
+                    x1="0"
+                    y1="6"
+                    x2="22"
+                    y2="6" 
+                    :stroke="getEdgeConfig(item.key).color"
+                    :stroke-width="getEdgeConfig(item.key).strokeWidth"
+                    :stroke-dasharray="getEdgeConfig(item.key).dashArray !== 'none' ? getEdgeConfig(item.key).dashArray : undefined"
+                    :marker-end="`url(#legend-arrow-${item.key})`"
+                  />
+                </svg>
+                <span class="text-[var(--ui-text-muted)]">{{ item.label }}</span>
               </div>
-              <span class="text-xs text-[var(--ui-text-muted)] tabular-nums">{{ sourceCount }}</span>
-            </div>
-            <div class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2">
-                <span class="
-                  h-2.5 w-2.5 shrink-0 rounded-full bg-red-300
-                  dark:bg-red-700
-                "
-                />
-                <span class="text-[var(--ui-text-muted)]">Use</span>
-              </div>
-              <span class="text-xs text-[var(--ui-text-muted)] tabular-nums">{{ useCount }}</span>
+              <span class="text-xs text-[var(--ui-text-muted)] tabular-nums">
+                {{ edgeCountByType[item.key] ?? 0 }}
+              </span>
             </div>
           </div>
         </div>

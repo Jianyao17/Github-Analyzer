@@ -97,6 +97,10 @@ public static class JwtAuthBuilderExtensions
                     options.ClientSecret = githubConfig.ClientSecret;
                     options.SignInScheme = IdentityConstants.ExternalScheme;
                     options.CallbackPath = githubConfig.CallbackPath;
+                    
+                    // This scope is needed to get user email. 
+                    // By default, Github only gives access to public profile data.
+                    options.Scope.Add("user:email"); 
 
                     // Map additional claims from Github's user info response
                     options.ClaimActions.MapJsonKey("urn:github:avatar", "avatar_url");

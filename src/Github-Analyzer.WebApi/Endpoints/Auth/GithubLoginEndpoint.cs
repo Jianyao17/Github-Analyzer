@@ -101,11 +101,6 @@ public static class GithubLoginEndpoint
 
                     // Check if a user with the provided email already exists in our system.
                     var user = await userManager.FindByEmailAsync(email);
-                    if (user is null)
-                    {
-                        // Check if a user with the github username already exists (just in case email changed)
-                        user = await userManager.FindByNameAsync(login);
-                    }
 
                     if (user is null)
                     {

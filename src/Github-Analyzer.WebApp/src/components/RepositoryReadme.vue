@@ -47,41 +47,30 @@ const fetchFiles = async () =>
   activeFileId.value = null;
 
   const probes = [
-    { id: 'readme', icon: 'i-lucide-book-open', names: ['README.md', 'readme.md', 'Readme.md', 'README.MD'] },
-    { id: 'contributing', icon: 'i-lucide-users', names: ['CONTRIBUTING.md', 'contributing.md'] },
-    { id: 'license', icon: 'i-lucide-scale', names: ['LICENSE', 'LICENSE.md', 'License.txt', 'license'] }
+    { id: 'readme', icon: 'i-lucide-book-open', name: 'README.md' },
+    { id: 'contributing', icon: 'i-lucide-users', name: 'CONTRIBUTING.md' },
+    { id: 'license', icon: 'i-lucide-scale', name: 'LICENSE' }
   ];
 
-  await Promise.all(probes.map(async (probe) => 
+  await Promise.allSettled(probes.map(async (probe) => 
   {
-    for (const name of probe.names) 
+    const response = await getProjectSourceContent(props.projectId, probe.name);
+    if (response && response.content) 
     {
-      try 
-      {
-        const response = await getProjectSourceContent(props.projectId, name);
-        if (response && response.content) 
-        {
-          const isMarkdown = name.toLowerCase().endsWith('.md');
-          
-          let displayName = name;
-          if (probe.id === 'license') displayName = guessLicenseType(response.content);
-          else if (probe.id === 'readme') displayName = 'README';
-          else if (probe.id === 'contributing') displayName = 'Contributing';
-          
-          availableFiles.value.push({
-            id: probe.id,
-            name: displayName,
-            rawContent: response.content,
-            icon: probe.icon,
-            isMarkdown
-          });
-          break; // Stop checking other names for this probe
-        }
-      }
-      catch (_) 
-      {
-        // File not found, ignore
-      }
+      const isMarkdown = probe.name.toLowerCase().endsWith('.md');
+      
+      let displayName = probe.name;
+      if (probe.id === 'license') displayName = guessLicenseType(response.content);
+      else if (probe.id === 'readme') displayName = 'README';
+      else if (probe.id === 'contributing') displayName = 'Contributing';
+      
+      availableFiles.value.push({
+        id: probe.id,
+        name: displayName,
+        rawContent: response.content,
+        icon: probe.icon,
+        isMarkdown
+      });
     }
   }));
 
@@ -176,8 +165,21 @@ watch(() => props.projectId, () =>
   </div>
   
   <div v-else
-    class="hidden"
-  ></div>
+    class="
+      flex h-full min-h-[16rem] items-center justify-center rounded-xl border-1
+      border-[var(--ui-border)] bg-[var(--ui-bg)]/70 backdrop-blur-md
+    "
+  >
+    <div class="flex flex-col items-center gap-3 px-4 text-center text-[var(--ui-text-muted)]">
+      <NIcon name="i-lucide-file-question"
+        class="h-10 w-10 opacity-50"
+      />
+      <div>
+        <p class="font-medium text-[var(--ui-text)]">No documentation files found</p>
+        <p class="mt-1 text-sm">This repository does not have a standard README.md, CONTRIBUTING.md, or LICENSE file.</p>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>

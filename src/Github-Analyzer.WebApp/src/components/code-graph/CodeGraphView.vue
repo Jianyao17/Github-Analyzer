@@ -42,7 +42,8 @@ const {
   settings, maxCollapseDepth,
   search, focusNode, focusHover,
   focusResults, clearSearch, expandAll, 
-  collapseAll, highlightNode, getEngine
+  collapseAll, highlightNode, getEngine,
+  expandNode
 } = useGraphD3(graphContainer, graphData, 
   {
   // Layout
@@ -113,8 +114,12 @@ function handleTogglePin(id: string)
   }
 }
 
-function handleHighlightRelations(node: D3Node) 
+function handleHighlightRelations(node: D3Node, relatedIds?: string[]) 
 {
+  if (relatedIds) 
+  {
+    relatedIds.forEach(id => expandNode(id));
+  }
   highlightNode(node.id);
 }
 

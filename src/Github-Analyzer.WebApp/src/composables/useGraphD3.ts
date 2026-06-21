@@ -293,6 +293,7 @@ export function useGraphD3(
     focusHover:   (node: D3Node | null) => searchPlugin.value?.focusHover?.(node as any),
     focusNode:    (node: D3Node, scale?: number) => searchPlugin.value?.focusNode(node as any, scale),
     focusResults: (results: D3Node[], padding?: number) => searchPlugin.value?.focusResults(results as any, padding),
+    expandNode:   (nodeId: string) => engine.value?.ctx.bus.emit('collapse:expand-path', { targetId: nodeId }),
     clearSearch:  () => searchPlugin.value?.clearSearch(),
     getOnboardingPlugin: () => onboardingPlugin.value,
   };

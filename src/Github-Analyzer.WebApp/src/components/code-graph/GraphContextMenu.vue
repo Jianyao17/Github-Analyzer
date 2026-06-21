@@ -19,7 +19,7 @@ const emit = defineEmits<{
   (e: 'close'): void;
   (e: 'toggle-pin'): void;
   (e: 'show-source-code', node: D3Node): void;
-  (e: 'highlight-relations', node: D3Node): void;
+  (e: 'highlight-relations', node: D3Node, relatedIds: string[]): void;
   (e: 'focus-node', node: D3Node): void;
 }>();
 
@@ -182,6 +182,22 @@ const iconColor = computed(() =>
   return style.color;
 });
 
+function getNodeIcon(n?: D3Node) 
+{
+  if (!n) return 'i-lucide-circle';
+  const typeKey = NODE_TYPE_KEYS[n.type] ?? 'default';
+  const style = defaultGraphConfig.nodeTypes[typeKey] ?? defaultGraphConfig.nodeTypes['default'];
+  return `i-lucide-${style.icon}`;
+}
+
+function getNodeColor(n?: D3Node) 
+{
+  if (!n) return '#9CA3AF';
+  const typeKey = NODE_TYPE_KEYS[n.type] ?? 'default';
+  const style = defaultGraphConfig.nodeTypes[typeKey] ?? defaultGraphConfig.nodeTypes['default'];
+  return style.color;
+}
+
 const shortPath = computed(() => 
 {
   const path = props.node?.pathId || '';
@@ -191,15 +207,21 @@ const shortPath = computed(() =>
 const incomingCount = computed(() => 
 {
   if (!props.node || !props.data) return 0;
-  return props.data.sourceRelEdges.filter(e => e.to === props.node!.id).length +
-         props.data.useRelEdges.filter(e => e.to === props.node!.id).length;
+  const edges = [
+    ...props.data.sourceRelEdges.filter(e => e.to === props.node!.id),
+    ...props.data.useRelEdges.filter(e => e.to === props.node!.id)
+  ];
+  return new Set(edges.map(e => e.from)).size;
 });
 
 const outgoingCount = computed(() => 
 {
   if (!props.node || !props.data) return 0;
-  return props.data.sourceRelEdges.filter(e => e.from === props.node!.id).length +
-         props.data.useRelEdges.filter(e => e.from === props.node!.id).length;
+  const edges = [
+    ...props.data.sourceRelEdges.filter(e => e.from === props.node!.id),
+    ...props.data.useRelEdges.filter(e => e.from === props.node!.id)
+  ];
+  return new Set(edges.map(e => e.to)).size;
 });
 
 const incomingNodes = computed(() => 
@@ -210,11 +232,14 @@ const incomingNodes = computed(() =>
     ...props.data.useRelEdges.filter(e => e.to === props.node!.id)
   ];
 
-  return edges
-    .map(e => props.data.nodes.find(n => 
-      (n as D3Node).id === e.from || 
-      (n as D3Node).pathId === e.from
-    ))
+  const uniqueNodeIds = Array.from(new Set(edges.map(e => e.from)));
+
+  return uniqueNodeIds
+    .map(fromId => 
+    {
+      const n = props.data!.nodes.find(node => (node as any).id === fromId || node.pathId === fromId);
+      return n ? { ...n, id: n.pathId } as D3Node : null;
+    })
     .filter(Boolean) as D3Node[];
 });
 
@@ -226,11 +251,14 @@ const outgoingNodes = computed(() =>
     ...props.data.useRelEdges.filter(e => e.from === props.node!.id)
   ];
 
-  return edges
-    .map(e => props.data.nodes.find(n => 
-      (n as D3Node).id === e.to || 
-      (n as D3Node).pathId === e.to
-    ))
+  const uniqueNodeIds = Array.from(new Set(edges.map(e => e.to)));
+
+  return uniqueNodeIds
+    .map(toId => 
+    {
+      const n = props.data!.nodes.find(node => (node as any).id === toId || node.pathId === toId);
+      return n ? { ...n, id: n.pathId } as D3Node : null;
+    })
     .filter(Boolean) as D3Node[];
 });
 
@@ -538,19 +566,27 @@ onUnmounted(() =>
               text-[var(--ui-text-muted)] uppercase
             "
             >Incoming</span>
-            <div class="flex max-h-[70px] flex-col gap-0.5 overflow-y-auto">
-              <div v-for="n in incomingNodes.slice(0, 3)"
+            <div class="
+              relations-scroll flex max-h-[120px] flex-col gap-0.5
+              overflow-y-auto pr-1
+            "
+            >
+              <button v-for="n in incomingNodes"
                 :key="n.pathId"
-                class="truncate text-xs text-[var(--ui-text)]"
+                class="
+                  flex items-center gap-1.5 rounded px-1.5 py-1 text-left
+                  text-xs text-[var(--ui-text)] transition-colors
+                  hover:bg-[var(--ui-bg-elevated)]
+                "
                 :title="n.pathId"
+                @click.stop="$emit('focus-node', n)"
               >
-                {{ n.label }}
-              </div>
-              <div v-if="incomingNodes.length > 3"
-                class="text-[10px] text-[var(--ui-text-muted)] italic"
-              >
-                ... and {{ incomingNodes.length - 3 }} more
-              </div>
+                <NIcon :name="getNodeIcon(n)"
+                  class="h-3.5 w-3.5 shrink-0"
+                  :style="{ color: getNodeColor(n) }"
+                />
+                <span class="truncate">{{ n.label }}</span>
+              </button>
             </div>
           </div>
           
@@ -562,19 +598,27 @@ onUnmounted(() =>
               text-[var(--ui-text-muted)] uppercase
             "
             >Outgoing</span>
-            <div class="flex max-h-[70px] flex-col gap-0.5 overflow-y-auto">
-              <div v-for="n in outgoingNodes.slice(0, 3)"
+            <div class="
+              relations-scroll flex max-h-[120px] flex-col gap-0.5
+              overflow-y-auto pr-1
+            "
+            >
+              <button v-for="n in outgoingNodes"
                 :key="n.pathId"
-                class="truncate text-xs text-[var(--ui-text)]"
+                class="
+                  flex items-center gap-1.5 rounded px-1.5 py-1 text-left
+                  text-xs text-[var(--ui-text)] transition-colors
+                  hover:bg-[var(--ui-bg-elevated)]
+                "
                 :title="n.pathId"
+                @click.stop="$emit('focus-node', n)"
               >
-                {{ n.label }}
-              </div>
-              <div v-if="outgoingNodes.length > 3"
-                class="text-[10px] text-[var(--ui-text-muted)] italic"
-              >
-                ... and {{ outgoingNodes.length - 3 }} more
-              </div>
+                <NIcon :name="getNodeIcon(n)"
+                  class="h-3.5 w-3.5 shrink-0"
+                  :style="{ color: getNodeColor(n) }"
+                />
+                <span class="truncate">{{ n.label }}</span>
+              </button>
             </div>
           </div>
 
@@ -593,7 +637,7 @@ onUnmounted(() =>
                 text-[var(--ui-primary)] transition-colors
                 hover:bg-[var(--ui-primary)]/20
               "
-              @click.stop="$emit('highlight-relations', node!)"
+              @click.stop="$emit('highlight-relations', node!, [...incomingNodes.map(n => n.id), ...outgoingNodes.map(n => n.id)])"
             >
               <NIcon name="i-lucide-network"
                 class="h-3.5 w-3.5"
@@ -671,3 +715,22 @@ onUnmounted(() =>
     </div>
   </Teleport>
 </template>
+
+<style scoped>
+.relations-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.relations-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.relations-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--ui-border);
+  border-radius: 999px;
+}
+
+.relations-scroll:hover::-webkit-scrollbar-thumb {
+  background-color: var(--ui-text-muted);
+}
+</style>

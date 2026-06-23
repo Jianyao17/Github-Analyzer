@@ -8,8 +8,8 @@ import { useOnboardingStore } from '@/stores/onboarding.store';
 import type { ProgressEvent } from '@/composables/useProjectApi';
 import type { GraphNode } from '@/types/analysis/code-graph';
 
-import CodeGraphView from '@/components/code-graph/CodeGraphView.vue';
 import CodeViewer from '@/components/code-viewer/CodeViewer.vue';
+import CodeGraphView from '@/components/code-graph/CodeGraphView.vue';
 import 'splitpanes/dist/splitpanes.css';
 
 
@@ -118,7 +118,7 @@ function handleFocusNode(path: string)
         absolute inset-0 z-10 flex flex-col items-center justify-center gap-6
         bg-[var(--ui-bg)]/80 backdrop-blur-sm
       "
-      style="background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px;"
+      style="background-image: radial-gradient(var(--ui-border) 1px, transparent 1px); background-size: 20px 20px;"
     >
       <!-- Circular progress ring -->
       <div class="relative flex h-28 w-28 items-center justify-center">
@@ -194,7 +194,7 @@ function handleFocusNode(path: string)
         />
         <!-- Tooltip Canvas Navigation -->
         <div class="absolute top-4 right-4 z-20">
-          <NTooltip text="Scroll untuk zoom, drag untuk geser, klik node untuk lihat kode."
+          <NTooltip text="Buka Panduan Singkat"
             :popper="{ placement: 'left' }"
           >
             <button class="

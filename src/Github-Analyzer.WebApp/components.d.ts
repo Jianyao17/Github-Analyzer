@@ -52,6 +52,7 @@ declare module 'vue' {
     RepositoryStatistics: typeof import('./src/components/RepositoryStatistics.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    TutorialModal: typeof import('./src/components/TutorialModal.vue')['default']
     UserProfileCard: typeof import('./src/components/UserProfileCard.vue')['default']
     ZeroMD: typeof import('./src/components/ZeroMD.vue')['default']
   }

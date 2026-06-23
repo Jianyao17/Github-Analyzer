@@ -340,9 +340,10 @@ function toggleProjectsCollapsed()
   <!-- Delete Confirmation Modal -->
   <NModal 
     v-model:open="isDeleteModalOpen" 
+    class="z-[9999]"
     :ui="{ 
       content: 'sm:max-w-sm', 
-      overlay: 'bg-gray-900/25 dark:bg-gray-900/50 backdrop-blur-xs',
+      overlay: 'bg-[var(--ui-bg)]/20 backdrop-blur-xs',
       footer: 'justify-end gap-1'
     }"
   >

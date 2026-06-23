@@ -170,7 +170,11 @@ watch(() => props.projectId, () =>
       border-[var(--ui-border)] bg-[var(--ui-bg)]/70 backdrop-blur-md
     "
   >
-    <div class="flex flex-col items-center gap-3 px-4 text-center text-[var(--ui-text-muted)]">
+    <div class="
+      flex flex-col items-center gap-3 px-4 text-center
+      text-[var(--ui-text-muted)]
+    "
+    >
       <NIcon name="i-lucide-file-question"
         class="h-10 w-10 opacity-50"
       />

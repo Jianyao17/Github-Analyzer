@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useCodeViewer } from '@/composables/useCodeViewer';
 import CodeViewerSettings from './CodeViewerSettings.vue';
 import CodeViewerSearch from './CodeViewerSearch.vue';
@@ -30,12 +30,32 @@ const {
   clearHighlightLines,
 } = useCodeViewer(props.projectId);
 
+function handleGlobalKeyDown(e: KeyboardEvent) 
+{
+  // Prevent browser search and open code viewer search instead
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') 
+  {
+    e.preventDefault();
+    e.stopPropagation();
+    if (tabs.value.length > 0) 
+    {
+      isSearchOpen.value = true;
+    }
+  }
+}
+
 onMounted(() => 
 {
   if (editorContainer.value) 
   {
     initEditor(editorContainer.value);
   }
+  window.addEventListener('keydown', handleGlobalKeyDown, { capture: true });
+});
+
+onUnmounted(() => 
+{
+  window.removeEventListener('keydown', handleGlobalKeyDown, { capture: true });
 });
 
 defineExpose({

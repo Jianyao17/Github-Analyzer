@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { D3Node } from '@graph.types';
 import type { CodeGraph } from '@/types/analysis/code-graph';
-import { NODE_TYPE_KEYS, defaultGraphConfig } from '@graph/config';
+import { NODE_TYPE_KEYS, EDGE_TYPE_KEYS, defaultGraphConfig } from '@graph/config';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import * as d3 from 'd3';
 
@@ -198,6 +198,12 @@ function getNodeColor(n?: D3Node)
   return style.color;
 }
 
+function getEdgeConfig(type: number) 
+{
+  const key = EDGE_TYPE_KEYS[type] ?? 'default';
+  return (defaultGraphConfig.edgeTypes as any)[key] ?? defaultGraphConfig.edgeTypes.default;
+}
+
 const shortPath = computed(() => 
 {
   const path = props.node?.pathId || '';
@@ -232,15 +238,19 @@ const incomingNodes = computed(() =>
     ...props.data.useRelEdges.filter(e => e.to === props.node!.id)
   ];
 
-  const uniqueNodeIds = Array.from(new Set(edges.map(e => e.from)));
+  const map = new Map<string, number>();
+  edges.forEach(e => 
+  {
+    if (!map.has(e.from)) map.set(e.from, e.type);
+  });
 
-  return uniqueNodeIds
-    .map(fromId => 
+  return Array.from(map.entries())
+    .map(([fromId, edgeType]) => 
     {
       const n = props.data!.nodes.find(node => (node as any).id === fromId || node.pathId === fromId);
-      return n ? { ...n, id: n.pathId } as D3Node : null;
+      return n ? { node: { ...n, id: n.pathId } as D3Node, edgeType } : null;
     })
-    .filter(Boolean) as D3Node[];
+    .filter(Boolean) as { node: D3Node; edgeType: number }[];
 });
 
 const outgoingNodes = computed(() => 
@@ -251,15 +261,19 @@ const outgoingNodes = computed(() =>
     ...props.data.useRelEdges.filter(e => e.from === props.node!.id)
   ];
 
-  const uniqueNodeIds = Array.from(new Set(edges.map(e => e.to)));
+  const map = new Map<string, number>();
+  edges.forEach(e => 
+  {
+    if (!map.has(e.to)) map.set(e.to, e.type);
+  });
 
-  return uniqueNodeIds
-    .map(toId => 
+  return Array.from(map.entries())
+    .map(([toId, edgeType]) => 
     {
       const n = props.data!.nodes.find(node => (node as any).id === toId || node.pathId === toId);
-      return n ? { ...n, id: n.pathId } as D3Node : null;
+      return n ? { node: { ...n, id: n.pathId } as D3Node, edgeType } : null;
     })
-    .filter(Boolean) as D3Node[];
+    .filter(Boolean) as { node: D3Node; edgeType: number }[];
 });
 
 const isRelationsExpanded = ref(false);
@@ -268,8 +282,8 @@ const isRelationsCopied = ref(false);
 async function handleCopyRelations() 
 {
   if (!props.node) return;
-  const inText = incomingNodes.value.map(n => `- ${n.pathId}`).join('\n');
-  const outText = outgoingNodes.value.map(n => `- ${n.pathId}`).join('\n');
+  const inText = incomingNodes.value.map(item => `- ${item.node.pathId}`).join('\n');
+  const outText = outgoingNodes.value.map(item => `- ${item.node.pathId}`).join('\n');
   const text = `Node: ${props.node.pathId}\n\nIncoming (${incomingCount.value}):\n${inText || 'None'}\n\nOutgoing (${outgoingCount.value}):\n${outText || 'None'}`;
   
   await navigator.clipboard.writeText(text);
@@ -571,21 +585,53 @@ onUnmounted(() =>
               overflow-y-auto pr-1
             "
             >
-              <button v-for="n in incomingNodes"
-                :key="n.pathId"
+              <button v-for="item in incomingNodes"
+                :key="item.node.pathId"
                 class="
                   flex items-center gap-1.5 rounded px-1.5 py-1 text-left
                   text-xs text-[var(--ui-text)] transition-colors
                   hover:bg-[var(--ui-bg-elevated)]
                 "
-                :title="n.pathId"
-                @click.stop="$emit('focus-node', n)"
+                :title="item.node.pathId"
+                @click.stop="$emit('focus-node', item.node)"
               >
-                <NIcon :name="getNodeIcon(n)"
+                <!-- Relation indicator -->
+                <svg width="16"
+                  height="8"
+                  class="shrink-0 overflow-visible opacity-80"
+                >
+                  <defs>
+                    <marker :id="`ctx-arrow-in-${item.edgeType}`"
+                      viewBox="0 -3 6 6"
+                      refX="5"
+                      refY="0"
+                      markerWidth="5"
+                      markerHeight="5"
+                      orient="auto"
+                    >
+                      <path d="M0,-3L6,0L0,3"
+                        :fill="getEdgeConfig(item.edgeType).color"
+                      />
+                    </marker>
+                  </defs>
+                  <line x1="14"
+                    y1="4"
+                    x2="2"
+                    y2="4" 
+                    :marker-end="`url(#ctx-arrow-in-${item.edgeType})`" 
+                    :stroke="getEdgeConfig(item.edgeType).color" 
+                    :stroke-width="Math.max(1, getEdgeConfig(item.edgeType).strokeWidth - 0.5)" 
+                    :stroke-dasharray="getEdgeConfig(item.edgeType).dashArray !== 'none' 
+                      ? getEdgeConfig(item.edgeType).dashArray 
+                      : undefined" 
+                  />
+                </svg>
+
+                <NIcon :name="getNodeIcon(item.node)"
                   class="h-3.5 w-3.5 shrink-0"
-                  :style="{ color: getNodeColor(n) }"
+                  :style="{ color: getNodeColor(item.node) }"
                 />
-                <span class="truncate">{{ n.label }}</span>
+                <span class="truncate">{{ item.node.label }}</span>
               </button>
             </div>
           </div>
@@ -603,21 +649,51 @@ onUnmounted(() =>
               overflow-y-auto pr-1
             "
             >
-              <button v-for="n in outgoingNodes"
-                :key="n.pathId"
+              <button v-for="item in outgoingNodes"
+                :key="item.node.pathId"
                 class="
                   flex items-center gap-1.5 rounded px-1.5 py-1 text-left
                   text-xs text-[var(--ui-text)] transition-colors
                   hover:bg-[var(--ui-bg-elevated)]
                 "
-                :title="n.pathId"
-                @click.stop="$emit('focus-node', n)"
+                :title="item.node.pathId"
+                @click.stop="$emit('focus-node', item.node)"
               >
-                <NIcon :name="getNodeIcon(n)"
+                <!-- Relation indicator -->
+                <svg width="16"
+                  height="8"
+                  class="shrink-0 overflow-visible opacity-80"
+                >
+                  <defs>
+                    <marker :id="`ctx-arrow-out-${item.edgeType}`"
+                      viewBox="0 -3 6 6"
+                      refX="5"
+                      refY="0"
+                      markerWidth="5"
+                      markerHeight="5"
+                      orient="auto"
+                    >
+                      <path d="M0,-3L6,0L0,3"
+                        :fill="getEdgeConfig(item.edgeType).color"
+                      />
+                    </marker>
+                  </defs>
+                  <line x1="0"
+                    y1="4"
+                    x2="13"
+                    y2="4" 
+                    :stroke="getEdgeConfig(item.edgeType).color" 
+                    :stroke-width="Math.max(1, getEdgeConfig(item.edgeType).strokeWidth - 0.5)" 
+                    :stroke-dasharray="getEdgeConfig(item.edgeType).dashArray !== 'none' ? getEdgeConfig(item.edgeType).dashArray : undefined" 
+                    :marker-end="`url(#ctx-arrow-out-${item.edgeType})`" 
+                  />
+                </svg>
+
+                <NIcon :name="getNodeIcon(item.node)"
                   class="h-3.5 w-3.5 shrink-0"
-                  :style="{ color: getNodeColor(n) }"
+                  :style="{ color: getNodeColor(item.node) }"
                 />
-                <span class="truncate">{{ n.label }}</span>
+                <span class="truncate">{{ item.node.label }}</span>
               </button>
             </div>
           </div>
@@ -637,7 +713,7 @@ onUnmounted(() =>
                 text-[var(--ui-primary)] transition-colors
                 hover:bg-[var(--ui-primary)]/20
               "
-              @click.stop="$emit('highlight-relations', node!, [...incomingNodes.map(n => n.id), ...outgoingNodes.map(n => n.id)])"
+              @click.stop="$emit('highlight-relations', node!, [...incomingNodes.map(item => item.node.id), ...outgoingNodes.map(item => item.node.id)])"
             >
               <NIcon name="i-lucide-network"
                 class="h-3.5 w-3.5"

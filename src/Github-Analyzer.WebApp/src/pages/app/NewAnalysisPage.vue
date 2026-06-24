@@ -13,6 +13,7 @@ const {
   branches,
   commits,
   isFetchingBranches,
+  isFetchingCommits,
   fetchError,
   hasBranches,
   hasCommits,
@@ -48,8 +49,12 @@ function resetSelections(): void
 
 function applyDefaultBranch(): void
 {
-  const firstBranch = branches.value[0]?.name;
-  if (firstBranch) branch.value = firstBranch;
+  if (!branches.value.length) return;
+  const defaultBranch = branches.value.find(b => b.name === 'main') ||
+                        branches.value.find(b => b.name === 'master') ||
+                        branches.value[0];
+  
+  if (defaultBranch) branch.value = defaultBranch.name;
 }
 
 // ─── Derived Options ──────────────────────────────────────────────────────
@@ -99,9 +104,10 @@ async function onSubmit()
 
   try 
   {
+    const fallbackBranch = branches.value.find(b => b.name === 'master') ? 'master' : 'main';
     const project = await createProjectAsync({
       repoUrl: repoUrl.value,
-      branch: branch.value || 'main',
+      branch: branch.value || fallbackBranch,
       commitHash: commitHash.value || undefined,
     });
 
@@ -293,7 +299,7 @@ onMounted(() =>
             </div>
             <select
               v-model="branch"
-              :disabled="creating || !hasBranches"
+              :disabled="creating || !hasBranches || isFetchingBranches"
               class="
                 w-full cursor-pointer appearance-none rounded-xl border
                 border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] py-2.5 pr-8
@@ -317,7 +323,12 @@ onMounted(() =>
               pr-3 text-[var(--ui-text-muted)]
             "
             >
-              <NIcon name="i-lucide-chevron-down"
+              <NIcon v-if="isFetchingBranches"
+                name="i-lucide-loader-2"
+                class="h-4 w-4 animate-spin text-[var(--ui-primary)]"
+              />
+              <NIcon v-else
+                name="i-lucide-chevron-down"
                 class="h-4 w-4"
               />
             </div>
@@ -343,7 +354,7 @@ onMounted(() =>
             </div>
             <select
               v-model="commitHash"
-              :disabled="creating || !hasCommits"
+              :disabled="creating || !hasCommits || isFetchingCommits"
               class="
                 w-full cursor-pointer appearance-none rounded-xl border
                 border-[var(--ui-border)] bg-[var(--ui-bg-elevated)] py-2.5 pr-8
@@ -364,7 +375,12 @@ onMounted(() =>
               pr-3 text-[var(--ui-text-muted)]
             "
             >
-              <NIcon name="i-lucide-chevron-down"
+              <NIcon v-if="isFetchingCommits"
+                name="i-lucide-loader-2"
+                class="h-4 w-4 animate-spin text-[var(--ui-primary)]"
+              />
+              <NIcon v-else
+                name="i-lucide-chevron-down"
                 class="h-4 w-4"
               />
             </div>
@@ -430,6 +446,24 @@ onMounted(() =>
             class="h-4 w-4"
           />
         </button>
+      </div>
+
+      <!-- Limitations Notice -->
+      <div class="
+        mt-1 flex items-start gap-2.5 rounded-xl border
+        border-[var(--ui-border)] bg-[var(--ui-bg-elevated)]/50 p-3.5 text-xs
+        text-[var(--ui-text-muted)]
+      "
+      >
+        <NIcon name="i-lucide-info"
+          class="mt-0.5 h-4 w-4 shrink-0 text-[var(--ui-primary)]"
+        />
+        <div class="flex-1 leading-relaxed">
+          <span class="font-semibold text-[var(--ui-text)]">Batasan Analisa:</span> Saat ini sistem hanya dapat menganalisa 1 bahasa utama per repositori dan baru mendukung <span class="
+            font-medium text-[var(--ui-text)]
+          "
+          >C#, C++, PHP, serta JavaScript/TypeScript</span>.
+        </div>
       </div>
     </form>
 

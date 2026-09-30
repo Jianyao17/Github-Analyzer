@@ -67,8 +67,6 @@ builder.AddAnalysisConfig();
 builder.AddMailService();
 
 // Services for analysis
-builder.Services.AddSingleton<ILanguageRegistry>(LanguageRegistry.Default);
-builder.Services.AddSingleton<ILanguageDetector, LanguageDetector>();
 builder.Services.AddScoped<ICodebaseReader, CodebaseReader>();
 builder.Services.AddScoped<ICodeAnalyzer, TreeSitterAnalyzer>();
 builder.Services.AddScoped<IFileStatisticsService, FileStatisticsService>();
@@ -77,6 +75,8 @@ builder.Services.AddScoped<IProjectCacheService, ProjectCacheService>();
 // Queue progress notifier for real-time updates to clients
 builder.Services.AddSingleton<IQueueProgressNotifier, QueueProgressNotifier>();
 builder.Services.AddSingleton<IAnalysisCacheService, DBAnalysisCacheService>();
+builder.Services.AddSingleton<ILanguageRegistry>(LanguageRegistry.Default);
+builder.Services.AddSingleton<ILanguageDetector, LanguageDetector>();
 
 // Workers for background processing
 builder.Services.AddHostedService<CodeGraphAnalysisWorker>();

@@ -1,6 +1,8 @@
 using System.Text.Json;
-using GithubAnalyzer.Analysis.Interface;
+using GithubAnalyzer.Analysis.Interfaces;
+using GithubAnalyzer.Analysis.Languages;
 using GithubAnalyzer.Analysis.Domain.Graph;
+using GithubAnalyzer.Analysis.Domain.Languages;
 using GithubAnalyzer.Analysis.Domain.TreeSitter;
 using GithubAnalyzer.Analysis.Domain.Reader;
 using GithubAnalyzer.WebApi.Database;
@@ -66,6 +68,8 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
         var reader          = scope.ServiceProvider.GetRequiredService<ICodebaseReader>();
         var repoFetcher     = scope.ServiceProvider.GetRequiredService<IRepositoryFetcher>();
         var downloadGate    = scope.ServiceProvider.GetRequiredService<RepoDownloadGate>();
+        var languageDetector = scope.ServiceProvider.GetRequiredService<ILanguageDetector>();
+        var languageRegistry = scope.ServiceProvider.GetRequiredService<ILanguageRegistry>();
 
         var localPath = job.Project.LocalPath;
         if (!Directory.Exists(localPath)) 
@@ -87,15 +91,21 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
                 throw new DirectoryNotFoundException($"Repository path not found after re-download: {localPath}");
         }
 
-        // 1. Tentukan bahasa secara otomatis
+        // 1. Tentukan bahasa secara otomatis via LanguageDetector
         var excluded = analysisConfig.ExcludedFolders ?? Array.Empty<string>();
-        var language = DetermineLanguage(localPath, excluded);
-        _logger.LogInformation("Auto-detected language {Language} for project {ProjectId}", language, job.ProjectId);
+        var detection = languageDetector.Detect(localPath, new LanguageDetectionOptions
+        {
+            ExcludedFolders = excluded
+        });
+        var language = detection.PrimaryLanguage ?? AnalysisLanguage.CSharp;
+        _logger.LogInformation(
+            "Auto-detected language {Language} (matched {MatchedFiles} files) for project {ProjectId}", 
+            language, detection.TotalMatchedFiles, job.ProjectId);
 
         // 2. Baca Codebase Snapshot
         var options = new CodebaseReadOptions
         {
-            AllowedExtensions = GetExtensionsForLanguage(language),
+            AllowedExtensions = language.GetSupportedExtensions(languageRegistry),
             ExcludedFolders = excluded
         };
 
@@ -177,75 +187,7 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
             "CodeGraphAnalysis saved (+ cached) for project {ProjectId}", job.ProjectId);
     }
 
-    private static AnalysisLanguage DetermineLanguage(
-        string localPath, string[] excludedFolders)
-    {
-        var extCount = new Dictionary<AnalysisLanguage, int>
-        {
-            { AnalysisLanguage.CSharp, 0 },
-            { AnalysisLanguage.JavaScript, 0 },
-            { AnalysisLanguage.Php, 0 },
-            { AnalysisLanguage.Cpp, 0 }
-        };
 
-        var dirsToProcess = new Stack<string>();
-        var excludedSet = new HashSet<string>(excludedFolders, StringComparer.OrdinalIgnoreCase);
-        dirsToProcess.Push(localPath);
-
-        while (dirsToProcess.Count > 0)
-        {
-            var currentDir = dirsToProcess.Pop();
-
-            try
-            {
-                foreach (var file in Directory.EnumerateFiles(currentDir))
-                {
-                    var ext = Path.GetExtension(file).ToLowerInvariant();
-                    switch (ext)
-                    {
-                        case ".cs": extCount[AnalysisLanguage.CSharp]++; break;
-                        case ".js":
-                        case ".ts": extCount[AnalysisLanguage.JavaScript]++; break;
-                        case ".php": extCount[AnalysisLanguage.Php]++; break;
-                        case ".cpp":
-                        case ".cxx":
-                        case ".cc":
-                        case ".h":
-                        case ".hpp": extCount[AnalysisLanguage.Cpp]++; break;
-                    }
-                }
-
-                foreach (var subDir in Directory.EnumerateDirectories(currentDir))
-                {
-                    var dirName = Path.GetFileName(subDir);
-                    if (!excludedSet.Contains(dirName) && !dirName.StartsWith("."))
-                    {
-                        dirsToProcess.Push(subDir);
-                    }
-                }
-            }
-            catch (UnauthorizedAccessException) { }
-        }
-
-        // Pilih bahasa dengan jumlah file terbanyak
-        var majorityLanguage = extCount.OrderByDescending(x => x.Value).First();
-        
-        // Default fallback ke CSharp jika kosong
-        return majorityLanguage.Value > 0 ? majorityLanguage.Key : AnalysisLanguage.CSharp;
-    }
-
-    private static IReadOnlyCollection<string> 
-        GetExtensionsForLanguage(AnalysisLanguage language)
-    {
-        return language switch
-        {
-            AnalysisLanguage.CSharp     => new[] { ".cs" },
-            AnalysisLanguage.JavaScript => new[] { ".js", ".ts" },
-            AnalysisLanguage.Php        => new[] { ".php" },
-            AnalysisLanguage.Cpp        => new[] { ".cpp", ".cxx", ".cc", ".h", ".hpp" },
-            _                           => Array.Empty<string>()
-        };
-    }
 
     private static QueueProgressEvent ToEvent(
         TreeSitterProgress<CodeGraph> progress, 

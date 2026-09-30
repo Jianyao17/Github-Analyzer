@@ -1,5 +1,6 @@
 using GithubAnalyzer.Analysis.Reader;
-using GithubAnalyzer.Analysis.Interface;
+using GithubAnalyzer.Analysis.Interfaces;
+using GithubAnalyzer.Analysis.Languages;
 using GithubAnalyzer.Analysis.TreeSitter;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Extensions;
@@ -66,6 +67,8 @@ builder.AddAnalysisConfig();
 builder.AddMailService();
 
 // Services for analysis
+builder.Services.AddSingleton<ILanguageRegistry>(LanguageRegistry.Default);
+builder.Services.AddSingleton<ILanguageDetector, LanguageDetector>();
 builder.Services.AddScoped<ICodebaseReader, CodebaseReader>();
 builder.Services.AddScoped<ICodeAnalyzer, TreeSitterAnalyzer>();
 builder.Services.AddScoped<IFileStatisticsService, FileStatisticsService>();

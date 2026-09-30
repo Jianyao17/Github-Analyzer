@@ -1,6 +1,6 @@
 {
   "CodeGraph": {
-    "CurrentVersion": "20260621_151050-79f8423",
+    "CurrentVersion": "20260930_170417-2588dc8",
     "WatchPaths": [
       "src/Github-Analyzer.Analysis/Domain",
       "src/Github-Analyzer.Analysis/Interface",
@@ -11,6 +11,23 @@
       "src/Github-Analyzer.WebApi/Entities/Cache/CodeGraphCache.cs"
     ],
     "History": [
+      {
+        "Version": "20260930_170417-2588dc8",
+        "Timestamp": "2026-09-30T17:04:17.754Z",
+        "ChangedFiles": [
+          "src/Github-Analyzer.Analysis/Domain/Languages/LanguageDefinition.cs",
+          "src/Github-Analyzer.Analysis/Domain/Languages/LanguageDetectionOptions.cs",
+          "src/Github-Analyzer.Analysis/Domain/Languages/LanguageDetectionResult.cs",
+          "src/Github-Analyzer.Analysis/Interfaces/ICodeAnalyzer.cs",
+          "src/Github-Analyzer.Analysis/Interfaces/ICodebaseReader.cs",
+          "src/Github-Analyzer.Analysis/Interfaces/ILanguageDetector.cs",
+          "src/Github-Analyzer.Analysis/Interfaces/ILanguageRegistry.cs",
+          "src/Github-Analyzer.Analysis/Reader/CodebaseReader.cs",
+          "src/Github-Analyzer.Analysis/TreeSitter/TreeSitterAnalyzer.cs",
+          "src/Github-Analyzer.Analysis/TreeSitter/Utils/ParserPool.cs",
+          "src/Github-Analyzer.WebApi/Workers/CodeGraphAnalysisWorker.cs"
+        ]
+      },
       {
         "Version": "20260621_151050-79f8423",
         "Timestamp": "2026-06-21T15:10:50.089Z",

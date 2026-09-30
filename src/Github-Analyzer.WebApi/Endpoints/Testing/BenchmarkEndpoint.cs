@@ -1,8 +1,10 @@
 using System.Diagnostics;
 using GithubAnalyzer.Analysis.Domain.Graph;
+using GithubAnalyzer.Analysis.Domain.Languages;
 using GithubAnalyzer.Analysis.Domain.Reader;
 using GithubAnalyzer.Analysis.Domain.TreeSitter;
-using GithubAnalyzer.Analysis.Interface;
+using GithubAnalyzer.Analysis.Interfaces;
+using GithubAnalyzer.Analysis.Languages;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Models.Analysis;
@@ -56,6 +58,8 @@ public static class BenchmarkEndpoint
             IRepositoryFetcher repositoryFetcher,
             ICodebaseReader reader,
             ICodeAnalyzer analyzer,
+            ILanguageDetector languageDetector,
+            ILanguageRegistry languageRegistry,
             AnalysisConfig analysisConfig,
             CancellationToken ct) =>
         {
@@ -88,10 +92,14 @@ public static class BenchmarkEndpoint
             {
                 CodebaseSnapshot snapshot;
                 var excluded = analysisConfig.ExcludedFolders ?? Array.Empty<string>();
-                var language = DetermineLanguage(repoResult.ExtractPath, excluded);
+                var detection = languageDetector.Detect(repoResult.ExtractPath, new LanguageDetectionOptions
+                {
+                    ExcludedFolders = excluded
+                });
+                var language = detection.PrimaryLanguage ?? AnalysisLanguage.CSharp;
                 var options = new CodebaseReadOptions
                 {
-                    AllowedExtensions = GetExtensionsForLanguage(language),
+                    AllowedExtensions = language.GetSupportedExtensions(languageRegistry),
                     ExcludedFolders = excluded
                 };
 
@@ -275,73 +283,7 @@ public static class BenchmarkEndpoint
         }
     }
 
-    private static AnalysisLanguage DetermineLanguage(
-        string localPath, string[] excludedFolders)
-    {
-        var extCount = new Dictionary<AnalysisLanguage, int>
-        {
-            { AnalysisLanguage.CSharp, 0 },
-            { AnalysisLanguage.JavaScript, 0 },
-            { AnalysisLanguage.Php, 0 },
-            { AnalysisLanguage.Cpp, 0 }
-        };
 
-        var dirsToProcess = new Stack<string>();
-        var excludedSet = new HashSet<string>(excludedFolders, StringComparer.OrdinalIgnoreCase);
-        dirsToProcess.Push(localPath);
-
-        while (dirsToProcess.Count > 0)
-        {
-            var currentDir = dirsToProcess.Pop();
-
-            try
-            {
-                foreach (var file in Directory.EnumerateFiles(currentDir))
-                {
-                    var ext = Path.GetExtension(file).ToLowerInvariant();
-                    switch (ext)
-                    {
-                        case ".cs": extCount[AnalysisLanguage.CSharp]++; break;
-                        case ".js":
-                        case ".ts": extCount[AnalysisLanguage.JavaScript]++; break;
-                        case ".php": extCount[AnalysisLanguage.Php]++; break;
-                        case ".cpp":
-                        case ".cxx":
-                        case ".cc":
-                        case ".h":
-                        case ".hpp": extCount[AnalysisLanguage.Cpp]++; break;
-                    }
-                }
-
-                foreach (var subDir in Directory.EnumerateDirectories(currentDir))
-                {
-                    var dirName = Path.GetFileName(subDir);
-                    if (!excludedSet.Contains(dirName) && !dirName.StartsWith("."))
-                    {
-                        dirsToProcess.Push(subDir);
-                    }
-                }
-            }
-            catch (UnauthorizedAccessException)
-            {
-            }
-        }
-
-        var majorityLanguage = extCount.OrderByDescending(x => x.Value).First();
-        return majorityLanguage.Value > 0 ? majorityLanguage.Key : AnalysisLanguage.CSharp;
-    }
-
-    private static IReadOnlyCollection<string> GetExtensionsForLanguage(AnalysisLanguage language)
-    {
-        return language switch
-        {
-            AnalysisLanguage.CSharp => new[] { ".cs" },
-            AnalysisLanguage.JavaScript => new[] { ".js", ".ts" },
-            AnalysisLanguage.Php => new[] { ".php" },
-            AnalysisLanguage.Cpp => new[] { ".cpp", ".cxx", ".cc", ".h", ".hpp" },
-            _ => Array.Empty<string>()
-        };
-    }
 
     private readonly record struct RuntimeSnapshot(
         long ManagedBytes,

@@ -2,10 +2,10 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0.203 AS build
 WORKDIR /src
 
 COPY ["global.json", "./"]
+COPY ["nuget.config", "./"]
 COPY ["Github-Analyzer.slnx", "./"]
 COPY ["src/Github-Analyzer.WebApi/Github-Analyzer.WebApi.csproj", "src/Github-Analyzer.WebApi/"]
 COPY ["src/Github-Analyzer.ServiceDefaults/Github-Analyzer.ServiceDefaults.csproj", "src/Github-Analyzer.ServiceDefaults/"]
-COPY ["src/Github-Analyzer.Analysis/Github-Analyzer.Analysis.csproj", "src/Github-Analyzer.Analysis/"]
 
 RUN dotnet restore "src/Github-Analyzer.WebApi/Github-Analyzer.WebApi.csproj"
 

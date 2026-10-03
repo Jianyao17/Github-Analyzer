@@ -1,10 +1,10 @@
 using System.Diagnostics;
-using GithubAnalyzer.Analysis.Domain.Graph;
-using GithubAnalyzer.Analysis.Domain.Languages;
-using GithubAnalyzer.Analysis.Domain.Reader;
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
-using GithubAnalyzer.Analysis.Interfaces;
-using GithubAnalyzer.Analysis.Languages;
+using TreeSitter.CodeGraph.Domain.Graph;
+using TreeSitter.CodeGraph.Domain.Languages;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
+using TreeSitter.CodeGraph.Domain.Reader;
+using TreeSitter.CodeGraph.Interfaces;
+using TreeSitter.CodeGraph.Languages;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Models.Analysis;

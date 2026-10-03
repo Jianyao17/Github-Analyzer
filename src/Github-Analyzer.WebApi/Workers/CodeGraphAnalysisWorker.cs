@@ -1,10 +1,10 @@
 using System.Text.Json;
-using GithubAnalyzer.Analysis.Interfaces;
-using GithubAnalyzer.Analysis.Languages;
-using GithubAnalyzer.Analysis.Domain.Graph;
-using GithubAnalyzer.Analysis.Domain.Languages;
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
-using GithubAnalyzer.Analysis.Domain.Reader;
+using TreeSitter.CodeGraph.Domain.Graph;
+using TreeSitter.CodeGraph.Domain.Languages;
+using TreeSitter.CodeGraph.Domain.Reader;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
+using TreeSitter.CodeGraph.Interfaces;
+using TreeSitter.CodeGraph.Languages;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Entities;
@@ -14,7 +14,6 @@ using GithubAnalyzer.WebApi.Entities.Repo;
 using GithubAnalyzer.WebApi.Services.Repo;
 using GithubAnalyzer.WebApi.Models;
 using GithubAnalyzer.WebApi.Config;
-using Microsoft.EntityFrameworkCore;
 
 namespace GithubAnalyzer.WebApi.Workers;
 
@@ -25,7 +24,7 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
     public CodeGraphAnalysisWorker(
         IServiceScopeFactory scopeFactory,
         IQueueProgressNotifier progressNotifier,
-        ILogger<CodeGraphAnalysisWorker> logger) 
+        ILogger<CodeGraphAnalysisWorker> logger)
         : base(scopeFactory, progressNotifier, logger)
     {
     }
@@ -35,7 +34,7 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
         using var scope     = _scopeFactory.CreateScope();
         var dbContext       = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        if (job.Project == null) 
+        if (job.Project == null)
         {
             // Check if project is null
             throw new InvalidOperationException("Project data is missing from the queue job.");
@@ -53,7 +52,7 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
         // Cache check — copy at DB level if a previous analysis exists
         // ─────────────────────────────────────────────────────────────────────
         var cacheHit = await cacheService.TryCopyCacheToProjectAsync(
-            AnalysisType.CodeGraph, job.ProjectId, job.Project.UserId, 
+            AnalysisType.CodeGraph, job.ProjectId, job.Project.UserId,
             repoUrl, branch, commitHash, version, cancellationToken);
 
         if (cacheHit)
@@ -72,7 +71,7 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
         var languageRegistry = scope.ServiceProvider.GetRequiredService<ILanguageRegistry>();
 
         var localPath = job.Project.LocalPath;
-        if (!Directory.Exists(localPath)) 
+        if (!Directory.Exists(localPath))
         {
             // Re-download repository if local file is missing
             // EnsureRepoAsync will coordinate concurrent download attempts for the same project
@@ -99,7 +98,7 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
         });
         var language = detection.PrimaryLanguage ?? AnalysisLanguage.CSharp;
         _logger.LogInformation(
-            "Auto-detected language {Language} (matched {MatchedFiles} files) for project {ProjectId}", 
+            "Auto-detected language {Language} (matched {MatchedFiles} files) for project {ProjectId}",
             language, detection.TotalMatchedFiles, job.ProjectId);
 
         // 2. Baca Codebase Snapshot
@@ -111,7 +110,7 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
 
         var snapshot = await reader.ReadAsync(localPath, options, cancellationToken);
         snapshot.RepositoryName = job.Project.RepositoryName;
-        
+
         if (snapshot.Files.Count == 0)
         {
             // Check if snapshot files count is zero
@@ -120,13 +119,13 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
 
         // 3. Eksekusi analisis secara inkremental dan stream ke Event Bus
         CodeGraph? finalGraph = null;
-        
+
         await foreach (var progress in analyzer.AnalyzeAsync(snapshot, language, cancellationToken))
         {
             var progressEvent = ToEvent(progress, job.ProjectId, job.Id, JobType);
             await _progressNotifier.NotifyAsync(progressEvent);
 
-            if (progress.Percentage == 100 && 
+            if (progress.Percentage == 100 &&
                 progress.Result != null)
             {
                 // Get final graph result
@@ -143,7 +142,7 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
         // 4. Serialize ke JsonDocument untuk JSONB storage
         var graphDocument = JsonSerializer.SerializeToDocument(finalGraph);
         var nodeCount = finalGraph.Nodes?.Count ?? 0;
-        var edgeCount = finalGraph.SourceRelEdges?.Count + 
+        var edgeCount = finalGraph.SourceRelEdges?.Count +
                         finalGraph.UseRelEdges?.Count ?? 0;
         var generatedAt = DateTime.UtcNow;
 
@@ -160,7 +159,7 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
             GraphJson = graphDocument,
             NodeCount = nodeCount,
             EdgeCount = edgeCount,
-            
+
             AnalysisVersion = version
         };
 
@@ -182,7 +181,7 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
         };
 
         await cacheService.SetCacheAsync(cache, cancellationToken);
-        
+
         _logger.LogInformation(
             "CodeGraphAnalysis saved (+ cached) for project {ProjectId}", job.ProjectId);
     }
@@ -190,7 +189,7 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
 
 
     private static QueueProgressEvent ToEvent(
-        TreeSitterProgress<CodeGraph> progress, 
+        TreeSitterProgress<CodeGraph> progress,
         Guid projectId, Guid queueId, string jobType)
     {
         return new QueueProgressEvent(

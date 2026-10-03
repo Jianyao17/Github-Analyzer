@@ -6,7 +6,6 @@ on:
     branches: [main, master, develop, "feature/**"]
     paths:
       - "src/Github-Analyzer.WebApi/**"
-      - "src/Github-Analyzer.Analysis/**"
       - "test/Github-Analyzer.WebApi.Tests/**"
       - "global.json"
       - "*.slnx"
@@ -15,7 +14,6 @@ on:
     branches: [main, master, develop, "feature/**"]
     paths:
       - "src/Github-Analyzer.WebApi/**"
-      - "src/Github-Analyzer.Analysis/**"
       - "test/Github-Analyzer.WebApi.Tests/**"
       - "global.json"
       - "*.slnx"

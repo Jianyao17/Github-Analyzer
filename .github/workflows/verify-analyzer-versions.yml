@@ -4,7 +4,6 @@ on:
   push:
     branches: [main, master, develop, 'feature/**']
     paths:
-      - 'src/Github-Analyzer.Analysis/**'
       - 'src/Github-Analyzer.WebApi/**'
 
 jobs:

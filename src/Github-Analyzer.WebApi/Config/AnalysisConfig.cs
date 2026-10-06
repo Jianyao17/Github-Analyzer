@@ -5,7 +5,7 @@ public class AnalysisConfig
     public string BaseTempPath { get; set; } = Path.GetTempPath();
     public string SubDirectory { get; set; } = "Github-Analyzer";
     
-    // Versions for cache invalidation, populated by pre-commit hook
+    // Versions for cache invalidation, populated via appsettings or environment variables
     public string CodeGraphVersion { get; set; } = "dev";
     public string StatisticVersion { get; set; } = "dev";
 

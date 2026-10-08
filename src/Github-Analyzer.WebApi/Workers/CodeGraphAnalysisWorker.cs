@@ -5,13 +5,13 @@ using TreeSitter.CodeGraph.Domain.Reader;
 using TreeSitter.CodeGraph.Domain.TreeSitter;
 using TreeSitter.CodeGraph.Interfaces;
 using TreeSitter.CodeGraph.Languages;
+using GithubAnalyzer.Shared.Git;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Entities;
 using GithubAnalyzer.WebApi.Entities.Analysis;
 using GithubAnalyzer.WebApi.Entities.Cache;
 using GithubAnalyzer.WebApi.Entities.Repo;
-using GithubAnalyzer.WebApi.Services.Repo;
 using GithubAnalyzer.WebApi.Models;
 using GithubAnalyzer.WebApi.Config;
 
@@ -65,26 +65,17 @@ public class CodeGraphAnalysisWorker : BaseQueueWorker
         // ─────────────────────────────────────────────────────────────────────
         var analyzer        = scope.ServiceProvider.GetRequiredService<ICodeAnalyzer>();
         var reader          = scope.ServiceProvider.GetRequiredService<ICodebaseReader>();
-        var repoFetcher     = scope.ServiceProvider.GetRequiredService<IRepositoryFetcher>();
-        var downloadGate    = scope.ServiceProvider.GetRequiredService<RepoDownloadGate>();
+        var gitService      = scope.ServiceProvider.GetRequiredService<IGitService>();
         var languageDetector = scope.ServiceProvider.GetRequiredService<ILanguageDetector>();
         var languageRegistry = scope.ServiceProvider.GetRequiredService<ILanguageRegistry>();
 
         var localPath = job.Project.LocalPath;
         if (!Directory.Exists(localPath))
         {
-            // Re-download repository if local file is missing
-            // EnsureRepoAsync will coordinate concurrent download attempts for the same project
-            localPath = await downloadGate.EnsureRepoAsync(
-                job.ProjectId,
-                async token =>
-                {
-                    var repoResult = await repoFetcher.DownloadAndExtractAsync(
-                        job.Project.RepositoryUrl, job.Project.BranchName ?? "main",
-                        job.Project.LastCommitHash, token);
-                    return repoResult.ExtractPath;
-                },
-                cancellationToken);
+            var repoResult = await gitService.DownloadAndExtractAsync(
+                job.Project.RepositoryUrl, job.Project.BranchName ?? "main",
+                job.Project.LastCommitHash, cancellationToken);
+            localPath = repoResult.ExtractPath;
 
             if (!Directory.Exists(localPath))
                 throw new DirectoryNotFoundException($"Repository path not found after re-download: {localPath}");

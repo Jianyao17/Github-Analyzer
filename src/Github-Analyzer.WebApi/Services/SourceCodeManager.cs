@@ -1,38 +1,42 @@
 using Microsoft.Extensions.Caching.Distributed;
 using GithubAnalyzer.WebApi.Entities.Repo;
 using GithubAnalyzer.WebApi.Interfaces;
+using GithubAnalyzer.Shared.Git;
 
-namespace GithubAnalyzer.WebApi.Services.Repo;
+namespace GithubAnalyzer.WebApi.Services;
 
+/// <summary>
+/// Mengelola pengambilan konten source code dengan membungkus IGitService dan caching Redis (IDistributedCache).
+/// </summary>
 public class SourceCodeManager : ISourceCodeManager
 {
     private static readonly TimeSpan CacheSlidingExpiration = TimeSpan.FromHours(2);
     private static readonly TimeSpan CacheAbsoluteExpiration = TimeSpan.FromHours(24);
 
+    private readonly IGitService _gitService;
     private readonly IDistributedCache _cache;
-    private readonly IEnumerable<ISourceCodeProvider> _providers;
     private readonly ILogger<SourceCodeManager> _logger;
 
     public SourceCodeManager(
-        IEnumerable<ISourceCodeProvider> providers,
-        IDistributedCache cache, ILogger<SourceCodeManager> logger)
+        IGitService gitService,
+        IDistributedCache cache,
+        ILogger<SourceCodeManager> logger)
     {
-        _providers = providers;
+        _gitService = gitService;
         _cache = cache;
         _logger = logger;
     }
 
     public async Task<string?> GetFileContentAsync(
-      Project project, string relativePath, CancellationToken ct = default)
+        Project project, string relativePath, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(project.RepositoryUrl) ||
             string.IsNullOrWhiteSpace(project.LastCommitHash))
         {
-            // Repository URL or commit hash is missing, cannot fetch content
             return null;
         }
 
-        // Normalize repository URL for consistent cache keys (remove trailing slash, lowercase)
+        // Normalize repository URL for consistent cache keys
         var cleanRepoUrl = project.RepositoryUrl.TrimEnd('/').ToLowerInvariant();
         var repoKey = Uri.EscapeDataString(cleanRepoUrl);
         var safePath = Uri.EscapeDataString(relativePath);
@@ -45,24 +49,17 @@ public class SourceCodeManager : ISourceCodeManager
             var cachedBytes = await _cache.GetAsync(cacheKey, ct);
             if (cachedBytes != null)
             {
-                // Cache hit, return cached content
                 return System.Text.Encoding.UTF8.GetString(cachedBytes);
             }
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to read from cache for key {CacheKey}", cacheKey);
-            // Continue fetching from provider even if cache fails
         }
 
-        var provider = _providers.FirstOrDefault(p => p.CanHandle(project.RepositoryUrl));
-        if (provider == null)
-        {
-            _logger.LogWarning("No source code provider found that can handle repository URL: {RepoUrl}", project.RepositoryUrl);
-            return null;
-        }
-
-        var content = await provider.GetFileContentAsync(project, relativePath, ct);
+        var content = await _gitService.GetFileContentAsync(
+            project.RepositoryUrl, project.LastCommitHash,
+            relativePath, ct);
 
         if (content != null)
         {

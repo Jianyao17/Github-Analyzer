@@ -4,7 +4,7 @@ using GithubAnalyzer.WebApi.Entities;
 using GithubAnalyzer.WebApi.Entities.Analysis;
 using GithubAnalyzer.WebApi.Entities.Cache;
 using GithubAnalyzer.WebApi.Entities.Repo;
-using GithubAnalyzer.WebApi.Services.Repo;
+using GithubAnalyzer.Shared.Git;
 using GithubAnalyzer.WebApi.Models;
 using GithubAnalyzer.WebApi.Config;
 using Microsoft.EntityFrameworkCore;
@@ -55,25 +55,17 @@ public sealed class StatisticAnalysisWorker : BaseQueueWorker
         // ─────────────────────────────────────────────────────────────────────
         // Cache miss — run full analysis pipeline
         // ─────────────────────────────────────────────────────────────────────
-        var fileSvc         = scope.ServiceProvider.GetRequiredService<IFileStatisticsService>();
-        var repoProvider    = scope.ServiceProvider.GetRequiredService<IRepositoryFetcher>();
-        var downloadGate    = scope.ServiceProvider.GetRequiredService<RepoDownloadGate>();
+        var fileSvc    = scope.ServiceProvider.GetRequiredService<IFileStatisticsService>();
+        var gitService = scope.ServiceProvider.GetRequiredService<IGitService>();
 
         var localPath = job.Project.LocalPath;
         if (!Directory.Exists(localPath))
         {
-            // Re-download repository if local path is missing
-            // EnsureRepoAsync will coordinate concurrent download attempts for the same project
-            localPath = await downloadGate.EnsureRepoAsync(
-                job.ProjectId,
-                async token =>
-                {
-                    var repoResult = await repoProvider.DownloadAndExtractAsync(
-                        job.Project.RepositoryUrl, job.Project.BranchName ?? "main",
-                        job.Project.LastCommitHash, token);
-                    return repoResult.ExtractPath;
-                },
-                cancellationToken);
+            var repoResult = await gitService.DownloadAndExtractAsync(
+                job.Project.RepositoryUrl, job.Project.BranchName ?? "main",
+                job.Project.LastCommitHash, cancellationToken);
+            localPath = repoResult.ExtractPath;
+
             if (!Directory.Exists(localPath))
                 throw new DirectoryNotFoundException($"Repository path not found after re-download: {localPath}");
         }
@@ -101,16 +93,10 @@ public sealed class StatisticAnalysisWorker : BaseQueueWorker
 
         try
         {
-            // All three calls are independent — run concurrently
-            var branchTask      = repoProvider.GetTotalBranchCountAsync(repoUrl, cancellationToken);
-            var commitTask      = repoProvider.GetTotalCommitCountAsync(repoUrl, branch, cancellationToken);
-            var contributorTask = repoProvider.GetTotalContributorCountAsync(repoUrl, cancellationToken);
-
-            await Task.WhenAll(branchTask, commitTask, contributorTask);
-
-            totalBranches     = await branchTask;
-            totalCommits      = await commitTask;
-            totalContributors = await contributorTask;
+            var counts = await gitService.GetCountsAsync(repoUrl, branch, cancellationToken);
+            totalBranches     = counts.Branches;
+            totalCommits      = counts.Commits;
+            totalContributors = counts.Contributors;
 
             _logger.LogInformation(
                 "GitHub stats for project {ProjectId}: branches={Branches}, commits={Commits}, contributors={Contributors}",

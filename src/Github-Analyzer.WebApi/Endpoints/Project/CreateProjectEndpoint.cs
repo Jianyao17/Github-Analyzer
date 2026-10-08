@@ -5,7 +5,7 @@ using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Entities.Repo;
-using GithubAnalyzer.WebApi.Models.Analysis;
+using GithubAnalyzer.Shared.Git;
 using GithubAnalyzer.WebApi.Models;
 using GithubAnalyzer.WebApi.Config;
 
@@ -22,7 +22,7 @@ public static class CreateProjectEndpoint
     {
         return group.MapPost("/new", async (
             CreateProjectRequest request, ClaimsPrincipal claimsPrincipal,
-            AppDbContext dbContext, IRepositoryFetcher repositoryFetcher,
+            AppDbContext dbContext, IGitService gitService,
             CancellationToken ct) =>
         {
             // Get User ID from claims
@@ -37,7 +37,7 @@ public static class CreateProjectEndpoint
             RepositoryResult repoResult;
             try
             {
-                repoResult = await repositoryFetcher.DownloadAndExtractAsync(
+                repoResult = await gitService.DownloadAndExtractAsync(
                     request.RepoUrl, request.Branch, request.CommitHash, ct);
             }
             catch (NotSupportedException ex)

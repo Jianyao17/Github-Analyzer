@@ -7,7 +7,7 @@ using TreeSitter.CodeGraph.Interfaces;
 using TreeSitter.CodeGraph.Languages;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Extensions;
-using GithubAnalyzer.WebApi.Models.Analysis;
+using GithubAnalyzer.Shared.Git;
 using GithubAnalyzer.WebApi.Config;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Testing;
@@ -55,7 +55,7 @@ public static class BenchmarkEndpoint
     public static RouteHandlerBuilder MapBenchmarkEndpoint(this RouteGroupBuilder group)
     {
         return group.MapGet("/benchmark", async (
-            IRepositoryFetcher repositoryFetcher,
+            IGitService gitService,
             ICodebaseReader reader,
             ICodeAnalyzer analyzer,
             ILanguageDetector languageDetector,
@@ -72,7 +72,7 @@ public static class BenchmarkEndpoint
             {
                 var downloadMetrics = await MeasureStageAsync(
                     "download_extract",
-                    async () => await repositoryFetcher.DownloadAndExtractAsync(
+                    async () => await gitService.DownloadAndExtractAsync(
                         RepoUrl, Branch, CommitHash, ct));
 
                 repoResult = downloadMetrics.Result;

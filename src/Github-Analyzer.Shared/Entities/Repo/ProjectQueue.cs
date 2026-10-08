@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-
 using GithubAnalyzer.Shared.Enums;
 using GithubAnalyzer.Shared.Jobs;
 

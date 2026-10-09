@@ -4,8 +4,10 @@
     <Project Path="src/Github-Analyzer.ServiceDefaults/Github-Analyzer.ServiceDefaults.csproj" />
     <Project Path="src/Github-Analyzer.Shared/Github-Analyzer.Shared.csproj" />
     <Project Path="src/Github-Analyzer.WebApi/Github-Analyzer.WebApi.csproj" />
+    <Project Path="src/Github-Analyzer.Worker/Github-Analyzer.Worker.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/Github-Analyzer.WebApi.Tests/Github-Analyzer.WebApi.Tests.csproj" />
+    <Project Path="test/Github-Analyzer.Worker.Tests/Github-Analyzer.Worker.Tests.csproj" />
   </Folder>
 </Solution>

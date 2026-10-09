@@ -10,6 +10,6 @@ namespace GithubAnalyzer.Worker.Models;
 [JsonSerializable(typeof(AnalysisJobMessage))]
 [JsonSerializable(typeof(AnalysisProgressEvent))]
 [JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]
-internal partial class WorkerJsonContext : JsonSerializerContext
+public partial class WorkerJsonContext : JsonSerializerContext
 {
 }

@@ -17,9 +17,6 @@ public class ProjectQueue : BaseEntity
     [Column(TypeName = "jsonb")]
     public AnalysisOptions Options { get; set; } = new();
 
-    [MaxLength(30)]
-    public string? RedisStreamMessageId { get; set; }
-
     [Required]
     public JobQueueStatus Status { get; set; } = JobQueueStatus.Pending;
 

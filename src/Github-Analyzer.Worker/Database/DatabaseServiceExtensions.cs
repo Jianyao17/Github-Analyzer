@@ -1,13 +1,15 @@
 
+using GithubAnalyzer.Worker.Services;
+
 namespace GithubAnalyzer.Worker.Database;
 
 /// <summary>
-/// Extension methods untuk mendaftarkan infrastruktur database Worker ke dependency injection container.
+/// Extension methods untuk mendaftarkan infrastruktur database Worker dan analysis cache service ke DI container.
 /// </summary>
 public static class DatabaseServiceExtensions
 {
     /// <summary>
-    /// Mendaftarkan NpgsqlDataSource, IDbConnectionFactory, serta repository Dapper AOT untuk Worker.
+    /// Mendaftarkan NpgsqlDataSource, IDbConnectionFactory, repository Dapper AOT, serta DB analysis cache service untuk Worker.
     /// </summary>
     public static IHostApplicationBuilder AddWorkerDatabase(
         this IHostApplicationBuilder builder,
@@ -15,8 +17,10 @@ public static class DatabaseServiceExtensions
     {
         builder.AddNpgsqlDataSource(connectionName);
         builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
-        builder.Services.AddScoped<IProjectQueueRepository, ProjectQueueRepository>();
+
         builder.Services.AddScoped<IAnalysisRepository, AnalysisRepository>();
+        builder.Services.AddScoped<IProjectQueueRepository, ProjectQueueRepository>();
+        builder.Services.AddScoped<IDbAnalysisCacheService, DbAnalysisCacheService>();
 
         return builder;
     }

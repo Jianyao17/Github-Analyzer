@@ -2,9 +2,6 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using GithubAnalyzer.Worker.Database;
-
-#nullable disable
-
 namespace GithubAnalyzer.Worker.Tests.Mocks;
 
 /// <summary>
@@ -113,6 +110,7 @@ internal sealed class InMemoryDbCommand(InMemoryDatabase db, DbConnection connec
 {
     private readonly InMemoryDbParameterCollection _parameters = new();
 
+    [AllowNull]
     public override string CommandText { get; set; } = string.Empty;
     public override int CommandTimeout { get; set; } = 30;
     public override CommandType CommandType { get; set; } = CommandType.Text;
@@ -164,7 +162,9 @@ internal sealed class InMemoryDbParameter : DbParameter
     public override DbType DbType { get; set; } = DbType.String;
     public override ParameterDirection Direction { get; set; } = ParameterDirection.Input;
     public override bool IsNullable { get; set; } = true;
+    [AllowNull]
     public override string ParameterName { get; set; } = string.Empty;
+    [AllowNull]
     public override string SourceColumn { get; set; } = string.Empty;
     public override object? Value { get; set; }
     public override bool SourceColumnNullMapping { get; set; }

@@ -1,6 +1,6 @@
 using GithubAnalyzer.Shared.Entities;
 
-namespace GithubAnalyzer.Worker.Services;
+namespace GithubAnalyzer.Worker.Interfaces;
 
 /// <summary>
 /// Kontrak service untuk pengelolaan dan pengecekan DB analysis cache pada Worker.

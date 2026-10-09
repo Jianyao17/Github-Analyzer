@@ -1,6 +1,6 @@
 using GithubAnalyzer.Shared.Entities;
 using GithubAnalyzer.Worker.Database;
-using Microsoft.Extensions.Logging;
+using GithubAnalyzer.Worker.Interfaces;
 
 namespace GithubAnalyzer.Worker.Services;
 

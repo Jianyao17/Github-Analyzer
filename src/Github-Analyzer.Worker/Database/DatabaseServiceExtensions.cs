@@ -1,4 +1,4 @@
-
+using GithubAnalyzer.Worker.Interfaces;
 using GithubAnalyzer.Worker.Services;
 
 namespace GithubAnalyzer.Worker.Database;

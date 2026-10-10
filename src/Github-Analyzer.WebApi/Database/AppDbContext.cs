@@ -1,12 +1,11 @@
 using System.Text.Json;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using GithubAnalyzer.WebApi.Entities.Analysis;
+using Microsoft.AspNetCore.Identity;
 using GithubAnalyzer.WebApi.Entities.Auth;
-using GithubAnalyzer.WebApi.Entities.Cache;
-using GithubAnalyzer.WebApi.Entities.Repo;
+using GithubAnalyzer.Shared.Entities;
+using GithubAnalyzer.Shared.Jobs;
 
 namespace GithubAnalyzer.WebApi.Database;
 
@@ -17,7 +16,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<ProjectQueue> ProjectQueues { get; set; } = null!;
     public DbSet<StatisticAnalysis> StatisticAnalyses { get; set; } = null!;
     public DbSet<CodeGraphAnalysis> CodeGraphAnalyses { get; set; } = null!;
-    
+
     // Cache tables (schema: Cache)
     public DbSet<CodeGraphCache> CodeGraphCaches { get; set; } = null!;
     public DbSet<StatisticCache> StatisticCaches { get; set; } = null!;
@@ -58,10 +57,16 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
         modelBuilder.Entity<IdentityRoleClaim<Guid>>().ToTable("RoleClaims", "Auth");
         modelBuilder.Entity<IdentityUserToken<Guid>>().ToTable("UserTokens", "Auth");
 
-
-
         modelBuilder.Entity<Project>(entity =>
         {
+            // FK: Project → ApplicationUser (owner)
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(p => p.UserId);
+
             entity.HasMany(p => p.Queues)
                 .WithOne(q => q.Project)
                 .HasForeignKey(q => q.ProjectId)
@@ -71,24 +76,39 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
                 .WithOne(sa => sa.Project)
                 .HasForeignKey(sa => sa.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
-            
+
             entity.HasMany(p => p.CodeGraphs)
                 .WithOne(cg => cg.Project)
                 .HasForeignKey(cg => cg.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        var analysisOptionsConverter = new ValueConverter<AnalysisOptions, string>(
+            opt => JsonSerializer.Serialize(opt, (JsonSerializerOptions?)null),
+            raw => JsonSerializer.Deserialize<AnalysisOptions>(raw, (JsonSerializerOptions?)null) ?? new AnalysisOptions());
+
         modelBuilder.Entity<ProjectQueue>(entity =>
         {
-            entity.HasIndex(q => 
-                new { q.ProjectId, q.Status, q.Priority, q.JobType });
-            
+            entity.HasIndex(q => new { q.ProjectId, q.Status, q.Priority });
+
             entity.HasIndex(q => q.ScheduledAtUtc);
+            entity.HasIndex(q => q.StartedAtUtc);
             entity.HasIndex(q => q.CompletedAtUtc);
+
+            entity.Property(q => q.Options)
+                .HasConversion(analysisOptionsConverter)
+                .HasColumnType("jsonb");
         });
 
         modelBuilder.Entity<StatisticAnalysis>(entity =>
         {
+            // FK: StatisticAnalysis → ApplicationUser (author of the analysis)
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(sa => sa.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(sa => sa.UserId);
             entity.HasIndex(sa => sa.ProjectId);
             entity.HasIndex(sa => sa.CommitHash);
             entity.HasIndex(sa => sa.GeneratedAtUtc);
@@ -103,6 +123,13 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
 
         modelBuilder.Entity<CodeGraphAnalysis>(entity =>
         {
+            // FK: CodeGraphAnalysis → ApplicationUser (author of the analysis)
+            entity.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(cg => cg.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(cg => cg.UserId);
             entity.HasIndex(cg => cg.ProjectId);
             entity.HasIndex(cg => cg.CommitHash);
             entity.HasIndex(cg => cg.GeneratedAtUtc);

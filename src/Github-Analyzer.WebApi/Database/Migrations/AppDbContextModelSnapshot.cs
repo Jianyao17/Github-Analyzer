@@ -22,7 +22,7 @@ namespace GithubAnalyzer.WebApi.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("GithubAnalyzer.WebApi.Entities.Analysis.CodeGraphAnalysis", b =>
+            modelBuilder.Entity("GithubAnalyzer.Shared.Entities.CodeGraphAnalysis", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -85,7 +85,201 @@ namespace GithubAnalyzer.WebApi.Migrations
                     b.ToTable("CodeGraphAnalyses", "Repo");
                 });
 
-            modelBuilder.Entity("GithubAnalyzer.WebApi.Entities.Analysis.StatisticAnalysis", b =>
+            modelBuilder.Entity("GithubAnalyzer.Shared.Entities.CodeGraphCache", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AnalysisVersion")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Branch")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("CommitHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("EdgeCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("GeneratedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GraphJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LookupKey")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("NodeCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RepoUrl")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CommitHash");
+
+                    b.HasIndex("LookupKey")
+                        .IsUnique();
+
+                    b.ToTable("CodeGraphCaches", "Cache");
+                });
+
+            modelBuilder.Entity("GithubAnalyzer.Shared.Entities.Project", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AuthorName")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("BranchName")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastCommitAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastCommitHash")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("LocalPath")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("RepositoryName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("RepositoryUrl")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Projects", "Repo");
+                });
+
+            modelBuilder.Entity("GithubAnalyzer.Shared.Entities.ProjectQueue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("MaxAttempts")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Options")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ScheduledAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("StartedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompletedAtUtc");
+
+                    b.HasIndex("ScheduledAtUtc");
+
+                    b.HasIndex("StartedAtUtc");
+
+                    b.HasIndex("ProjectId", "Status", "Priority");
+
+                    b.ToTable("ProjectQueues", "Repo");
+                });
+
+            modelBuilder.Entity("GithubAnalyzer.Shared.Entities.StatisticAnalysis", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -166,6 +360,90 @@ namespace GithubAnalyzer.WebApi.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("StatisticAnalyses", "Repo");
+                });
+
+            modelBuilder.Entity("GithubAnalyzer.Shared.Entities.StatisticCache", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AnalysisVersion")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<long?>("BlankLines")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Branch")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<long?>("CodeLines")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("CommentLines")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("CommitHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("GeneratedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LookupKey")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("RepoUrl")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("SizeInBytes")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TotalBranches")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TotalCommits")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TotalContributors")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TotalFiles")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TotalFolders")
+                        .HasColumnType("integer");
+
+                    b.Property<long?>("TotalLinesOfCode")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CommitHash");
+
+                    b.HasIndex("LookupKey")
+                        .IsUnique();
+
+                    b.ToTable("StatisticCaches", "Cache");
                 });
 
             modelBuilder.Entity("GithubAnalyzer.WebApi.Entities.Auth.ApplicationRole", b =>
@@ -294,281 +572,6 @@ namespace GithubAnalyzer.WebApi.Migrations
                     b.ToTable("Users", "Auth");
                 });
 
-            modelBuilder.Entity("GithubAnalyzer.WebApi.Entities.Cache.CodeGraphCache", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AnalysisVersion")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("Branch")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<string>("CommitHash")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DeletedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("EdgeCount")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("GeneratedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("GraphJson")
-                        .IsRequired()
-                        .HasColumnType("jsonb");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LookupKey")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<int>("NodeCount")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("RepoUrl")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CommitHash");
-
-                    b.HasIndex("LookupKey")
-                        .IsUnique();
-
-                    b.ToTable("CodeGraphCaches", "Cache");
-                });
-
-            modelBuilder.Entity("GithubAnalyzer.WebApi.Entities.Cache.StatisticCache", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AnalysisVersion")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<long?>("BlankLines")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Branch")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<long?>("CodeLines")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("CommentLines")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("CommitHash")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DeletedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("GeneratedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LookupKey")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("RepoUrl")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int?>("SizeInBytes")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("TotalBranches")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("TotalCommits")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("TotalContributors")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("TotalFiles")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("TotalFolders")
-                        .HasColumnType("integer");
-
-                    b.Property<long?>("TotalLinesOfCode")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CommitHash");
-
-                    b.HasIndex("LookupKey")
-                        .IsUnique();
-
-                    b.ToTable("StatisticCaches", "Cache");
-                });
-
-            modelBuilder.Entity("GithubAnalyzer.WebApi.Entities.Repo.Project", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AuthorName")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("BranchName")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DeletedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastCommitAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("LastCommitHash")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("LocalPath")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
-                    b.Property<string>("RepositoryName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("RepositoryUrl")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Projects", "Repo");
-                });
-
-            modelBuilder.Entity("GithubAnalyzer.WebApi.Entities.Repo.ProjectQueue", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("AttemptCount")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("CompletedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DeletedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("JobType")
-                        .IsRequired()
-                        .HasMaxLength(25)
-                        .HasColumnType("character varying(25)");
-
-                    b.Property<string>("LastError")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<int>("MaxAttempts")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Priority")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("ScheduledAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("StartedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompletedAtUtc");
-
-                    b.HasIndex("ScheduledAtUtc");
-
-                    b.HasIndex("ProjectId", "Status", "Priority", "JobType");
-
-                    b.ToTable("ProjectQueues", "Repo");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.Property<int>("Id")
@@ -672,49 +675,54 @@ namespace GithubAnalyzer.WebApi.Migrations
                     b.ToTable("UserTokens", "Auth");
                 });
 
-            modelBuilder.Entity("GithubAnalyzer.WebApi.Entities.Analysis.CodeGraphAnalysis", b =>
+            modelBuilder.Entity("GithubAnalyzer.Shared.Entities.CodeGraphAnalysis", b =>
                 {
-                    b.HasOne("GithubAnalyzer.WebApi.Entities.Repo.Project", "Project")
+                    b.HasOne("GithubAnalyzer.Shared.Entities.Project", "Project")
                         .WithMany("CodeGraphs")
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("GithubAnalyzer.WebApi.Entities.Auth.ApplicationUser", "User")
+                    b.HasOne("GithubAnalyzer.WebApi.Entities.Auth.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Project");
-
-                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("GithubAnalyzer.WebApi.Entities.Analysis.StatisticAnalysis", b =>
+            modelBuilder.Entity("GithubAnalyzer.Shared.Entities.Project", b =>
                 {
-                    b.HasOne("GithubAnalyzer.WebApi.Entities.Repo.Project", "Project")
+                    b.HasOne("GithubAnalyzer.WebApi.Entities.Auth.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("GithubAnalyzer.Shared.Entities.ProjectQueue", b =>
+                {
+                    b.HasOne("GithubAnalyzer.Shared.Entities.Project", "Project")
+                        .WithMany("Queues")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("GithubAnalyzer.Shared.Entities.StatisticAnalysis", b =>
+                {
+                    b.HasOne("GithubAnalyzer.Shared.Entities.Project", "Project")
                         .WithMany("Statistics")
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("GithubAnalyzer.WebApi.Entities.Auth.ApplicationUser", "User")
+                    b.HasOne("GithubAnalyzer.WebApi.Entities.Auth.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Project");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("GithubAnalyzer.WebApi.Entities.Repo.ProjectQueue", b =>
-                {
-                    b.HasOne("GithubAnalyzer.WebApi.Entities.Repo.Project", "Project")
-                        .WithMany("Queues")
-                        .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -772,7 +780,7 @@ namespace GithubAnalyzer.WebApi.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GithubAnalyzer.WebApi.Entities.Repo.Project", b =>
+            modelBuilder.Entity("GithubAnalyzer.Shared.Entities.Project", b =>
                 {
                     b.Navigation("CodeGraphs");
 

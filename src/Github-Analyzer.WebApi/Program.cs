@@ -1,15 +1,10 @@
-using TreeSitter.CodeGraph.Interfaces;
-using TreeSitter.CodeGraph.Languages;
-using TreeSitter.CodeGraph.TreeSitter;
-using TreeSitter.CodeGraph.Reader;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Endpoints.Auth;
 using GithubAnalyzer.WebApi.Endpoints.Project;
-using GithubAnalyzer.WebApi.Endpoints.Testing;
 using GithubAnalyzer.WebApi.Services;
-using GithubAnalyzer.WebApi.Config;
 using GithubAnalyzer.WebApi.Workers;
+using GithubAnalyzer.WebApi.Config;
 using Microsoft.AspNetCore.HttpOverrides;
 using Scalar.AspNetCore;
 using Asp.Versioning;
@@ -51,34 +46,23 @@ builder.Services.AddOpenApi("v1", options =>
 builder.Services.AddApiProblemDetails(builder.Environment);
 builder.Services.AddCorsPolicies(builder.Configuration);
 
-// Add Redis Distributed Cache
-builder.AddRedisDistributedCache("cache");
+// Add Redis Distributed Cache & Message Broker (Streams & Pub/Sub)
+builder.AddRedisDistributedCache("redis");
+builder.AddRedisMessageBroker("redis");
 
-// Add repository services
-builder.AddRepositoryServices();
-
+// Add application persistence & services
 builder.AddApplicationPersistence();
 builder.AddJwtAuthentication();
 builder.AddStreamTokenService();
 builder.AddApiRateLimiting();
 builder.AddAnalysisConfig();
+builder.AddGitServices();
 builder.AddMailService();
 
-// Services for analysis
-builder.Services.AddScoped<ICodebaseReader, CodebaseReader>();
-builder.Services.AddScoped<ICodeAnalyzer, TreeSitterAnalyzer>();
-builder.Services.AddScoped<IFileStatisticsService, FileStatisticsService>();
+// Application services
 builder.Services.AddScoped<IProjectCacheService, ProjectCacheService>();
 
-// Queue progress notifier for real-time updates to clients
-builder.Services.AddSingleton<IQueueProgressNotifier, QueueProgressNotifier>();
-builder.Services.AddSingleton<IAnalysisCacheService, DBAnalysisCacheService>();
-builder.Services.AddSingleton<ILanguageRegistry>(LanguageRegistry.Default);
-builder.Services.AddSingleton<ILanguageDetector, LanguageDetector>();
-
-// Workers for background processing
-builder.Services.AddHostedService<CodeGraphAnalysisWorker>();
-builder.Services.AddHostedService<StatisticAnalysisWorker>();
+// Periodic database cleanup worker
 builder.Services.AddHostedService<QueueCleanupWorker>();
 
 
@@ -118,9 +102,6 @@ if (app.Environment.IsDevelopment() ||
 
     // Apply pending migrations on startup in development mode
     await app.ApplyMigrationsAsync();
-
-    // Map testing endpoints only for benchmarking and development purposes
-    app.MapTestingEndpoints();
 }
 
 app.Run();

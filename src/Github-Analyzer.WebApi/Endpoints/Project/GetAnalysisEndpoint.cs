@@ -3,9 +3,9 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Interfaces;
-using GithubAnalyzer.WebApi.Entities.Analysis;
 using GithubAnalyzer.WebApi.Extensions;
-using GithubAnalyzer.WebApi.Models;
+using GithubAnalyzer.Shared.Entities;
+using GithubAnalyzer.Shared.Enums;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Project;
 

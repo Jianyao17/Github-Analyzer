@@ -20,7 +20,8 @@ if (builder.Environment.IsDevelopment())
 var mailpit = builder.AddMailPit("mailpit")
     .WithLifetime(ContainerLifetime.Persistent);
 
-var cache = builder.AddRedis("cache")
+// Single Redis instance shared by distributed cache, Streams (job dispatch), and Pub/Sub (progress)
+var redis = builder.AddRedis("redis")
     .WithRedisCommander();
 
 const int webappPort = 5017;
@@ -33,9 +34,19 @@ var api = builder.AddProject<Projects.Github_Analyzer_WebApi>("webapi")
     .WithEnvironment("Cors__AllowedOrigins__0", webapp.GetEndpoint("http"))
     .WithReference(postgresDb)
     .WithReference(mailpit)
-    .WithReference(cache)
+    .WithReference(redis)
     .WaitFor(postgresDb)
-    .WaitFor(cache);
+    .WaitFor(redis);
+
+// Worker consumes analysis jobs from Redis Streams and publishes progress via Redis Pub/Sub.
+// Increase replicas to scale job processing capacity (each replica competes for stream entries).
+var workerReplicas = builder.ExecutionContext.IsPublishMode ? 2 : 1;
+builder.AddProject<Projects.Github_Analyzer_Worker>("worker")
+    .WithReference(postgresDb)
+    .WithReference(redis)
+    .WaitFor(postgresDb)
+    .WaitFor(redis)
+    .WithReplicas(workerReplicas);
 
 webapp
     .WithEnvironment("VITE_API_BASE_URL", api.GetEndpoint("http"))

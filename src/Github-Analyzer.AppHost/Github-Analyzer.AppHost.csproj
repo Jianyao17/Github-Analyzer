@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Github-Analyzer.WebApi\Github-Analyzer.WebApi.csproj" />
+    <ProjectReference Include="..\Github-Analyzer.Worker\Github-Analyzer.Worker.csproj" />
   </ItemGroup>
 
 </Project>

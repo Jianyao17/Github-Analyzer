@@ -3,7 +3,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using GithubAnalyzer.Shared.Git;
-using GithubAnalyzer.WebApi.Entities.Repo;
+using GithubAnalyzer.Shared.Entities;
 using GithubAnalyzer.WebApi.Services;
 
 namespace GithubAnalyzer.WebApi.Tests.Services;

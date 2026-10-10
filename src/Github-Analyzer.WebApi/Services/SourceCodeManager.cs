@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Caching.Distributed;
-using GithubAnalyzer.WebApi.Entities.Repo;
 using GithubAnalyzer.WebApi.Interfaces;
+using GithubAnalyzer.Shared.Entities;
 using GithubAnalyzer.Shared.Git;
 
 namespace GithubAnalyzer.WebApi.Services;

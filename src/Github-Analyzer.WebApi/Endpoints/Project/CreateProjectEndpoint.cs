@@ -1,13 +1,14 @@
 using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.Extensions.Options;
 using GithubAnalyzer.WebApi.Database;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Extensions;
-using GithubAnalyzer.WebApi.Entities.Repo;
-using GithubAnalyzer.Shared.Git;
 using GithubAnalyzer.WebApi.Models;
-using GithubAnalyzer.WebApi.Config;
+using GithubAnalyzer.Shared.Enums;
+using GithubAnalyzer.Shared.Config;
+using GithubAnalyzer.Shared.Jobs;
+using GithubAnalyzer.Shared.Git;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Project;
 
@@ -23,12 +24,14 @@ public static class CreateProjectEndpoint
         return group.MapPost("/new", async (
             CreateProjectRequest request, ClaimsPrincipal claimsPrincipal,
             AppDbContext dbContext, IGitService gitService,
+            IAnalysisJobDispatcher jobDispatcher,
+            IOptions<AnalysisConfig> configOptions,
             CancellationToken ct) =>
         {
             // Get User ID from claims
-            var userIdStr = claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? 
+            var userIdStr = claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ??
                             claimsPrincipal.FindFirstValue("sub");
-            
+
             // Try to parse user ID
             if (!Guid.TryParse(userIdStr, out var userId))
                 return ApiResults.Unauthorized("Invalid user identifier.");
@@ -50,13 +53,12 @@ public static class CreateProjectEndpoint
             }
 
             // Create Project Entity
-            var project = new Entities.Repo.Project
+            var project = new Shared.Entities.Project
             {
                 UserId          = userId,
                 Title           = repoResult.RepositoryName,
                 RepositoryName  = repoResult.RepositoryName,
                 RepositoryUrl   = repoResult.RepositoryUrl,
-                
                 AuthorName      = repoResult.AuthorName,
                 LocalPath       = repoResult.ExtractPath,
                 BranchName      = repoResult.BranchName ?? request.Branch,
@@ -65,32 +67,58 @@ public static class CreateProjectEndpoint
                 Description     = repoResult.Description
             };
 
-            // Add project to database
-            // and save to prevent race conditions with 
-            // queued jobs that reference the project
+            // Add project to database and save
             dbContext.Projects.Add(project);
             await dbContext.SaveChangesAsync(ct);
 
-            // Queue jobs for analysis (Statistic & CodeGraph)
-            var statisticJob = new ProjectQueue
+            // Create a single unified ProjectQueue job for analysis pipeline
+            var queueJob = new Shared.Entities.ProjectQueue
             {
-                Project = project,
-                JobType = AnalysisType.Statistic.ToString(),
-                Status = Entities.QueueStatus.Pending,
-                Priority = 10
-            };
-            
-            var codeGraphJob = new ProjectQueue
-            {
-                Project = project,
-                JobType = AnalysisType.CodeGraph.ToString(),
-                Status = Entities.QueueStatus.Pending,
-                Priority = 10
+                ProjectId = project.Id,
+                Status = JobQueueStatus.Pending,
+                Priority = 10,
+
+                Options = new AnalysisOptions
+                {
+                    Statistics = true,
+                    CodeGraph = true
+                }
             };
 
-            // Save project and jobs to database
-            dbContext.ProjectQueues.AddRange(statisticJob, codeGraphJob);
+            dbContext.ProjectQueues.Add(queueJob);
             await dbContext.SaveChangesAsync(ct);
+
+            // Construct AnalysisJobMessage for Redis Streams worker
+            var analysisConfig = configOptions.Value;
+            var jobMessage = new AnalysisJobMessage
+            {
+                JobId = queueJob.Id,
+                ProjectId = project.Id,
+                UserId = userId,
+
+                RepositoryUrl = project.RepositoryUrl,
+                RepositoryName = project.RepositoryName,
+                Branch = project.BranchName ?? request.Branch,
+                CommitHash = project.LastCommitHash,
+                Options = queueJob.Options,
+
+                StatisticsVersion = analysisConfig.StatisticVersion,
+                CodeGraphVersion = analysisConfig.CodeGraphVersion
+            };
+
+            // Dispatch job to Redis message broker
+            try
+            {
+                await jobDispatcher.DispatchAsync(jobMessage, ct);
+            }
+            catch (Exception ex)
+            {
+                queueJob.Status = JobQueueStatus.Failed;
+                queueJob.LastError = $"Failed to dispatch job to message broker: {ex.Message}";
+
+                await dbContext.SaveChangesAsync(CancellationToken.None);
+                return ApiResults.InternalServerError($"Project created but failed to enqueue analysis job: {ex.Message}");
+            }
 
             // Return the created project
             var response = new ProjectResponse(

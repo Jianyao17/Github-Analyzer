@@ -1,4 +1,4 @@
-using GithubAnalyzer.Worker.Config;
+using GithubAnalyzer.Shared.Config;
 using GithubAnalyzer.Worker.Interfaces;
 
 namespace GithubAnalyzer.Worker.Redis;

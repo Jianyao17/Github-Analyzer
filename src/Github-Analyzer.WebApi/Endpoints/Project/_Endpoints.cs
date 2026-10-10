@@ -1,4 +1,4 @@
-using GithubAnalyzer.WebApi.Entities.Analysis;
+using GithubAnalyzer.Shared.Entities;
 using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Models;
 using Asp.Versioning;

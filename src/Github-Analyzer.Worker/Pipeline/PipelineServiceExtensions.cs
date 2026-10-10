@@ -3,7 +3,7 @@ using TreeSitter.CodeGraph.Languages;
 using TreeSitter.CodeGraph.TreeSitter;
 using TreeSitter.CodeGraph.Reader;
 using GithubAnalyzer.Shared.Git;
-using GithubAnalyzer.Worker.Config;
+using GithubAnalyzer.Shared.Config;
 using GithubAnalyzer.Worker.Interfaces;
 using GithubAnalyzer.Worker.Pipeline.Steps;
 using GithubAnalyzer.Worker.Services;

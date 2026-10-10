@@ -1,6 +1,6 @@
 using GithubAnalyzer.Shared.Git;
 using GithubAnalyzer.Shared.Jobs;
-using GithubAnalyzer.Worker.Config;
+using GithubAnalyzer.Shared.Config;
 using GithubAnalyzer.Worker.Database;
 using GithubAnalyzer.Worker.Interfaces;
 using GithubAnalyzer.Worker.Pipeline;

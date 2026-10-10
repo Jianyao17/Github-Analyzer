@@ -1,10 +1,10 @@
 using GithubAnalyzer.Shared.Git;
 using GithubAnalyzer.Shared.Jobs;
 using GithubAnalyzer.Shared.Enums;
+using GithubAnalyzer.Shared.Config;
 using GithubAnalyzer.Shared.Progress;
 using GithubAnalyzer.Worker.Interfaces;
 using GithubAnalyzer.Worker.Services;
-using GithubAnalyzer.Worker.Config;
 
 namespace GithubAnalyzer.Worker.Pipeline;
 

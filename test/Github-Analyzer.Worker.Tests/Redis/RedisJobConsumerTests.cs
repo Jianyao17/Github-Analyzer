@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using StackExchange.Redis;
 using GithubAnalyzer.Shared.Jobs;
-using GithubAnalyzer.Worker.Config;
+using GithubAnalyzer.Shared.Config;
 using GithubAnalyzer.Worker.Database;
 using GithubAnalyzer.Worker.Models;
 using GithubAnalyzer.Worker.Pipeline;

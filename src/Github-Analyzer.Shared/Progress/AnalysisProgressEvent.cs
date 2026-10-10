@@ -9,6 +9,7 @@ public class AnalysisProgressEvent
     public Guid JobId { get; set; }            // Correlation ID ke ProjectQueue.Id
     public Guid ProjectId { get; set; }
     public AnalysisType AnalysisType { get; set; } 
+    public string JobType => AnalysisType.ToString();
 
 
     public JobQueueStatus Status { get; set; }

@@ -1,13 +1,10 @@
 using System.Text.Json;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
+using Microsoft.Extensions.Options;
 using GithubAnalyzer.Shared.Jobs;
-using GithubAnalyzer.Worker.Config;
-using GithubAnalyzer.Worker.Database;
+using GithubAnalyzer.Shared.Config;
 using GithubAnalyzer.Worker.Models;
+using GithubAnalyzer.Worker.Database;
 using GithubAnalyzer.Worker.Pipeline;
 
 namespace GithubAnalyzer.Worker.Redis;
@@ -123,10 +120,22 @@ public class RedisJobConsumer(
     /// </summary>
     private async Task ProcessEntryAsync(StreamEntry entry, bool isStaleReclaim, CancellationToken ct)
     {
+        // 1. Baca jobId dari level stream entry terlebih dahulu
+        var jobIdValue = entry.Values.FirstOrDefault(v => v.Name == "jobId").Value;
+        Guid parsedJobId = Guid.Empty;
+        if (jobIdValue.HasValue)
+        {
+            _ = Guid.TryParse(jobIdValue.ToString(), out parsedJobId);
+        }
+
         var payloadValue = entry.Values.FirstOrDefault(v => v.Name == "payload").Value;
         if (!payloadValue.HasValue)
         {
             logger.LogWarning("Entry '{EntryId}' does not contain 'payload' field. ACKing entry.", entry.Id);
+            if (parsedJobId != Guid.Empty)
+            {
+                await MarkJobFailedSafelyAsync(parsedJobId, "Missing payload field in message", ct);
+            }
             await _db.StreamAcknowledgeAsync(_config.StreamName, _config.ConsumerGroup, entry.Id);
             return;
         }
@@ -140,12 +149,20 @@ public class RedisJobConsumer(
         catch (Exception ex)
         {
             logger.LogError(ex, "Corrupt JSON payload on entry '{EntryId}'. ACKing to avoid blocking.", entry.Id);
+            if (parsedJobId != Guid.Empty)
+            {
+                await MarkJobFailedSafelyAsync(parsedJobId, $"Corrupt payload JSON: {ex.Message}", ct);
+            }
             await _db.StreamAcknowledgeAsync(_config.StreamName, _config.ConsumerGroup, entry.Id);
             return;
         }
 
         if (job == null)
         {
+            if (parsedJobId != Guid.Empty)
+            {
+                await MarkJobFailedSafelyAsync(parsedJobId, "Payload deserialized to null", ct);
+            }
             await _db.StreamAcknowledgeAsync(_config.StreamName, _config.ConsumerGroup, entry.Id);
             return;
         }
@@ -164,19 +181,7 @@ public class RedisJobConsumer(
                     "Job {JobId} (Entry: {EntryId}) exceeded maximum delivery attempts ({Retries}x). Marking as Dead-Letter and ACKing.",
                     job.JobId, entry.Id, pendingInfo[0].DeliveryCount);
 
-                try
-                {
-                    using var deadLetterScope = scopeFactory.CreateScope();
-                    var queueRepo = deadLetterScope.ServiceProvider.GetRequiredService<IProjectQueueRepository>();
-                    
-                    await queueRepo.MarkJobFailedAsync(
-                        job.JobId, $"Dead-letter: Exceeded maximum delivery attempts ({pendingInfo[0].DeliveryCount}x)", ct);
-                }
-                catch (Exception dbEx)
-                {
-                    logger.LogError(dbEx, "Failed to update database status for dead-letter Job {JobId}.", job.JobId);
-                }
-
+                await MarkJobFailedSafelyAsync(job.JobId, $"Dead-letter: Exceeded maximum delivery attempts ({pendingInfo[0].DeliveryCount}x)", ct);
                 await _db.StreamAcknowledgeAsync(_config.StreamName, _config.ConsumerGroup, entry.Id);
                 return;
             }
@@ -201,4 +206,19 @@ public class RedisJobConsumer(
                 job.JobId, entry.Id);
         }
     }
+
+    private async Task MarkJobFailedSafelyAsync(Guid jobId, string errorMessage, CancellationToken ct)
+    {
+        try
+        {
+            using var deadLetterScope = scopeFactory.CreateScope();
+            var queueRepo = deadLetterScope.ServiceProvider.GetRequiredService<IProjectQueueRepository>();
+            await queueRepo.MarkJobFailedAsync(jobId, errorMessage, ct);
+        }
+        catch (Exception dbEx)
+        {
+            logger.LogError(dbEx, "Failed to update database status for failed Job {JobId}.", jobId);
+        }
+    }
 }
+

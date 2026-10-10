@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.Worker.Config;
+namespace GithubAnalyzer.Shared.Config;
 
 /// <summary>
 /// Opsi konfigurasi untuk Redis Streams consumer group dan penanganan job analisis.
@@ -21,6 +21,12 @@ public sealed class RedisConfig
     /// Default: "analysis-workers".
     /// </summary>
     public string ConsumerGroup { get; set; } = "analysis-workers";
+
+    /// <summary>
+    /// Prefix channel Redis Pub/Sub untuk stream progress analisis real-time.
+    /// Default: "analysis:progress".
+    /// </summary>
+    public string ProgressChannelPrefix { get; set; } = "analysis:progress";
 
     /// <summary>
     /// Jumlah maksimum percobaan pengiriman sebelum job dianggap dead-letter (poison pill) dan di-ACK.

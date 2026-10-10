@@ -4,9 +4,9 @@ using GithubAnalyzer.WebApi.Services;
 
 namespace GithubAnalyzer.WebApi.Extensions;
 
-public static class RepoServiceExtensions
+public static class GitServiceExtensions
 {
-    public static IHostApplicationBuilder AddRepositoryServices(this IHostApplicationBuilder builder)
+    public static IHostApplicationBuilder AddGitServices(this IHostApplicationBuilder builder)
     {
         builder.Services.AddGitHubProvider();
         builder.Services.AddGitServices(builder.Configuration);

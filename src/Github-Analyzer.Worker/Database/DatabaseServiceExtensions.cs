@@ -13,7 +13,7 @@ public static class DatabaseServiceExtensions
     /// </summary>
     public static IHostApplicationBuilder AddWorkerDatabase(
         this IHostApplicationBuilder builder,
-        string connectionName = "postgres")
+        string connectionName = "postgresdb")
     {
         builder.AddNpgsqlDataSource(connectionName);
         builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();

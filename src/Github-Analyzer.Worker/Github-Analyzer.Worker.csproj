@@ -8,6 +8,10 @@
     <InvariantGlobalization>true</InvariantGlobalization>
     <InterceptorsNamespaces>$(InterceptorsNamespaces);Dapper.AOT</InterceptorsNamespaces>
     <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Dapper.AOT</InterceptorsPreviewNamespaces>
+  </PropertyGroup>
+
+  <!-- Native AOT only during publish; dotnet run / Aspire dev uses normal JIT -->
+  <PropertyGroup Condition="'$(PublishProtocol)' != ''">
     <PublishAot>true</PublishAot>
   </PropertyGroup>
 

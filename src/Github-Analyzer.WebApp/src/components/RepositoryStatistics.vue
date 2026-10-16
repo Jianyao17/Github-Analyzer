@@ -47,7 +47,7 @@ watch(data, (newData) =>
 <template>
   <div class="flex h-full w-full flex-col">
     <!-- ── Loading state ────────────────────────────────────────────────────── -->
-    <div v-if="isLoading"
+    <div v-if="isLoading && !data"
       class="
         flex h-full flex-col overflow-hidden rounded-xl border-0
         bg-[var(--ui-bg)]/70 ring-1 ring-[var(--ui-border)] backdrop-blur-md

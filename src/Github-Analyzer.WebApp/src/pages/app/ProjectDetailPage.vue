@@ -149,7 +149,6 @@ async function subscribeToCodeGraph(token?: string)
           // Small delay to let the backend flush the DB write before we fetch
           await new Promise(r => setTimeout(r, 500));
           queryCache.invalidateQueries({ key: ['analysis', 'codegraph', project.value?.id as string] });
-          queryCache.invalidateQueries({ key: ['project', project.value?.id as string] });
         }
       },
       {
@@ -184,7 +183,6 @@ async function subscribeToStatistic(token?: string)
         {
           await new Promise(r => setTimeout(r, 500));
           queryCache.invalidateQueries({ key: ['analysis', 'statistic', project.value?.id as string] });
-          queryCache.invalidateQueries({ key: ['project', project.value?.id as string] });
         }
       },
       {
@@ -224,7 +222,7 @@ onUnmounted(() =>
   >
 
     <!-- Loading -->
-    <div v-if="loading"
+    <div v-if="loading && !project"
       class="flex flex-1 flex-col items-center justify-center gap-4"
     >
       <NIcon name="i-lucide-loader-2"

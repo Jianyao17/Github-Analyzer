@@ -94,8 +94,14 @@ public sealed class PipelineContext : IAsyncDisposable
     public ValueTask ReportProgressAsync(
         AnalysisType analysisType,
         int progressPercentage, string? message,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        JobQueueStatus status = JobQueueStatus.Running)
     {
+        if (status == JobQueueStatus.Running && progressPercentage >= 100)
+        {
+            progressPercentage = 99;
+        }
+
         return ProgressPublisher.PublishAsync(
           new AnalysisProgressEvent
         {
@@ -103,12 +109,25 @@ public sealed class PipelineContext : IAsyncDisposable
             ProjectId = Job.ProjectId,
             AnalysisType = analysisType,
 
-            Status = JobQueueStatus.Running,
+            Status = status,
             Progress = progressPercentage,
             Message = message,
 
             Timestamp = DateTimeOffset.UtcNow
         }, ct);
+    }
+
+    public ValueTask ReportCompletionAsync(
+        AnalysisType analysisType,
+        string? message,
+        CancellationToken ct = default)
+    {
+        return ReportProgressAsync(
+            analysisType,
+            100,
+            message,
+            ct,
+            JobQueueStatus.Completed);
     }
 
     public ValueTask DisposeAsync()

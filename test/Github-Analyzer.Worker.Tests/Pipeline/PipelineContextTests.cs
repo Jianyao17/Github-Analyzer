@@ -153,7 +153,24 @@ public sealed class PipelineContextTests
         Assert.Equal(3, _progressPublisher.Events.Count);
         Assert.Equal(10, _progressPublisher.Events[0].Progress);
         Assert.Equal(50, _progressPublisher.Events[1].Progress);
-        Assert.Equal(100, _progressPublisher.Events[2].Progress);
+        Assert.Equal(99, _progressPublisher.Events[2].Progress);
+        Assert.Equal(GithubAnalyzer.Shared.Enums.JobQueueStatus.Running, _progressPublisher.Events[2].Status);
+    }
+
+    [Fact]
+    public async Task ReportCompletionAsync_PublishesCompleted100()
+    {
+        // Arrange
+        await using var context = PipelineTestHelpers.CreateContext(progressPublisher: _progressPublisher);
+
+        // Act
+        await context.ReportCompletionAsync(GithubAnalyzer.Shared.Enums.AnalysisType.Statistic, "Completed");
+
+        // Assert
+        var ev = Assert.Single(_progressPublisher.Events);
+        Assert.Equal(100, ev.Progress);
+        Assert.Equal(GithubAnalyzer.Shared.Enums.JobQueueStatus.Completed, ev.Status);
+        Assert.Equal("Completed", ev.Message);
     }
 
     // ─── DisposeAsync ─────────────────────────────────────────────────────────

@@ -21,7 +21,7 @@ public abstract class BaseAnalysisStep : IAnalysisStep
         if (isCacheHit)
         {
             logger.LogInformation("{Step} Cache HIT. Skipping computation.", AnalysisType);
-            await context.ReportProgressAsync(AnalysisType, 100, $"{AnalysisType} restored from cache", ct);
+            await context.ReportCompletionAsync(AnalysisType, $"{AnalysisType} restored from cache", ct);
             return;
         }
 
@@ -33,7 +33,7 @@ public abstract class BaseAnalysisStep : IAnalysisStep
         await ExecuteCoreAsync(context, localPath, logger, ct);
 
         // 4. Pastikan progress akhir 100%
-        await context.ReportProgressAsync(AnalysisType, 100, $"{AnalysisType} analysis completed", ct);
+        await context.ReportCompletionAsync(AnalysisType, $"{AnalysisType} analysis completed", ct);
         logger.LogInformation("{Step} completed successfully for Project {ProjectId}", AnalysisType, context.Job.ProjectId);
     }
 

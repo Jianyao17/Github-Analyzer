@@ -40,6 +40,10 @@ public sealed class BaseAnalysisStepTests
 
         // Assert: progress 100 foi reportado
         Assert.True(_publisher.HasEventWithProgress(AnalysisType.Statistic, 100));
+        Assert.Contains(_publisher.Events, e =>
+            e.AnalysisType == AnalysisType.Statistic &&
+            e.Progress == 100 &&
+            e.Status == JobQueueStatus.Completed);
     }
 
     [Fact]
@@ -82,6 +86,10 @@ public sealed class BaseAnalysisStepTests
             // Assert
             Assert.True(stub.CoreExecuted);
             Assert.True(_publisher.HasEventWithProgress(AnalysisType.Statistic, 100));
+            Assert.Contains(_publisher.Events, e =>
+                e.AnalysisType == AnalysisType.Statistic &&
+                e.Progress == 100 &&
+                e.Status == JobQueueStatus.Completed);
         }
         finally
         {
@@ -169,6 +177,11 @@ public sealed class BaseAnalysisStepTests
             // Assert: event terakhir adalah 100
             var lastEvent = _publisher.Events.Last();
             Assert.Equal(100, lastEvent.Progress);
+            Assert.Equal(JobQueueStatus.Completed, lastEvent.Status);
+            Assert.DoesNotContain(_publisher.Events, e =>
+                e.AnalysisType == AnalysisType.Statistic &&
+                e.Status == JobQueueStatus.Running &&
+                e.Progress >= 100);
         }
         finally
         {

@@ -1,10 +1,12 @@
-using GithubAnalyzer.WebApi.Database;
-using GithubAnalyzer.WebApi.Entities;
-using GithubAnalyzer.WebApi.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using GithubAnalyzer.WebApi.Database;
+using GithubAnalyzer.Shared.Enums;
 
 namespace GithubAnalyzer.WebApi.Workers;
 
+/// <summary>
+/// Background worker untuk membersihkan riwayat antrean lama (>24 jam) dan cache analisis lama (>7 hari).
+/// </summary>
 public class QueueCleanupWorker : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
@@ -30,24 +32,38 @@ public class QueueCleanupWorker : BackgroundService
                 using var scope = _scopeFactory.CreateScope();
                 var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                // Delete jobs that are completed or failed and older than 24 hours
+                // 1. Delete jobs that are completed or failed and older than 24 hours
                 var cutoffTime = DateTime.UtcNow.AddHours(-24);
 
                 var oldJobsCount = await dbContext.ProjectQueues
-                    .Where(q => (q.Status == QueueStatus.Completed || q.Status == QueueStatus.Failed) 
+                    .Where(q => (q.Status == JobQueueStatus.Completed || q.Status == JobQueueStatus.Failed) 
                              && q.CompletedAtUtc != null 
                              && q.CompletedAtUtc <= cutoffTime)
                     .ExecuteDeleteAsync(stoppingToken);
 
-                if (oldJobsCount > 0) {
+                if (oldJobsCount > 0)
+                {
                     _logger.LogInformation("Cleaned up {Count} old queue records.", oldJobsCount);
                 }
 
-                // Invalidate old analysis caches using the AnalysisCacheService (older than 7 days)
-                var cacheService = scope.ServiceProvider.GetRequiredService<IAnalysisCacheService>();
-                await cacheService.InvalidateOldCachesAsync(TimeSpan.FromDays(7), stoppingToken);
+                // 2. Invalidate old analysis caches (older than 7 days)
+                var cacheCutoffTime = DateTime.UtcNow.AddDays(-7);
+                var cgDeleted = await dbContext.CodeGraphCaches
+                    .Where(c => c.GeneratedAtUtc != null && c.GeneratedAtUtc <= cacheCutoffTime)
+                    .ExecuteDeleteAsync(stoppingToken);
+
+                var stDeleted = await dbContext.StatisticCaches
+                    .Where(c => c.GeneratedAtUtc != null && c.GeneratedAtUtc <= cacheCutoffTime)
+                    .ExecuteDeleteAsync(stoppingToken);
+
+                if (cgDeleted > 0 || stDeleted > 0)
+                {
+                    _logger.LogInformation("Cleaned up {CgCount} CodeGraph caches and {StCount} Statistic caches older than 7 days.",
+                        cgDeleted, stDeleted);
+                }
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 _logger.LogError(ex, "Error occurred while cleaning up old records.");
             }
         }

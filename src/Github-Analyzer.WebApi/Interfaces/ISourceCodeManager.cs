@@ -1,4 +1,4 @@
-using GithubAnalyzer.WebApi.Entities.Repo;
+using GithubAnalyzer.Shared.Entities;
 
 namespace GithubAnalyzer.WebApi.Interfaces;
 

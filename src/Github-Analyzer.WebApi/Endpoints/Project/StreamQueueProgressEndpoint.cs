@@ -1,8 +1,8 @@
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Interfaces;
 using GithubAnalyzer.WebApi.Services.Auth;
-using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
 
 namespace GithubAnalyzer.WebApi.Endpoints.Project;
 
@@ -19,7 +19,7 @@ public static class StreamQueueProgressEndpoint
         return group.MapGet("/{projectGuid:guid}/queue/event", async (
             [AsParameters] StreamProgressRequest request,
             StreamTokenService streamTokenService,
-            IQueueProgressNotifier progressNotifier,
+            IJobProgressSubscriber progressSubscriber,
             HttpContext context, CancellationToken ct) =>
         {
             // Validate stream token to ensure the client is authorized to receive events for this project
@@ -32,8 +32,8 @@ public static class StreamQueueProgressEndpoint
             context.Response.Headers.Append("Cache-Control", "no-cache");
             context.Response.Headers.Append("Connection", "keep-alive");
 
-            // Subscribe to progress events for the specified project and job type
-            var stream = progressNotifier.SubscribeAsync(request.ProjectGuid, request.JobType, ct);
+            // Subscribe to progress events via Redis Pub/Sub for the specified project and job type
+            var stream = progressSubscriber.SubscribeAsync(request.ProjectGuid, request.JobType, ct);
 
             try
             {

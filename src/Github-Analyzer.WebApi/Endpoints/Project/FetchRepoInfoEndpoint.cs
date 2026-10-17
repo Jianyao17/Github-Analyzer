@@ -1,4 +1,4 @@
-using GithubAnalyzer.WebApi.Interfaces;
+using GithubAnalyzer.Shared.Git;
 using GithubAnalyzer.WebApi.Extensions;
 using GithubAnalyzer.WebApi.Models;
 
@@ -14,7 +14,7 @@ public static class FetchRepoInfoEndpoint
     {
         return group.MapGet("/github/info", async (
             string repoUrl, string? branch,
-            IRepositoryFetcher repositoryFetcher,
+            IGitService gitService,
             CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(repoUrl))
@@ -23,13 +23,13 @@ public static class FetchRepoInfoEndpoint
             try
             {
                 // Get branches for the repository
-                var branches = await repositoryFetcher.GetBranchesAsync(repoUrl, ct);
+                var branches = await gitService.GetBranchesAsync(repoUrl, ct);
                 
                 // Get commits for the branch if provided
                 IReadOnlyList<RepoCommit>? commits = null;
                 if (!string.IsNullOrWhiteSpace(branch))
                 {
-                    commits = await repositoryFetcher.GetCommitsAsync(repoUrl, branch, ct);
+                    commits = await gitService.GetCommitsAsync(repoUrl, branch, ct);
                 }
 
                 // Return the branches and commits

@@ -485,8 +485,8 @@ $RECYCLE.BIN/
 *.swp
 
 # appsettings files
-src/Github-Analyzer.WebApi/appsettings.json
-src/Github-Analyzer.WebApi/appsettings.Development.json
+**/appsettings.json
+**/appsettings.Development.json
 
 # .NET / VS Code Artifacts
 *.lscache

@@ -105,7 +105,7 @@ function handleFocusNode(path: string)
 <template>
   <div class="relative h-full w-full">
     <!-- ── Loading state ────────────────────────────────────────────────────── -->
-    <div v-if="isLoading"
+    <div v-if="isLoading && !data"
       class="absolute inset-0 z-10 p-4"
     >
       <NSkeleton class="h-full w-full rounded-xl" />

@@ -5,9 +5,9 @@ using GithubAnalyzer.WebApi.Services.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using AspNet.Security.OAuth.GitHub;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
+using AspNet.Security.OAuth.GitHub;
 using System.Text;
 
 namespace GithubAnalyzer.WebApi.Extensions;

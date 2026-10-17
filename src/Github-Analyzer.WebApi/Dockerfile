@@ -25,6 +25,6 @@ EXPOSE 8080
 COPY --from=build /app/publish .
 # Use the pre-configured docker appsettings (sensitive fields omitted, provided via ENV)
 COPY --from=build /src/src/Github-Analyzer.WebApi/appsettings.docker.json ./appsettings.json
-COPY --from=build /src/src/Github-Analyzer.WebApi/analyzer_versions.json ./
+
 
 ENTRYPOINT ["dotnet", "Github-Analyzer.WebApi.dll"]

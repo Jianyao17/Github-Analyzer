@@ -24,6 +24,8 @@ var mailpit = builder.AddMailPit("mailpit")
 var redis = builder.AddRedis("redis")
     .WithRedisCommander();
 
+postgresDb.WithCachePurgeCommand(redis);
+
 const int webappPort = 5017;
 
 var webapp = builder.AddNpmApp("webapp", "../Github-Analyzer.WebApp", "dev")

@@ -5,6 +5,8 @@
     <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.6.0" />
     <PackageReference Include="Aspire.Hosting.Redis" Version="13.6.0" />
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.MailPit" Version="13.6.0" />
+    <PackageReference Include="Npgsql" Version="8.0.3" />
+    <PackageReference Include="StackExchange.Redis" Version="2.13.17" />
   </ItemGroup>
 
   <PropertyGroup>
